@@ -147,7 +147,7 @@ def main():
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--emit-json", action="store_true",
                     help="Print the publish plan (one object per entity) as JSON and exit — "
-                         "for driving the publish through the Claude Atlassian connector instead of REST. "
+                         "for driving the publish through an available Atlassian connector instead of REST. "
                          "Milestones map to Epic, everything else to Task.")
     args = ap.parse_args()
 

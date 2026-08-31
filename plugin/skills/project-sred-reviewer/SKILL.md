@@ -261,5 +261,5 @@ Common CRA objections to simulate:
 ## Reference
 
 - `packs/sred-canada/profiles/funder-reporting.yaml` — language guidance (preferred/risky language lists)
-- `packs/sred-canada/templates/t661-narrative.md` — narrative template reviewed against
+- `capabilities/sred/templates/t661-narrative.md` — narrative template reviewed against
 - CRA T661 Guide (current year) — advisor should confirm current CRA policy

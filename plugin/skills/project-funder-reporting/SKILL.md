@@ -89,6 +89,11 @@ omit `deep_link`. Board-pack and invoice profiles follow the same shape with the
 
 ## Migration from v1.x
 
-The v1.x `project-claim-prep` skill was hard-wired to the PIC quarterly form. v2.0 reads the same form template — now living at `packs/pic-pcais/templates/ms-and-financial-tracking.xlsx` — through the profile system. Same xlsx output; new authoring path. Existing claim drafts in `reports/claims/` are unchanged and continue to be referenced.
+The v1.x `project-claim-prep` skill was hard-wired to the PIC quarterly form.
+The public v4.9.0 archive does not include the proprietary MS & financial
+tracking workbook referenced by the PIC profile. Require the operator to supply
+the governing workbook path before producing a PIC claim; never synthesize or
+silently substitute a compliance form. Existing claim drafts in
+`reports/claims/` remain unchanged.
 
 If you load only the PIC pack, behavior is identical to v1.x. Loading a customer pack alongside adds new reporting matrix entries (customer invoices, customer reports) without affecting the PIC claim flow.

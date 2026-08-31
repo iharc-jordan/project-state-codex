@@ -346,7 +346,7 @@ presents a diff for user review.
 ── Re-analysis diff ─────────────────────────────────────────────
 
   NEW FINDINGS (not in current manifest)
-    M08.owner_org   →  "Atomic47 Labs"   [doc: schedule-v2.pdf]
+    M08.owner_org   →  "Example Lead Org" [doc: schedule-v2.pdf]
     M09.planned_end →  2027-03-15        [doc: schedule-v2.pdf]
 
   GAPS NOW FILLED (found in new documents)

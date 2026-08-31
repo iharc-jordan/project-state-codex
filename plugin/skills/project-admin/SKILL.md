@@ -1,15 +1,20 @@
 ---
 name: project-admin
-description: "Manage project-state projects in the local-first + GitHub-hub model. Sub-actions: create (scaffold a new project-state substrate, create its private GitHub state repo, push, and register it in the Vercel viewer's GITHUB_STATE_REPOS map), pull (clone an existing project's state repo to a local working copy), list (show registered projects from the viewer registry). Use when the user says 'create a new project', 'new project-state', 'pull down project X', 'clone the state for X', 'check out a project', 'list projects', 'what projects exist', 'register a project with the dashboard', or any request to create, fetch, or enumerate project-state projects. Members and roles are managed via GitHub repo permissions, not here."
+description: "Manage Project State projects in a local-first, optional GitHub-hub model. Create can scaffold locally and, with explicit authorization, create and push a private state repository; pull clones an authorized state repository; list reports locally known or explicitly configured projects. Register with an external viewer only when the operator supplies that viewer configuration and requests registration. Never assume access to Atomic47's private infrastructure."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
 
 # Project Admin
 
+> **Public-package boundary:** the Atomic47 keep-state-app viewer is not bundled,
+> and no internal team, project, token, or dashboard URL is assumed. Local
+> scaffolding works independently. GitHub repository creation/push and optional
+> viewer registration require explicit operator authorization and supplied scope.
+
 Manage project-state **projects** in the local-first model: local substrate is
-authoritative, a per-project GitHub repo is the hub, and the Vercel viewer reads
-the repos listed in its `GITHUB_STATE_REPOS` env var.
+authoritative, an optional per-project GitHub repo is the hub, and a configured
+viewer may read the repos listed in its `GITHUB_STATE_REPOS` environment variable.
 
 **Members/roles are NOT managed here** — they are GitHub repo permissions
 (collaborators / org teams). To add an editor, grant them `write` on the state
@@ -17,20 +22,18 @@ repo; to add a viewer, share the dashboard URL + a view token.
 
 ## Conventions
 
-- A project `org/name` (e.g. `worksona/q3-fun`) maps to one **private GitHub
-  state repo** (e.g. `worksona/q3-fun-state`).
+- A project `org/name` maps to one **private GitHub state repo** by convention
+  (for example, `org/project-state`).
 - The repo holds the substrate at `project-state/` in its root.
-- The Vercel viewer (project `kanban`, team `atomic47`) reads the map env var
+- An optional configured viewer may read the map environment variable
   `GITHUB_STATE_REPOS` = `{"<org>/<name>": "<owner>/<repo>", ...}`.
 
-## Finding the Vercel token / team / project
+## Optional provider prerequisites
 
-```bash
-TOK=$(cat "$HOME/Library/Application Support/com.vercel.cli/auth.json" | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
-TEAM=team_erg4sFyoOjgPXtD2EtTaCKqR   # atomic47
-PROJECT=kanban
-```
-Require `gh` authenticated with `repo` scope for repo create/clone/collaborators.
+Require an authenticated `gh` session with appropriate repository scope before
+GitHub operations. For viewer registration, require an operator-supplied team,
+project, and an already authenticated provider CLI/session. Never scrape, print,
+or copy a bearer token from a local authentication file.
 
 ---
 
@@ -51,23 +54,14 @@ Create a new project end to end.
    git remote add origin "https://github.com/<owner>/<repo>.git" 2>/dev/null || git remote set-url origin "https://github.com/<owner>/<repo>.git"
    git push -u origin main
    ```
-4. Register it in the viewer's `GITHUB_STATE_REPOS` (read → merge key → upsert):
+4. Only when the operator explicitly requests it and supplies an authorized
+   viewer, register it in that viewer's `GITHUB_STATE_REPOS` (read → merge key → upsert):
    read the current value from Vercel, add `"<org>/<name>": "<owner>/<repo>"`,
-   and PATCH/upsert via `POST /v10/projects/$PROJECT/env?teamId=$TEAM&upsert=true`
+   and use the authenticated provider CLI or API for the supplied project/team
    with `{key:"GITHUB_STATE_REPOS", value:<merged json>, type:"encrypted", target:["production","preview","development"]}`.
-5. Report the dashboard URL: `https://kanban-atomic47.vercel.app/dash/<org>/<name>/kanban`.
-6. **Launch the project context page automatically** — no manual navigation needed:
-   ```bash
-   # Start the local kanban on port 3355 if it isn't already running
-   if ! lsof -ti tcp:3355 > /dev/null 2>&1; then
-     KANBAN_DIR="$(pwd)/project-state/kanban"
-     [ ! -d "$KANBAN_DIR/node_modules" ] && (cd "$KANBAN_DIR" && npm install)
-     cd "$KANBAN_DIR" && npm run dev > /tmp/project-kanban.log 2>&1 &
-     for i in $(seq 1 15); do lsof -ti tcp:3355 > /dev/null 2>&1 && break; sleep 1; done
-   fi
-   open http://localhost:3355/onboarding
-   ```
-   Print: `✓ <org>/<name> created. Opening the setup page — select your compliance packs and orient the project.`
+5. Report the local path, repository URL, and viewer URL only when each exists.
+   Do not launch a kanban app unless the operator supplies an existing checkout;
+   it is not part of this public package.
 
 ---
 
@@ -82,7 +76,7 @@ Fetch an existing project's state to a local working copy (to edit locally).
    gh repo clone <owner>/<repo> <dest-dir>
    ```
    The substrate is at `<dest-dir>/project-state/`. The user works there; the
-   Stop hook / `project-git` skill commit+push changes back to the hub.
+   The `project-git` skill can commit and push later changes back to the hub.
 3. If they already have a local copy, prefer `project-git sync` (rebase-safe
    pull) instead of a fresh clone.
 4. Report the local path and confirm `project-state/manifest.yaml` is present.
@@ -93,15 +87,13 @@ Fetch an existing project's state to a local working copy (to edit locally).
 
 Show the registered projects (the viewer's registry).
 
-1. Read `GITHUB_STATE_REPOS` from Vercel:
-   ```bash
-   curl -s "https://api.vercel.com/v9/projects/$PROJECT/env?teamId=$TEAM&decrypt=true" \
-     -H "Authorization: Bearer $TOK" | python3 -c "..."   # find key GITHUB_STATE_REPOS
-   ```
+1. If an authorized viewer is configured, read its `GITHUB_STATE_REPOS` value
+   through the authenticated provider CLI/API. Otherwise list locally known
+   checkouts or repositories the operator explicitly names; do not probe
+   Atomic47 infrastructure.
 2. Parse the JSON map and present a table: `org/name → owner/repo`, grouped by
    org. Optionally annotate each with its latest commit (`gh api repos/<repo>/commits --jq '.[0].commit.committer.date'`).
-3. This is the source of truth for "what the dashboard shows." The read-only
-   `/overview` page in the Vercel app renders the same data plus members.
+3. For a configured viewer, this map is the source of truth for what it shows.
 
 ---
 

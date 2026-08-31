@@ -30,10 +30,11 @@ footnote.
 
 ## Install
 
-Standalone (any Claude Code setup):
+Standalone source layout:
 
 ```bash
-cp -R project-onepager ~/.claude/skills/
+Copy this directory into a Codex plugin's `skills/` directory or a local Codex
+skills directory, preserving its `templates/` and `examples/` subdirectories.
 ```
 
 As part of the project-state plugin, it ships in `plugin/skills/` automatically.

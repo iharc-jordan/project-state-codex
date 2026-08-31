@@ -18,10 +18,11 @@ MindMap Studio native save uses `nodes[]` with `parent`, `side`, `x`, `y`. The v
 
 ## open-in-studio.py
 
-Encodes the vibe JSON into `#vibe=` and opens the default browser on macOS (`open`).
+Encodes the vibe JSON into `#vibe=` and opens the default browser through
+Python's cross-platform `webbrowser` module.
 
 Run from the project-state repo root:
 
 ```bash
-python3 skills/mindmap-vibe/scripts/open-in-studio.py ~/Desktop/mindmap-inbox/latest.vibe.json
+python scripts/open-in-studio.py ~/Desktop/mindmap-inbox/latest.vibe.json
 ```

@@ -168,14 +168,13 @@ Five-slot palette (orange, indigo, emerald, sky, violet) assigned round-robin by
 
 One-shot scaffold of `website/` for a new project:
 
-1. Place the website starter at the project root as `website/`. The starter ships from the project-state package either expanded (`templates/website/`) or, in uploaded/zip distributions, as a compressed archive (`templates/website.tgz`) — the App Router uses bracketed dynamic-route folders (`[slug]`, `[...slug]`) that some zip uploaders reject, so packaged builds tar it. Use whichever is present:
-   ```bash
-   if [ -f templates/website.tgz ]; then
-     mkdir -p website && tar xzf templates/website.tgz -C website
-   else
-     cp -R templates/website/ website/
-   fi
-   ```
+1. Place the website starter at the project root as `website/`. Resolve the
+   bundled template from the plugin payload. This public package ships
+   `templates/website.tgz`; inspect the archive and reject absolute paths,
+   parent traversal, or link entries that escape the destination before
+   extracting it beneath `website/` with the current platform's tar support.
+   If an expanded `templates/website/` exists in a later release, copy it
+   recursively instead.
 2. `cd website && npm install`.
 3. Create `website/.env.local`:
    ```

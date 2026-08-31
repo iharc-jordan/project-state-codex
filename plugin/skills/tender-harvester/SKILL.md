@@ -12,7 +12,7 @@ Pull tender opportunities from configured sources and deposit them as `kind: ten
 ## Preconditions
 
 1. Locate the facility: walk up from cwd to `project-state/manifest.yaml` (standard project-state discovery).
-2. Confirm `manifest.yaml:packages.tender-intelligence.enabled: true`. If absent, stop: "Tender package not enabled in this facility — add the package block (templates/manifest-package-block.yaml) to manifest.yaml."
+2. Confirm `manifest.yaml:packages.tender-intelligence.enabled: true`. If absent, stop: "Tender package not enabled in this facility — adapt the bundled `templates/tender/manifest-capability-block.yaml` into manifest.yaml."
 3. Read the package block for sources, feeds, mailbox label, and intervals.
 4. Read `state/tender-intelligence.json:tender_connectors` for cursors and health. Initialize missing connector entries with the schema-extension defaults before first use.
 
@@ -40,7 +40,7 @@ For each URL in `sources.canadabuys.feeds.discovery` (watch feeds belong to `ten
    - Extract the notice reference number from the entry link/id.
    - Check existing tenders for a source match (`sources[].portal == CanadaBuys && source_id == ref`). If found and unchanged, skip. If found and changed, update `last_checked_at` and hand the diff to `tender-monitor` conventions (write nothing yourself beyond the source block).
    - If new: fetch the public notice page; parse title, organization, notice type, status, publication date, closing date (preserve original timezone), regions of delivery, commodity codes (UNSPSC/GSIN), trade agreements, procurement method, contact where public, external tendering-system links.
-   - Build the entity from `templates/tender-entity-template.yaml`; `sources[0].role: discovery`; if the notice points to another submission portal, record `submission_url` and add a second source block with `role: submission`.
+   - Build the entity from `templates/tender/tender-entity-template.yaml`; `sources[0].role: discovery`; if the notice points to another submission portal, record `submission_url` and add a second source block with `role: submission`.
    - Write via memory layer → `tender.discovered`.
 4. Update cursor, `etag`, `last_success`, `last_new_record`; reset `consecutive_failures`.
 

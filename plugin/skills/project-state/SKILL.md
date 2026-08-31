@@ -17,7 +17,7 @@ Without this skill, state edits drift, two agents clobber each other on the shar
 
 Walk up from the current working directory until a `project-state/manifest.yaml` is found. That directory is the project root. If none is found:
 - If the user asked a read-only question, say so and stop.
-- If the user asked to initialize, direct them to run `project-scaffolder` (or, while that skill isn't built, follow the BLUEPRINT.md in the project root).
+- If the operator asked to initialize, hand off to `project-scaffolder` or `project-onboarding`.
 
 ```bash
 # Locate state (pseudocode)
@@ -154,7 +154,7 @@ Those are owned by the capability's `schema/events.yaml`, not by this table.
 
 A **capability** is a plugin that extends the substrate with new entity kinds, its own event
 vocabulary, its own validator, and a bundled default pack. `install` makes a capability *available*
-(it lands at the Claude / appliance layer). **`enable` makes it active for one project**, and that is
+(it lands at the plugin or appliance layer). **`enable` makes it active for one project**, and that is
 a memory-layer verb — it writes the manifest, so it routes through here like every other write.
 
 Normative spec: `docs/CAPABILITY-PLUGINS.md` §5. Capabilities ship under `capabilities/<id>/` with a

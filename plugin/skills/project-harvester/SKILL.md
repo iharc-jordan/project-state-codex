@@ -1,6 +1,6 @@
 ---
 name: project-harvester
-description: "Harvest external signals (Slack, Gmail, GDocs, scsiwyg, Jira, Confluence, Linear, GitHub) relevant to a specific project and write them as classified intel docs into `project-state/documents/inbox/`. Jira, Confluence, and Linear are pulled through their Claude MCP connectors (Atlassian + Linear); GitHub via its MCP connector or the gh CLI (commits digested per repo/day, plus PRs, releases, issues). Reads the project manifest to discover which channels, contacts, keywords, projects/boards, spaces, and surfaces to watch. Tracks per-user, per-surface cursors in `project-state/harvest/cursors/`. Persists through the substrate binding: local file writes by default, or the project-state.app deposit API when a cloud endpoint + personal token are configured (see HARVEST-CONNECTIVITY-ROADMAP.md). Designed to be called by `project-orchestrator` as part of the daily routine. Trigger: `/project-harvester` or invoked by project-orchestrator."
+description: "Harvest external signals from configured Slack, Gmail, Google Docs, scsiwyg, Jira, Confluence, Linear, and GitHub surfaces into project-state/documents/inbox. Activate only when at least one surface is configured or harvesting is explicitly requested, and use only connectors available in the current host; GitHub may use its connector or gh CLI. Track per-user cursors and preserve the configured local or explicitly supplied deposit binding."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
@@ -69,7 +69,7 @@ surfaces:
     workspace: ~                        # Slack workspace name (optional; MCP default if null)
   gmail:
     enabled: true
-    from_identity: "david@atomic47.co"  # the project owner's send-as address
+    from_identity: "operator@example.com"  # replace with the authorized send-as identity
     drafts_only: false                  # if true, skip inbound filtering (pre-award mode)
     keywords: []                        # optional subject/body keywords to match inbound mail
   gdocs:
@@ -135,9 +135,9 @@ project-state/harvest/cursors/{email}--{surface}.yaml
 ```
 
 ```yaml
-# project-state/harvest/cursors/keystone@stonemaps.org--slack.yaml
+# project-state/harvest/cursors/operator@example.com--slack.yaml
 surface: slack
-email: keystone@stonemaps.org
+email: operator@example.com
 cursor: "2026-07-20T00:00:00Z"
 updated_at: "2026-07-23T09:12:00Z"
 ```
@@ -181,7 +181,7 @@ space: ~                               # confluence only (space key)
 relevance_signals:                     # why this was flagged
   - contact_match: "r.rohozinski@secdev.com"
   - channel_match: "#ledger-rt"
-harvested_by: "keystone@stonemaps.org" # harvester identity (see Substrate binding)
+harvested_by: "operator@example.com" # server-resolved or operator-confirmed identity
 harvest_plane: local                   # local | server | desktop | claude-ai
 status: inbox                          # always "inbox" on write; curator promotes
 ---
@@ -284,10 +284,9 @@ for each watch_site in surfaces.scsiwyg.watch_sites:
   → emit inbox doc
 ```
 
-> **Connectors note (Jira / Confluence / Linear).** These surfaces are served by
-> their **Claude MCP connectors** — the Atlassian connector (Jira + Confluence) and
-> the Linear connector — connected in the operator's Claude account / CLI, not by a
-> project-state-owned server. The exact MCP tool names vary by which connector build
+> **Connectors note (Jira / Confluence / Linear).** These surfaces use an available
+> Atlassian or Linear connector in the current Codex host, not a
+> project-state-owned server. The exact tool names vary by which connector build
 > is installed, so **discover the available `mcp__*` tools at runtime** and use the
 > ones that match the operations below. If the connector for a surface isn't
 > connected, skip that surface and log it (same as any other surface). All access is

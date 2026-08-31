@@ -11,7 +11,7 @@ Turn discovered tenders into scored, explained, human-decidable opportunities. R
 
 ## Preconditions
 
-Locate the facility; confirm the package is enabled; load enabled `tenders/profiles/*.yaml` (respect `profiles_enabled` in the package block; skip `enabled: false` profiles). If no profiles exist, stop and offer to create them from `templates/tender-profile-template.yaml`.
+Locate the facility; confirm the package is enabled; load enabled `tenders/profiles/*.yaml` (respect `profiles_enabled` in the package block; skip `enabled: false` profiles). If no profiles exist, stop and offer to create them from `templates/tender/tender-profile-template.yaml`.
 
 ## Sub-actions
 

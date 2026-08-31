@@ -87,12 +87,12 @@ Everything authoritative is under `project-state/` in the shared drive folder. R
 ## Useful reference
 - PIC PM Guide (May 2025): `<path>` — section that's most relevant to your role
 - The schema reference: `project-state/SCHEMA.md`
-- Install the skills per `project-state/skills/INSTALL.md` so "what's going on?" actually tells you
+- The Project State Codex plugin is already installed; no project-local skill installation is required
 
 Any questions, ping <Project Lead name> in Slack or email.
 
 Welcome aboard.
-— David (keystone: david@atomic47.co)
+— <Project Lead name>
 ```
 
 ## Role-specific playbook excerpts

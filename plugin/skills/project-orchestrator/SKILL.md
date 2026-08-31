@@ -231,24 +231,22 @@ When the user signals end of day, end of session, or "wrapping up":
 
 The orchestrator does not run itself. It is invoked:
 - On user demand ("what should I do?")
-- By the `schedule` skill (a scheduled task calls `project-orchestrator daily` each morning)
-- By a cron firing **`project-orchestrator tick`** on the registry's natural cadence
-  (e.g. early each weekday). The cron is a thin trigger; all scheduling *logic* lives
+- By a Codex recurring automation, when the operator explicitly requests scheduling
+- By an operating-system scheduler firing **`project-orchestrator tick`** on the registry's natural cadence
+  (for example, early each weekday). The scheduler is a thin trigger; all scheduling *logic* lives
   in the `tick` routine reading `automation/tasks.yaml` (falling back to
   `reporting-matrix.yaml` when no registry exists), so the schedule is testable
-  and inspectable in the substrate rather than buried in cron config. The kanban
+  and inspectable in the substrate rather than buried in scheduler config. The optional kanban
   **Calendar view** (`/calendar`) renders the same registry with computed next-due and
   last-run so a human can see what the next tick will do.
 
 `project-state/manifest.yaml` does not specify schedules; those are managed via the `schedule` skill and should be configured separately.
 
-**Registering the cron from the UI.** The kanban **Schedule view** (`/schedule`) now
-manages the recurring trigger directly: an Automation panel registers / pauses /
-removes a single marked block in the user's crontab that runs `project-orchestrator
-tick` on a chosen cadence (weekday-mornings preset, etc.). The cron command runs
-`claude -p` headless with `--permission-mode bypassPermissions --max-budget-usd 2`,
-logging to `logs/cron-tick.log`. The human clicks **Register** — the app does not
-register it silently. The Schedule view's "Last tick" reflects real runs once active.
+**Registering a recurring trigger.** The public package does not include the kanban
+Schedule view. In Codex, use the product's recurring-automation support when the
+operator requests scheduling; on Windows, Task Scheduler is an optional CLI fallback.
+Never register a trigger silently or bypass normal approval and sandbox settings.
+Keep scheduler logs under `logs/cron-tick.log` when a CLI fallback is used.
 
 ## Discipline
 

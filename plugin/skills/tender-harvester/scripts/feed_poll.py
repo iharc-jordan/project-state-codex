@@ -21,7 +21,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
-UA = "Atomic47-TenderIntelligence/1.0 (+https://atomic47.co; polite; contact keystone@stonemaps.org)"
+UA = "Atomic47-TenderIntelligence/1.0 (+https://atomic47.co; polite crawler)"
 ATOM = "{http://www.w3.org/2005/Atom}"
 
 

@@ -366,7 +366,7 @@ the SR&ED advisor in the room. Reads the Layer 0 baseline
 4. **Confirm framing** — every area description must be field-relative; rewrite any
    "new to us" phrasing on the spot, citing the Layer 0 field-level rule.
 
-Write the file from `templates/criteria.yaml`, `status: draft` until PL sign-off flips it
+Write the file from `capabilities/sred/templates/criteria.yaml`, `status: draft` until PL sign-off flips it
 to `reviewed`. Emit `sred.criteria.updated` with areas added/removed — criteria drift is
 audit-relevant and must be visible in the activity log. The quarterly review nudges a
 refresh when `last_refreshed` ages past a quarter.
@@ -392,7 +392,7 @@ refresh when `last_refreshed` ages past a quarter.
 
 ## Reference schema files
 
-- `packs/sred-canada/templates/t661-narrative.md` — narrative template (Sections E/F/G)
-- `packs/sred-canada/templates/evidence-map.md` — evidence map template
-- `packs/sred-canada/templates/cost-categorization.yaml` — cost allocation template
+- `capabilities/sred/templates/t661-narrative.md` — narrative template (Sections E/F/G)
+- `capabilities/sred/templates/evidence-map.md` — evidence map template
+- `capabilities/sred/templates/cost-categorization.yaml` — cost allocation template
 - `packs/sred-canada/profiles/funder-reporting.yaml` — language guidance and cadence config
