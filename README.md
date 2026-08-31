@@ -35,7 +35,11 @@ duplicating them:
 
 It also removes process duplication:
 
+- ordinary task-local code work stays in the active task and issue tracker;
+  epic/program facilities are created or updated only for shared material facts;
 - one durable fact creates one canonical entity update and one activity event;
+- exact evidence/report/delivery repeats reuse a deterministic existing event
+  identity instead of incrementing counters or fanning out again;
 - one report owner handles a source event and reporting period;
 - optional skills activate only for an applicable pack, capability, configured
   surface, due reporting entry, or explicit request;
@@ -45,6 +49,13 @@ It also removes process duplication:
 - `automation/tasks.yaml` is the only current automation registry;
 - onboarding inspects available sources before asking grouped unresolved
   questions; and
+- counters and last activity are mechanical projections, while phase, health,
+  lifecycle, timezone, and closeout disagreements are surfaced by read-only
+  reconciliation rather than guessed;
+- routine reads use bounded summaries and cursors before opening full entities;
+- implementation-linked state can travel with its code through the ordinary
+  protected/default-branch merge, while deliberate governance/reporting
+  state-only commits remain supported; and
 - Claude/Coworker presentation mechanics and dangling private-only references
   are removed without deleting their underlying data, approval, or output
   contracts.
@@ -79,6 +90,17 @@ overwriting it.
 The Codex manifest at `.codex-plugin/plugin.json` points to
 `./plugin/skills/`. Each skill links to the shared Codex adapter policy in
 `plugin/CODEX.md`.
+
+Validate the package without creating a facility:
+
+```powershell
+$env:PYTHONUTF8 = '1'
+py -3 scripts/validate_codex_adaptation.py
+```
+
+To inspect an existing facility without changing it, add
+`--facility <project-root-or-project-state-path>`. Findings are proposals only;
+repairs still require an explicit Project State apply request.
 
 ## Repository layout
 

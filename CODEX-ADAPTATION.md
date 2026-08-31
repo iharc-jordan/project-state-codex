@@ -16,6 +16,9 @@ for Codex while preserving the public Project State deliverable contract.
 - `codex-v4.9.0-lean.2` identifies the public-sharing documentation revision;
   it changes no Project State runtime contract. Tags are immutable.
 - `codex-v4.9.0-lean.3` identifies the Codex-only, single-branch distribution.
+- `codex-v4.9.0-lean.4` identifies the scale-proportional, idempotent,
+  reconciliation-aware operating contract while preserving every public
+  Project State interface.
 - Atomic47 attribution, upstream links, and the MIT license are retained.
 
 The repository began as an independent private mirror because GitHub does not
@@ -52,6 +55,61 @@ The compatibility changes are intentionally narrow:
 
 No Project State manifest field, alternate state format, connector, or hosted
 gate was added.
+
+## Scale-proportional operating contract
+
+Project State records shared project meaning, not every code change or
+individual task. Scale is determined at runtime from the operator request and
+supplied repository evidence; it is deliberately not a required manifest field.
+
+- A **task** remains in the active Codex task and configured issue tracker. It
+  does not scaffold or write Project State unless it changes a shared API/data/
+  architecture contract, milestone, durable decision/risk, compliance or
+  reporting obligation, governed phase, or release boundary, or the operator
+  explicitly requests a reasoned Project State record.
+- An **epic** represents one shared outcome with only meaningful milestones,
+  durable decisions/risks, stable external references, and revision-keyed
+  evidence.
+- A **program** may use the complete facility for multi-developer objectives,
+  rollups, reporting, compliance, and provenance.
+
+Explicit initialization still creates the existing standard tree and schema.
+Source-first intake asks only unresolved required, pack-driven, or
+routing-critical questions and does not populate speculative entities.
+
+New canonical events retain `ts`, `actor`, `event`, `id`, and `summary`.
+Idempotent evidence, reports, and deliveries derive deterministic identities
+from their existing event/entity/revision/period/owner inputs and reuse the
+existing `id` contract. Exact repeats return the existing record and do not
+append, increment, advance pointers, regenerate, or notify. Legacy duplicates
+and aliases remain readable. No `dedupe_key`, `source_revision`, `supersedes`,
+second event index, or clone request ledger was added.
+
+`state.json` remains at the same path and schema. Unique entity counters and
+`last_activity` are mechanical projections. Phase is governed by the manifest
+and successful explicit lifecycle/transition operations, with disagreement
+reported instead of inferred from milestones. The automation registry timezone
+mirrors the manifest; null/mismatch is reported rather than guessed. Default
+health reflects material delivery, reporting, compliance, security, and
+production-path risk; development-only advisories remain visible but do not
+independently lower health. Terminal closeout and continuous increments are
+reconciled explicitly. Validation/reconciliation is dry-run by default and any
+repair remains an explicit canonical write.
+
+Material implementation-linked state normally travels with its code through an
+ordinary branch/PR and protected/default-branch merge. State-only commits remain
+valid for meetings, decisions, reports, governance, and post-commit evidence.
+The merge is the cross-clone serialization point: stale bases, duplicate
+deterministic event IDs, and incompatible same-entity edits require explicit
+resolution. Lockfiles and `merge=union` do not solve cross-clone semantics, and
+no parallel change-request ledger exists.
+
+External ticket/document systems retain full bodies, comments, and source
+content. Project State stores stable references, provenance, required status
+snapshots, and managed copies only when a pack/output contract requires them.
+Routine list/activity/status reads use bounded summaries, filters, limits, and
+cursors before explicit detail reads. Deep documentation and historical scans
+remain available when explicitly requested or contractually triggered.
 
 ## Redundancies removed
 
@@ -150,6 +208,11 @@ events through `project-state`.
 | PS-CX-013 | Current registry, suite alias, and package metadata | `README.md`<br>`plugin/README.md`<br>`plugin/skills/project-automator/SKILL.md`<br>`plugin/skills/project-doc-suite-generator/SKILL.md`<br>`plugin/skills/project-doc-suite/SKILL.md`<br>`plugin/skills/project-orchestrator/SKILL.md`<br>`plugin/skills/project-status-reporter/SKILL.md`<br>`plugin/skills/project-funder-reporting/SKILL.md`<br>`plugin/templates/manifest-v2.yaml`<br>`plugin/templates/reporting-matrix.yaml` | Make `automation/tasks.yaml`, the unified suite, 43 skills, and eight packs authoritative; forward the deprecated generator once. | Retired baseline generation is not duplicated; its public entrypoint forwards to the established unified-suite owner. | Count, path, registry, alias, strict parse, and routing checks. | Use internal current registries and generators where authoritative; do not restore parallel legacy output. |
 | PS-CX-014 | Adaptation evidence | `CODEX-ADAPTATION.md`<br>`scripts/validate_codex_adaptation.py` | Record the compatibility reasoning and provide one read-only repeatable validation entrypoint. | Documentation and checks only. | Self-coverage check requires every changed file and commit to carry a justification ID and required rationale headings. | Carry this matrix into the internal migration and reclassify every row. |
 | PS-CX-015 | Codex-only single-branch distribution | `.claude-plugin/**`<br>`plugin/.claude-plugin/**`<br>`README.md`<br>`plugin/README.md`<br>`plugin/packs/pic-pcais/README.md`<br>`plugin/templates/reporting-matrix.yaml`<br>`plugin/capabilities/sred/views/README.md`<br>`plugin/capabilities/sred/views/build-sred-dashboard.mjs`<br>`plugin/skills/project-onepager/examples/**`<br>`scripts/validate_codex_adaptation.py` | Make `main` the single public Codex branch, remove Claude distribution manifests and active Claude-specific help, and retain the exact upstream baseline as a tag instead of a second branch. | Codex discovery and every Project State runtime contract remain; Claude installation routes to the upstream repository, while legacy data values and output flags stay readable. | Absence checks for both Claude manifests, active-instruction scan, strict YAML, JavaScript syntax, 43-skill validation, baseline ancestry, package validation, and remote branch audit. | Reintroduce a host-specific distribution layer only if the internal contract explicitly requires it; do not duplicate the runtime payload. |
+| PS-CX-016 | Cross-skill contract drift repair | `plugin/skills/project-inbox/SKILL.md`<br>`plugin/skills/project-inbox/project-intake/SKILL.md`<br>`plugin/skills/project-scaffolder/SKILL.md`<br>`plugin/skills/project-onboarding/SKILL.md`<br>`plugin/skills/project-automator/SKILL.md`<br>`plugin/skills/project-milestone-manager/SKILL.md`<br>`plugin/skills/project-phase-gate/SKILL.md`<br>`plugin/templates/manifest-v2.yaml` | Use canonical event envelopes and entity frontmatter, remove undefined scaffolder fronts and facility-specific claims, and make manifest/tasks timezone projection consistent. | Existing legacy events, facility files, task registries, and the standard scaffold remain readable; no bulk migration occurs. | Canonical-example, cross-skill-command, generic-instruction, strict-parse, timezone-fixture, and protected-template semantic checks. | Retain the checks; reconcile internal commands and schemas before changing any wording. |
+| PS-CX-017 | Scale and materiality routing | `plugin/CODEX.md`<br>`plugin/skills/project-state/SKILL.md`<br>`plugin/skills/project-scaffolder/SKILL.md`<br>`plugin/skills/project-onboarding/SKILL.md`<br>`plugin/skills/project-inbox/project-intake/SKILL.md`<br>`plugin/skills/project-change-register/SKILL.md`<br>`plugin/skills/project-feedback/SKILL.md`<br>`plugin/skills/project-goal-tracker/SKILL.md`<br>`plugin/skills/project-milestone-manager/SKILL.md` | Route task, epic, and program operations proportionally and require a shared-fact materiality gate before canonical writes. | Scale is runtime policy, not a manifest field; explicit initialization keeps the established tree/schema and explicit reasoned overrides use existing fields. | In-memory task/epic/program and materiality fixtures, policy scans, all-skill validation, and fresh-process routing probes. | Retain unless an internal router provides the same no-write task behavior without adding persisted scale state. |
+| PS-CX-018 | Idempotency, projection, health, and closeout | `plugin/CODEX.md`<br>`plugin/skills/project-state/SKILL.md`<br>`plugin/skills/project-milestone-manager/SKILL.md`<br>`plugin/skills/project-phase-gate/SKILL.md`<br>`plugin/skills/project-archive/SKILL.md`<br>`plugin/skills/project-status-reporter/SKILL.md`<br>`plugin/skills/project-orchestrator/SKILL.md`<br>`plugin/skills/project-doc-suite/SKILL.md`<br>`plugin/skills/project-tech-reports/SKILL.md`<br>`plugin/skills/project-onepager/SKILL.md`<br>`plugin/skills/project-funder-reporting/SKILL.md`<br>`plugin/skills/project-notifier/SKILL.md`<br>`scripts/validate_codex_adaptation.py` | Reuse deterministic canonical event identities, suppress exact repeat fan-out, mechanically project counters/last activity, reconcile governed phase/lifecycle/timezone, and base health/closeout on material conditions. | Paths, schemas, event names, legacy aliases, report formats, governed overrides, and historical duplicates remain; no new event field or alternate state format is added. | Deterministic-ID, duplicate-suppression, projection, health, closeout, legacy-vocabulary, generic facility dry-run, and CanRentPro read-only acceptance checks. | Prefer any stronger internal transactional implementation while preserving identities, dry-run defaults, and legacy readability. |
+| PS-CX-019 | Git serialization, external references, and progressive reads | `plugin/CODEX.md`<br>`plugin/skills/project-git/SKILL.md`<br>`plugin/skills/project-state/SKILL.md`<br>`plugin/skills/project-harvester/SKILL.md`<br>`plugin/skills/project-document-curator/SKILL.md`<br>`plugin/skills/project-feedback/SKILL.md`<br>`plugin/skills/project-jira-publisher/SKILL.md`<br>`plugin/skills/project-goal-tracker/SKILL.md`<br>`plugin/skills/project-milestone-manager/SKILL.md`<br>`plugin/skills/project-status-reporter/SKILL.md`<br>`plugin/skills/project-orchestrator/SKILL.md`<br>`plugin/skills/project-doc-suite/SKILL.md`<br>`plugin/skills/project-tech-reports/SKILL.md`<br>`plugin/skills/project-onepager/SKILL.md` | Use ordinary protected-branch merges for cross-clone serialization, allow explicit companion-code checkpoints, retain stable external references instead of full copies, and bound routine reads before detail. | Deliberate state-only commits, configured external adapters, copied legacy records, full detail/deep scans, Git sharing, and merge attributes remain supported. | Static Git/ref/read-contract scans, missing-reference audit, deterministic fixtures, fresh-process summary/detail probes, and legacy compatibility comparison. | Retain unless internal storage supplies stronger concurrency or query primitives with the same explicit authorization boundary. |
+| PS-CX-020 | Lean.4 package, release, and evidence | `.codex-plugin/plugin.json`<br>`README.md`<br>`CODEX-ADAPTATION.md`<br>`scripts/validate_codex_adaptation.py` | Publish the consensus scalability contract, incorporate the pre-existing local cachebuster into a stable release version, and make package plus optional facility validation repeatable. | Installation remains one public repository and `project-state@personal`; attribution, upstream provenance, MIT licensing, 43 skills, packs, capabilities, and public main remain unchanged. | Full adaptation validator, 43 quick validations, package/discovery checks, fresh-process probes, Git diff check, exact tag/remote parity, and clean personal-installation proof. | Carry this release evidence forward; never restore a duplicate distribution branch or hosted gate. |
 
 ## Validation evidence
 
@@ -196,6 +259,28 @@ YAML parsing, Python syntax compilation, `node --check`, active Claude-only
 instruction scanning, baseline ancestry, matrix/commit coverage, and
 `git diff --check` passed.
 
+For `codex-v4.9.0-lean.4`, the 43 skill directories again passed the
+skill-creator quick validator. Focused in-memory fixtures passed for
+task/epic/program routing, materiality, deterministic identity, exact-repeat
+suppression, projections, health, timezone, and continuous closeout. A generic,
+read-only reconciliation of the CanRentPro fixture at
+`548aefe10c92426ad2d805b32a34ae20f7aa4860` parsed its complete YAML/JSON state,
+left HEAD and the clean worktree unchanged, and measured 46 tracked state files,
+54 other tracked files, 90 activity events, 18 total commits, 14 state-touching
+commits, and nine state-only commits. It surfaced rather than repaired:
+
+- manifest/tasks timezone drift (`null` versus `America/Toronto`);
+- a continuous lifecycle with no increment history and completed entities in
+  later phases than the current phase;
+- yellow health attributed solely to development-only advisories; and
+- three repeated 40-character evidence revisions occurring six, two, and three
+  times respectively.
+
+Those findings are acceptance evidence for the generic dry-run reconciler, not
+authorization to mutate the fixture. The release validator and fresh-process
+installation probes are run again on the exact lean.4 release revision before
+the immutable tag is pushed.
+
 The contract validator checks the exact upstream baseline tag and ancestry,
 exact skill name set, adapter links, the direct nested plugin manifest, absence
 of Claude distribution manifests, strict JSON/YAML,
@@ -228,9 +313,11 @@ Release invariants are:
    validation; and
 6. retain the original attribution, upstream links, and MIT license.
 
-An installation may use a local version cachebuster after an immutable release
-tag. That machine-local manifest change is not part of the public adaptation
-commit or release tag.
+The lean.4 release intentionally replaces the pre-existing local timestamp
+cachebuster with the stable public manifest version `4.9.0+codex.lean.4` and
+installs that exact version. Any later machine-local cachebuster must be
+reconciled deliberately before the next release and must not leave the canonical
+checkout dirty.
 
 ## Later internal-version migration
 

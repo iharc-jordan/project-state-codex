@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import ast
+import argparse
 import fnmatch
+import hashlib
 import json
 import os
 import re
@@ -12,6 +14,8 @@ import subprocess
 import sys
 import tarfile
 import zipfile
+from collections import Counter
+from datetime import datetime
 from pathlib import Path, PurePosixPath
 from urllib.parse import unquote
 
@@ -23,6 +27,7 @@ except ImportError as exc:  # pragma: no cover - an actionable environment failu
 
 BASELINE_REF = "upstream-v4.9.0"
 BASELINE_COMMIT = "c0b55ba52dfdca9312a1f6150039ed14d569e2db"
+STRICT_COMMIT_BASE = "35499854e207908e6a00bbad23f837024ae0dae1"
 EXPECTED_SKILL_COUNT = 43
 EXPECTED_PACKS = {
     "agile-default",
@@ -138,10 +143,15 @@ def git_bytes(root: Path, spec: str) -> bytes:
     return run("git", "show", spec, cwd=root, text=False).stdout
 
 
-def tracked_paths(root: Path, ref: str = "HEAD", prefix: str | None = None) -> set[str]:
-    args = ["ls-tree", "-r", "--name-only", ref]
-    if prefix:
-        args.extend(["--", prefix])
+def tracked_paths(root: Path, ref: str | None = None, prefix: str | None = None) -> set[str]:
+    if ref is None:
+        args = ["ls-files"]
+        if prefix:
+            args.extend(["--", prefix])
+    else:
+        args = ["ls-tree", "-r", "--name-only", ref]
+        if prefix:
+            args.extend(["--", prefix])
     return {line for line in git_text(root, *args).splitlines() if line}
 
 
@@ -335,10 +345,10 @@ def validate_local_links(root: Path) -> int:
 def validate_protected_contract(root: Path) -> None:
     for prefix in ("plugin/templates", "plugin/packs", "plugin/capabilities"):
         before = tracked_paths(root, BASELINE_REF, prefix)
-        after = tracked_paths(root, "HEAD", prefix)
+        after = tracked_paths(root, prefix=prefix)
         assert before == after, f"protected path inventory changed under {prefix}"
 
-    changed = set(git_text(root, "diff", "--name-only", f"{BASELINE_REF}..HEAD").splitlines())
+    changed = set(git_text(root, "diff", "--name-only", BASELINE_REF).splitlines())
     protected = {
         path
         for path in changed
@@ -409,6 +419,363 @@ def validate_contract_terms(root: Path) -> None:
     assert manifest_v2["manifest_kind"] == "project"
 
 
+def deterministic_event_id(*parts: object) -> str:
+    """Return the contract event id without requiring a second schema field."""
+
+    payload = bytearray()
+    for part in parts:
+        value = str(part).encode("utf-8")
+        payload.extend(len(value).to_bytes(8, "big"))
+        payload.extend(value)
+    return "evt-" + hashlib.sha256(payload).hexdigest()[:20]
+
+
+def classify_scale(*, shared_outcome: bool, program_obligations: bool) -> str:
+    if program_obligations:
+        return "program"
+    if shared_outcome:
+        return "epic"
+    return "task"
+
+
+def is_material(reasons: set[str], override_reason: str | None = None) -> bool:
+    material_reasons = {
+        "shared-contract",
+        "milestone",
+        "decision-risk",
+        "compliance-reporting",
+        "phase",
+        "release-boundary",
+    }
+    return bool(reasons & material_reasons) or bool(
+        override_reason and override_reason.strip()
+    )
+
+
+def default_health(
+    *,
+    critical_blocker: bool = False,
+    compliance_failure: bool = False,
+    production_security_failure: bool = False,
+    blocked_required_milestone: bool = False,
+    material_delivery_risk: bool = False,
+    overdue_obligation: bool = False,
+    structural_contradiction: bool = False,
+    development_advisories: int = 0,
+) -> str:
+    del development_advisories  # disclosed, but not a health input on its own
+    if any(
+        (
+            critical_blocker,
+            compliance_failure,
+            production_security_failure,
+            blocked_required_milestone,
+        )
+    ):
+        return "red"
+    if any((material_delivery_risk, overdue_obligation, structural_contradiction)):
+        return "yellow"
+    return "green"
+
+
+def reconcile_projection_fixture(
+    *,
+    manifest_phase: str | None,
+    state_phase: str | None,
+    lifecycle: str | None,
+    increment_count: int,
+    manifest_timezone: str | None,
+    tasks_timezone: str | None,
+) -> list[str]:
+    findings: list[str] = []
+    if manifest_phase != state_phase:
+        findings.append("phase-mirror")
+    if manifest_timezone != tasks_timezone:
+        findings.append("timezone-projection")
+    if lifecycle == "continuous" and increment_count == 0:
+        findings.append("continuous-without-increment")
+    return findings
+
+
+def validate_lean_policy(root: Path) -> None:
+    required = {
+        "plugin/CODEX.md": (
+            "## Scale and materiality",
+            "## Idempotent writes and projections",
+            "## Progressive reads",
+            "no parallel change-request ledger is created",
+        ),
+        "plugin/skills/project-state/SKILL.md": (
+            "Apply materiality",
+            "Compute deterministic identity",
+            "Validate/reconcile",
+        ),
+        "plugin/skills/project-git/SKILL.md": (
+            "checkpoint [--include <path> ...]",
+            "protected/default-branch merge is the serialization point",
+        ),
+        "plugin/skills/project-document-curator/SKILL.md": (
+            "externally owned document",
+            "managed copy only",
+        ),
+    }
+    for rel, snippets in required.items():
+        content = (root / rel).read_text("utf-8")
+        normalized = " ".join(content.split())
+        for snippet in snippets:
+            assert " ".join(snippet.split()) in normalized, (
+                f"missing lean policy {snippet!r}: {rel}"
+            )
+
+    intake = (root / "plugin/skills/project-inbox/project-intake/SKILL.md").read_text(
+        "utf-8"
+    )
+    inbox = (root / "plugin/skills/project-inbox/SKILL.md").read_text("utf-8")
+    tech = (root / "plugin/skills/project-tech-reports/SKILL.md").read_text("utf-8")
+    assert '"event":"project.intake.completed","id":' in intake
+    assert '"event":"inbox.triage.document","id":' in inbox
+    assert '"event":"report.generated","id":' in tech
+    assert "project-scaffolder instant" not in intake
+    assert "project-scaffolder --config" not in intake
+
+    scaffolder_refs = set(
+        re.findall(r"`project-scaffolder\s+(?!using\b)([a-z][a-z0-9-]*)", current_text(root))
+    )
+    assert scaffolder_refs <= {"seed-matrix"}, (
+        "undefined project-scaffolder command references",
+        scaffolder_refs,
+    )
+
+    skill_text = "\n".join(
+        path.read_text("utf-8")
+        for path in sorted((root / "plugin/skills").rglob("SKILL.md"))
+    )
+    facility_claims = {
+        "seed-count claim": re.compile(r"\bwe seeded \d+", re.I),
+        "repository-specific claim": re.compile(r"this repo(?:s|'s|’s)? own facility", re.I),
+        "named example facility": re.compile(r"\bCC4PS\b|Jen(?:'s|’s) kickoff", re.I),
+        "sample incident count": re.compile(r"\b\d+ of \d+ entries\b", re.I),
+    }
+    failures = [label for label, pattern in facility_claims.items() if pattern.search(skill_text)]
+    assert not failures, "facility-specific generic instruction claims: " + ", ".join(failures)
+    runtime_text = (root / "plugin/CODEX.md").read_text("utf-8") + "\n" + skill_text
+    assert "project-state/changes/requests/" not in runtime_text
+
+    # Focused non-mutating policy fixtures.
+    assert classify_scale(shared_outcome=False, program_obligations=False) == "task"
+    assert classify_scale(shared_outcome=True, program_obligations=False) == "epic"
+    assert classify_scale(shared_outcome=True, program_obligations=True) == "program"
+    assert not is_material(set())
+    assert is_material({"shared-contract"})
+    assert is_material(set(), "operator requested a durable audit note")
+
+    identity = deterministic_event_id(
+        "report.generated", "weekly", "2026-W35", "project-status-reporter", "abc123"
+    )
+    assert identity == deterministic_event_id(
+        "report.generated", "weekly", "2026-W35", "project-status-reporter", "abc123"
+    )
+    assert identity != deterministic_event_id(
+        "report.generated", "weekly", "2026-W35", "project-status-reporter", "def456"
+    )
+    existing = {identity}
+    before = len(existing)
+    existing.add(identity)
+    assert len(existing) == before, "exact duplicate identity was not suppressed"
+
+    assert default_health(development_advisories=4) == "green"
+    assert default_health(material_delivery_risk=True, development_advisories=4) == "yellow"
+    assert default_health(production_security_failure=True) == "red"
+    fixture_findings = reconcile_projection_fixture(
+        manifest_phase="02-build",
+        state_phase="02-build",
+        lifecycle="continuous",
+        increment_count=0,
+        manifest_timezone=None,
+        tasks_timezone="America/Toronto",
+    )
+    assert fixture_findings == ["timezone-projection", "continuous-without-increment"]
+
+
+def validate_core_event_vocabulary(root: Path) -> None:
+    rel = "plugin/skills/project-state/SKILL.md"
+    before = git_bytes(root, f"{BASELINE_REF}:{rel}").decode("utf-8")
+    after = (root / rel).read_text("utf-8")
+    token_re = re.compile(r"`([a-z][a-z0-9_-]*(?:\.[a-z0-9_-]+)+)`")
+    extensions = (".json", ".yaml", ".yml", ".md", ".xlsx", ".docx")
+    baseline_terms = {term for term in token_re.findall(before) if not term.endswith(extensions)}
+    missing = sorted(term for term in baseline_terms if term not in after)
+    assert not missing, "core event vocabulary removed: " + ", ".join(missing)
+
+
+def _strict_json(text: str, source: str):
+    def reject_duplicates(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"duplicate JSON key {key!r}: {source}")
+            result[key] = value
+        return result
+
+    return json.loads(text, object_pairs_hook=reject_duplicates)
+
+
+def _phase_rank(value: object) -> int | None:
+    match = re.match(r"^(\d+)", str(value or ""))
+    return int(match.group(1)) if match else None
+
+
+def reconcile_facility_read_only(path: Path) -> dict:
+    supplied = path.resolve()
+    state_dir = supplied if supplied.name == "project-state" else supplied / "project-state"
+    assert (state_dir / "manifest.yaml").is_file(), f"no project-state manifest under {supplied}"
+    repo = Path(git_text(state_dir, "rev-parse", "--show-toplevel").strip()).resolve()
+    before_head = git_text(repo, "rev-parse", "HEAD").strip()
+    before_status = git_text(repo, "status", "--porcelain=v1")
+
+    for file in sorted(state_dir.rglob("*")):
+        if not file.is_file():
+            continue
+        if file.suffix.lower() in {".yaml", ".yml"}:
+            yaml.load(file.read_text("utf-8"), Loader=UniqueKeyLoader)
+        elif file.suffix.lower() == ".json":
+            _strict_json(file.read_text("utf-8"), str(file))
+
+    manifest = yaml.load((state_dir / "manifest.yaml").read_text("utf-8"), Loader=UniqueKeyLoader)
+    state = _strict_json((state_dir / "state.json").read_text("utf-8"), "state.json")
+    tasks_path = state_dir / "automation" / "tasks.yaml"
+    tasks = (
+        yaml.load(tasks_path.read_text("utf-8"), Loader=UniqueKeyLoader)
+        if tasks_path.is_file()
+        else None
+    )
+
+    events = []
+    activity_path = state_dir / "logs" / "activity.ndjson"
+    if activity_path.is_file():
+        for number, line in enumerate(activity_path.read_text("utf-8").splitlines(), 1):
+            if line.strip():
+                events.append(_strict_json(line, f"activity.ndjson:{number}"))
+
+    findings: list[str] = []
+    deterministic_ids = [event.get("id") for event in events if str(event.get("id", "")).startswith("evt-")]
+    duplicate_event_ids = sorted(key for key, count in Counter(deterministic_ids).items() if count > 1)
+    if duplicate_event_ids:
+        findings.append("duplicate deterministic event ids: " + ", ".join(duplicate_event_ids))
+
+    valid_times = []
+    for event in events:
+        timestamp = event.get("ts") or event.get("timestamp")
+        if timestamp:
+            valid_times.append(datetime.fromisoformat(str(timestamp).replace("Z", "+00:00")))
+    max_activity = max(valid_times).isoformat().replace("+00:00", "Z") if valid_times else None
+    if max_activity and state.get("last_activity") != max_activity:
+        findings.append(
+            f"last_activity projection: state={state.get('last_activity')!r}, derived={max_activity!r}"
+        )
+
+    counter_dirs = {
+        "milestones": state_dir / "milestones",
+        "objectives": state_dir / "objectives",
+        "kpis": state_dir / "kpis",
+        "decisions": state_dir / "decisions",
+        "risks": state_dir / "risks",
+        "people": state_dir / "people",
+    }
+    derived_counts = {}
+    completed_later_phases = []
+    current_rank = _phase_rank((manifest.get("phases") or {}).get("current_phase"))
+    for counter, directory in counter_dirs.items():
+        ids = []
+        if directory.is_dir():
+            for file in sorted(directory.glob("*.yaml")):
+                entity = yaml.load(file.read_text("utf-8"), Loader=UniqueKeyLoader)
+                ids.append(str(entity.get("id", file.stem)))
+                rank = _phase_rank(entity.get("phase"))
+                if (
+                    entity.get("status") == "complete"
+                    and current_rank is not None
+                    and rank is not None
+                    and rank > current_rank
+                ):
+                    completed_later_phases.append(ids[-1])
+        derived_counts[counter] = len(set(ids))
+        stored = (state.get("counters") or {}).get(counter)
+        if stored is not None and stored != derived_counts[counter]:
+            findings.append(f"counter {counter}: state={stored}, derived={derived_counts[counter]}")
+
+    manifest_phase = (manifest.get("phases") or {}).get("current_phase")
+    state_phase = state.get("current_phase")
+    if manifest_phase != state_phase:
+        findings.append(f"phase mirror: manifest={manifest_phase!r}, state={state_phase!r}")
+
+    manifest_timezone = (manifest.get("automation") or {}).get("timezone")
+    tasks_timezone = tasks.get("timezone") if isinstance(tasks, dict) else None
+    if tasks is not None and manifest_timezone != tasks_timezone:
+        findings.append(
+            f"timezone projection: manifest={manifest_timezone!r}, tasks={tasks_timezone!r}"
+        )
+
+    lifecycle = (manifest.get("phases") or {}).get("lifecycle") or state.get("lifecycle")
+    increment_count = len(list((state_dir / "increments").glob("*/manifest.yaml")))
+    if lifecycle == "continuous" and increment_count == 0:
+        findings.append("continuous lifecycle has no increment records")
+        if completed_later_phases:
+            findings.append(
+                "completed entities in later phases than current without increment history: "
+                + ", ".join(sorted(completed_later_phases))
+            )
+
+    health = state.get("health") or {}
+    health_notes = " ".join(str(note) for note in health.get("notes", []))
+    if (
+        health.get("overall") == "yellow"
+        and re.search(r"solely because", health_notes, re.I)
+        and re.search(r"development-only|dev-only", health_notes, re.I)
+    ):
+        findings.append("yellow health is attributed solely to development-only advisories")
+
+    revisions = Counter()
+    for event in events:
+        revisions.update(
+            re.findall(r"\b[0-9a-f]{40}\b", str(event.get("summary", "")), re.I)
+        )
+    repeated_revisions = {revision: count for revision, count in revisions.items() if count > 1}
+    if repeated_revisions:
+        findings.append(
+            "repeated evidence revisions: "
+            + ", ".join(f"{revision} x{count}" for revision, count in sorted(repeated_revisions.items()))
+        )
+
+    tracked = git_text(repo, "ls-files").splitlines()
+    state_prefix = state_dir.relative_to(repo).as_posix().rstrip("/") + "/"
+    state_tracked = sum(1 for item in tracked if item.startswith(state_prefix))
+    other_tracked = len(tracked) - state_tracked
+    commits = git_text(repo, "log", "--format=%H", "--", state_prefix.rstrip("/")).splitlines()
+    total_commits = int(git_text(repo, "rev-list", "--count", "HEAD").strip())
+    state_only = 0
+    for commit in commits:
+        paths = git_text(
+            repo, "diff-tree", "--root", "--no-commit-id", "--name-only", "-r", commit
+        ).splitlines()
+        if paths and all(item.startswith(state_prefix) for item in paths):
+            state_only += 1
+
+    after_head = git_text(repo, "rev-parse", "HEAD").strip()
+    after_status = git_text(repo, "status", "--porcelain=v1")
+    assert (before_head, before_status) == (after_head, after_status), "facility validation mutated Git state"
+    return {
+        "head": before_head,
+        "state_tracked": state_tracked,
+        "other_tracked": other_tracked,
+        "events": len(events),
+        "total_commits": total_commits,
+        "state_commits": len(commits),
+        "state_only_commits": state_only,
+        "findings": findings,
+    }
+
+
 def validate_forbidden_content(root: Path) -> None:
     private_patterns = {
         "private dashboard hostname": re.compile(r"kanban-atomic47|stonemaps\.org", re.I),
@@ -476,10 +843,10 @@ def validate_justification_coverage(root: Path) -> None:
         assert patterns, f"no affected-file patterns for {identifier}"
         rows[identifier] = patterns
 
-    expected_ids = {f"PS-CX-{number:03d}" for number in range(1, 16)}
+    expected_ids = {f"PS-CX-{number:03d}" for number in range(1, 21)}
     assert set(rows) == expected_ids, (set(rows), expected_ids)
 
-    changed = set(git_text(root, "diff", "--name-only", f"{BASELINE_REF}..HEAD").splitlines())
+    changed = set(git_text(root, "diff", "--name-only", BASELINE_REF).splitlines())
     uncovered = []
     for path in sorted(changed):
         if not any(
@@ -502,8 +869,28 @@ def validate_justification_coverage(root: Path) -> None:
                 f"commit lacks {heading}: {commit_hash}"
             )
 
+    new_commits = git_text(
+        root, "log", "--format=%H%x1f%B%x1e", f"{STRICT_COMMIT_BASE}..HEAD"
+    )
+    for record in new_commits.split("\x1e"):
+        record = record.strip()
+        if not record:
+            continue
+        commit_hash, body = record.split("\x1f", 1)
+        for heading in ("Justifications", "Why", "Compatibility", "Validation"):
+            assert re.search(rf"(?im)^\s*{heading}:", body), (
+                f"new commit lacks {heading}: {commit_hash}"
+            )
+
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--facility",
+        type=Path,
+        help="optional project root or project-state path for generic read-only reconciliation",
+    )
+    args = parser.parse_args()
     root = Path(
         git_text(Path.cwd(), "rev-parse", "--show-toplevel").strip()
     ).resolve()
@@ -516,6 +903,8 @@ def main() -> int:
     link_count = validate_local_links(root)
     validate_protected_contract(root)
     validate_contract_terms(root)
+    validate_core_event_vocabulary(root)
+    validate_lean_policy(root)
     validate_forbidden_content(root)
     validate_justification_coverage(root)
     print(
@@ -525,6 +914,19 @@ def main() -> int:
         f"yaml={yaml_count}, python={py_count}, javascript={js_count}, "
         f"archives={archive_count}, local_links={link_count}"
     )
+    if args.facility:
+        result = reconcile_facility_read_only(args.facility)
+        print(
+            "FACILITY DRY-RUN: "
+            f"head={result['head']}, tracked={result['state_tracked']} state/"
+            f"{result['other_tracked']} other, events={result['events']}, "
+            f"total_commits={result['total_commits']}, "
+            f"state_commits={result['state_commits']}, "
+            f"state_only_commits={result['state_only_commits']}, "
+            f"findings={len(result['findings'])}"
+        )
+        for finding in result["findings"]:
+            print(f"- {finding}")
     return 0
 
 

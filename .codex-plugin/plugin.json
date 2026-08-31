@@ -1,6 +1,6 @@
 {
   "name": "project-state",
-  "version": "4.9.0+codex.c0b55ba",
+  "version": "4.9.0+codex.lean.4",
   "description": "Codex adaptation of Atomic 47 Labs Project State: local-first project operations, reporting, compliance, grants, SR&ED, and tender workflows.",
   "author": {
     "name": "Atomic 47 Labs",
