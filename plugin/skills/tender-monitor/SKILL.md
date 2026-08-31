@@ -1,6 +1,6 @@
 ---
 name: tender-monitor
-description: "The change-detection layer of the tender-intelligence package. Re-check followed tenders across their sources (CanadaBuys watch feeds, listing re-fetches, amendment emails flagged by tender-harvester), diff against stored state, and emit typed change events to tenders/events.ndjson and the activity log: tender.amended, tender.deadline.changed, tender.document.revised, tender.cancelled, tender.awarded. Trigger on 'check for amendments', 'any changes on the tenders we're watching', 'monitor t-2026-0041', 'follow this tender', 'did the closing date move', 'stop following', or when tender-harvester flags amendment notifications. Every material change carries previous value, new value, and an evidence URL."
+description: "Monitor followed tenders only when tender-intelligence is enabled with configured sources, the operator explicitly requests monitoring, or tender-harvester emits its required trigger. Preserve typed event names, previous/new values, evidence URLs, and ledger logging. Remain inert without the capability and source prerequisites."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.

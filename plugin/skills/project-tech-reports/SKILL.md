@@ -1,6 +1,6 @@
 ---
 name: project-tech-reports
-description: "Generate the 11-report Tech Reports intelligence suite for one project by merging a live codebase scan with the project-state substrate. Write each report to a versioned project-state/reports/tech path, preserve history, and append the run to manifest.json. Use for tech reports, a technical intelligence suite, codebase documentation, or refreshing a selected report. Single-project only; never invent claims when a source cannot be verified."
+description: "Own the 11-report technical-intelligence suite for one project. Invoke only for an explicit technical-intelligence request, a due enabled tech-report matrix entry, or a required active-pack trigger. Merge a verified live source with Project State, preserve versioned report paths and history, and run once per source event and period. Never invent unverifiable claims or fan out to another report owner."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.

@@ -1,6 +1,6 @@
 ---
 name: project-status-reporter
-description: "Generate status reports for a grant-funded project in multiple formats — weekly report (team / Slack-format), Steering Committee pack (docx, PIC Appendix A agenda), quarterly claim draft (xlsx, PIC MS & financial tracking form), ad-hoc status prose (for email), and one-page dashboard snapshot. Use whenever the user says 'weekly report', 'draft the weekly', 'SC pack', 'prep the pack for next SC meeting', 'quarterly claim draft', 'draft Q2 claim', 'status update please', 'dashboard snapshot', 'summarize the project', 'how is the project', 'what's our status', 'send a status to PIC', or any request to produce a report from project-state/. Reads through project-state and milestone-manager; hands off delivery to project-notifier and blog-publisher. Never sends anything — always stops at a draft for review."
+description: "Own routine status views from Project State: weekly reports, Steering Committee status packs, monthly internal briefs, ad-hoc status, and dashboard snapshots. Use for weekly/status/SC-pack requests, or when a due enabled matrix entry or active pack requires one. Route funder/customer claims to project-funder-reporting and audience-specific briefs to project-onepager. Generate one draft per source event and period; never send."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
@@ -30,9 +30,8 @@ Turn the structured state under `project-state/` into readable reports in the fo
 
 - "weekly report" / "draft the weekly" / "Monday report"
 - "SC pack" / "prep next SC meeting" / "agenda for the steering committee"
-- "quarterly claim" / "draft Q2 claim" / "claim for the 20th"
 - "status update" / "how is the project" / "what's our status"
-- "snapshot" / "dashboard" / "one-pager"
+- "snapshot" / "dashboard"
 - "monthly brief" / "technical brief"
 - "final report for [org]"
 
@@ -102,20 +101,13 @@ Hand off to `project-notifier` for Slack delivery. Update `state.json:pointers.l
 
 Companion `agenda.docx` is lighter — just the agenda skeleton for the 5-business-day pre-meeting distribution.
 
-## Quarterly claim
+## Funder/customer claim routing
 
-Per PIC PM Guide: "Each project member must complete a MS and financial tracking form (provided by PIC). This form is used to assess your organization's claim submissions for the prior quarter."
-
-**Inputs:**
-- Period bounds from `claim_period(quarter)` — e.g., Q2 2026 = Apr 1 – Jun 30.
-- For each milestone active in the period: `percent_complete` + `technical_progress` at period end.
-- Per-member claim packages (expenses, invoices, categorization) — supplied by Finance Rep out of band; this skill assembles around them.
-
-**Output:** `reports/pic-submissions/YYYY-QN-ms-financial.xlsx` — a filled copy of the PIC-provided form. This is the deliverable sent to the PIC Project Manager by the 20th.
-
-Also produce a `reports/claims/YYYY-QN.yaml` record per the schema (under `project-state` locking).
-
-Hand off to `project-funder-reporting` for the detailed PIC-form assembly; this skill produces the narrative wrapper.
+Route a request for a quarterly claim, customer invoice, board/funder report, or
+other stakeholder-bound recurring deliverable to `project-funder-reporting`.
+Pass the audience, period, and active profile once and do not also generate a
+status-reporter wrapper. The established claim/report paths and formats remain
+owned by that skill.
 
 ## Ad-hoc status
 

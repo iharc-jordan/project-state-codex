@@ -1,6 +1,6 @@
 ---
 name: project-scaffolder
-description: "One-shot initializer for a new project-state/ facility. Use this skill when starting a brand-new funded project — scaffolds the directory tree, manifest, phase manifests, logs, README/SCHEMA/CONCURRENCY/SKILLS docs — and when asked to 'set up a new project', 'create a new project-state', 'scaffold a project', 'initialize project-state', 'start a new funded project', 'bootstrap a grant project', 'new consortium project', 'create the state folder for [project]', 'init project-state in this folder'. Asks clarifying questions about the project, its funder, its consortium, and seeds a manifest that the team fills in. Follow-up work (milestone seeding from proposal, people seeding from MPA) is handed off to the other project-* skills."
+description: "One-shot initializer for the standard project-state/ file tree and schemas. Before prompting, inspect supplied repository files and source documents, pre-fill only attributed facts, then group unresolved required, pack-driven, or routing-critical questions. Load only confirmed applicable packs and never infer objectives, milestones, contacts, eligibility, capabilities, automation, or external surfaces. Use for scaffold, initialize, bootstrap, or new Project State requests."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
@@ -12,6 +12,14 @@ description: "One-shot initializer for a new project-state/ facility. Use this s
 Stand up a fresh `project-state/` in a new working directory. Ensures the facility starts correctly-shaped so the other `project-*` skills can operate.
 
 Used once per project at kickoff. The experience runs as a 6-step wizard with a post-confirm build step.
+
+Before Step 1, inspect files and source documents the operator supplied or
+explicitly placed in scope. Pre-fill only directly supported values and preserve
+their attribution. Do not extrapolate objectives, milestones, contacts,
+eligibility, capabilities, automation, or delivery surfaces. Ask only unresolved
+schema-required, pack-driven, or routing-critical questions, grouped by topic.
+The directory tree, IDs, schema, templates, and generated paths remain exactly as
+defined below.
 
 ## Trigger phrases
 
@@ -105,13 +113,19 @@ Options are presented as a markdown table with bold `**N**` in the first column.
 
 ## Wizard Steps
 
-Run steps 1–6 in sequence, one at a time. Wait for the user's response before generating the next step. Do not skip steps. Do not write any files until the user confirms in Step 6.
+Cover steps 1–6 in sequence. Collapse source-resolved steps into attributed
+confirmation rows and group remaining questions; do not re-ask known values. Do
+not write any files until the operator confirms in Step 6.
 
 ---
 
 ### Step 1: Pack Selection
 
 **Purpose:** Choose which compliance pack(s) to load. Packs seed the reporting matrix and configure the six profile-driven skills.
+
+Preselect only a pack explicitly requested or directly supported by an inspected
+source, show the supporting source, and require confirmation. A capability or
+surface keyword is not a pack selection and must not enable anything.
 
 **HTML artifact:**
 - ProgressBar (1 of 6 active)

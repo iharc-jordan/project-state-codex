@@ -9,9 +9,17 @@ description: "The shared memory of a grant-funded project. Read, write, or valid
 
 ## Purpose
 
-Every `project-*` skill depends on this one. `project-state` is the *only* skill that reads and writes `project-state/` directly; every other skill expresses intent ("create milestone", "transition phase") and this skill enforces schema, concurrency, and logging.
+Every `project-*` skill depends on this one. `project-state` is the only gateway
+for canonical entity and activity-ledger mutation; every other skill expresses
+intent ("create milestone", "transition phase") and this skill enforces schema,
+concurrency, and logging. A generator may write its owned derived report or
+automation artifact, then routes canonical pointer, counter, outbox, and activity
+updates back through this skill.
 
-Without this skill, state edits drift, two agents clobber each other on the shared drive, and the activity log stops being trustworthy.
+Without this skill, state edits drift, writers can clobber each other on a shared
+drive, and the activity log stops being trustworthy. Lockfiles protect writers
+on the same shared filesystem or server-backed substrate only; separate Git
+clones coordinate through Git and explicit conflict resolution.
 
 ## Finding `project-state/`
 
@@ -79,9 +87,9 @@ Before every write, verify the document has all common frontmatter. Refuse to wr
 
 **Validate.** Walk every YAML/JSON in `project-state/`; confirm it parses **under a duplicate-key-strict loader** and has required frontmatter. Report deviations; do not auto-fix. Full check list under "Validate the state" below.
 
-### Write operations (with locking + logging)
+### Canonical write operations (with locking + logging)
 
-For every write:
+For every canonical entity or ledger write:
 
 1. **Find lockfile.** Check `<target>.lock`. If it exists and its `acquired + ttl_seconds` is in the future, wait (up to 30 s) or abort.
 2. **Acquire lock.** Write `<target>.lock` = `{actor, acquired, ttl_seconds: 300}`.
@@ -95,7 +103,15 @@ For every write:
    line whose structured fields say everything needs none of the three. Never rewrite existing lines
    to match. Full vocabulary and validator severity: `docs/SCHEMA.md` → Activity log → "The
    descriptive field".
-9. **Update state.json counters** if creating a new entity (also under the lock).
+9. **Update state.json counters or pointers** only when the operation requires it
+   (also under the lock).
+
+One durable fact change produces one canonical entity update, its required
+counter/pointer change, and one matching activity event. Do not duplicate the
+fact in a second entity or ledger event. Store stable external ticket/document
+references rather than copying full external records unless an active pack
+requires a managed copy. Reports remain derived views; record a newly discovered
+fact here before a report presents it.
 
 ### Canonical write events
 

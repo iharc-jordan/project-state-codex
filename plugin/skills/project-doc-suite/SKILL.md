@@ -1,6 +1,6 @@
 ---
 name: project-doc-suite
-description: "Unified documentation suite generator. Merges project-state/ substrate (milestones, risks, phases, manifest, reporting matrix) with a live codebase scan to produce one non-overlapping report bundle. Replaces and supersedes project-doc-suite-generator (governance Office bundle) and doc-suite-generator-v2 (software markdown suite). Use whenever the user says 'generate docs', 'unified suite', 'report bundle', 'full documentation', 'document this project', 'build the suite', 'create the docs', or any request for structured project documentation. Also triggered by phase transitions, milestone completions, and the orchestrator baseline routine. See docs/UNIFIED-SUITE-V3.md for the full design."
+description: "Own the full unified documentation bundle by merging Project State with a live codebase scan. Invoke only for an explicit full-suite request, a due enabled matrix entry, or a required active-pack event trigger. Replaces project-doc-suite-generator and preserves the unified-suite outputs. Generate once per source event and period; do not also invoke status, onepager, or tech-report generators for the same request."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.

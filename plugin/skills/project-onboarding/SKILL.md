@@ -1,6 +1,6 @@
 ---
 name: project-onboarding
-description: "Guided onboarding experience for new project-state instances. Begins with an Inbox Orientation pre-check — if documents/inbox/ contains files, runs project-inbox triage and pre-fills context before the first question. Then runs nine chapters: project identity, document ingestion, pack selection, milestone capture, stakeholder mapping, examples, gap handling, substrate initialization, and orientation check. Pre-filled chapters become confirmation passes instead of blank-slate interviews. Writes references/examples/ as first-class substrate entities. Does NOT set goals — objectives + KPIs are owned by the dedicated Goals tab, not onboarding. Use when starting a new project or re-orienting an existing one. Trigger on: 'set up project-state', 'onboard this project', 'initialize my project', 'I am new to project-state', 'configure this project', 'start the setup'."
+description: "Source-first guided onboarding for a new or existing Project State facility. Inspect supplied repository files and source documents before asking questions, pre-fill only attributed facts, and group unresolved required, pack-driven, or routing-critical questions. Preserve the standard scaffold and never infer objectives, milestones, contacts, eligibility, capabilities, or external surfaces. Use for onboarding, initialization, configuration, or re-orientation."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
@@ -17,6 +17,25 @@ This skill does two distinct things that `project-scaffolder` does not:
 2. **Orient** — write that context into the substrate as first-class entities (`references/examples/`, `references/context.md`) so every downstream skill can read it. (Goals — objectives + KPIs — are set up separately in the Goals tab, not by onboarding.)
 
 `project-scaffolder` is the technical initializer. This skill is the user-facing experience that feeds it with content that makes the result worth having.
+
+## Source-first intake
+
+Before asking the operator anything, inspect the repository files and source
+documents they supplied or explicitly placed in scope. Prefer governing
+agreements, signed schedules, proposals, existing manifests, and repository
+instructions over conversational recollection. Do not broaden the search to
+unrelated drives or services.
+
+Pre-fill only values directly supported by a source and retain file/section
+attribution. A source may identify an explicit milestone or contact; never
+extrapolate additional ones. Do not infer objectives, milestone commitments,
+contacts, eligibility, capabilities, or external delivery surfaces. Treat a
+keyword as a reason to ask or offer the relevant workflow, never as activation.
+
+Ask only questions that remain required by the schema, an active pack, or a
+routing decision. Group related unresolved fields into one prompt. Already
+settled chapters become compact confirmation passes; do not repeat their
+questions.
 
 ## Presentation Protocol
 
@@ -125,7 +144,10 @@ NavRow = numbered options or a single bold CTA: **Type your answer or press Ente
 
 ## The nine chapters
 
-Run in sequence. Each chapter begins with prose the user sees — explaining what is being collected and why — before asking anything. Collect inputs in the order below. Do not skip chapters; offer to return to any chapter if the user wants to add more later.
+Cover the chapters in sequence, but collapse source-resolved chapters into a
+compact attributed confirmation and ask only unresolved required, pack-driven,
+or routing-critical questions. Offer to return to any chapter if the operator
+wants to add more later.
 
 At the start of each chapter, render a progress marker using the detected surface:
 
@@ -788,8 +810,13 @@ On initialization (Chapter 8), write:
 - **Never paraphrase goals or examples.** Chapter 6 content is saved exactly as provided. Its value is the user's voice, not a cleaned-up version of it.
 - **Never invent milestone names or stakeholder contacts.** If the user says "there are five milestones but I can't remember the exact names," capture "five milestones, names TBD" rather than generating plausible names.
 - **Never present orientation as complete when it isn't.** The orientation quality card in Chapter 9 must be honest. A 1/3 grounding score should say 1/3.
-- **Documents take precedence over conversation, which takes precedence over synthesis.** When the same field has multiple sources, use the highest-fidelity one and note the others.
+- **Checked-in facts and canonical source documents take precedence over
+  conversation.** When the same field has multiple sources, surface the conflict
+  rather than silently choosing. Synthetic text is never a source for objectives,
+  milestones, contacts, eligibility, capabilities, or external surfaces.
 - **Preserve source attribution.** Every field in `manifest.yaml` that came from a document should have a comment noting it. Every synthetic field must be labeled.
+- **Enable only confirmed scope.** Load only applicable packs and enable no
+  capability, automation, connector, or delivery surface from a keyword alone.
 
 ## Integration
 

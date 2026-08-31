@@ -1,6 +1,6 @@
 ---
 name: tender-harvester
-description: "The collection layer of the tender-intelligence package. Harvest public-sector tender opportunities from CanadaBuys (RSS/Atom + email), MERX (email), SaskTenders/GEM (email + conservative public listing polling) and bids&tenders (email + approved public search) into tender entities inside the enabling project-state/ facility. Tracks per-connector cursors and health in state/tender-intelligence.json (the capability's own state file), quarantines unrecognized notification templates, honors a global per-domain politeness ledger, and writes every record through the project-state memory layer. Trigger on 'harvest tenders', 'check the tender feeds', 'what came in from CanadaBuys', 'drain the tender mailbox', 'poll SaskTenders', 'run the tender harvest', 'any new tenders', or when project-orchestrator finds a connector past its expected interval. Designed to run in scheduled sessions between interactive use."
+description: "Collect tender opportunities only when the tender-intelligence capability is enabled and at least one connector is configured, or when the operator explicitly requests setup. Preserve source coverage, cursor/health state, quarantine, politeness, and project-state write contracts. A due enabled capability trigger may run it; otherwise remain inert and never infer connector access."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.

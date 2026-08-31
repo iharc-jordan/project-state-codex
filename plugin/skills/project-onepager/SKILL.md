@@ -1,6 +1,6 @@
 ---
 name: project-onepager
-description: "Generate audience-framed one-pagers, briefs, deep-dives, and whitepapers from Project State. Store each document recipe in reports/custom-defs, render claims with provenance, and report changes when regenerating against newer state. Use for one-pagers, briefs, leave-behinds, whitepapers, executive summaries, funder documents, or scheduled one-pager entries. Draft for human review; never send or publish automatically."
+description: "Own audience-specific one-pagers, briefs, deep-dives, and whitepapers from Project State. Invoke only for an explicit audience-specific document request, a due enabled onepager matrix entry, or an active pack profile that requires it. Preserve recipes, provenance, established paths, and change reporting. Draft once per source event and period for human review; never send or publish automatically."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.

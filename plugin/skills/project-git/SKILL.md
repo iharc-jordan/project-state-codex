@@ -1,6 +1,6 @@
 ---
 name: project-git
-description: "Strategic git checkpointing for project-state facilities. Generates commit messages automatically from the activity log. Sub-actions: checkpoint (commit local changes), push (share with team), sync (pull teammates changes, rebase-safe), status (what has changed since last commit). Use when the user says 'checkpoint the project', 'commit my work', 'sync with the team', 'push the state', 'what have I changed', 'share my changes', 'end of session', 'before the meeting', or any request to checkpoint, share, or receive project-state changes via git."
+description: "Deliberate Git checkpointing and team synchronization for Project State facilities. Use for checkpoint, push, sync, status, sharing, or end-of-session requests when the facility is Git-backed. Never fetch, pull, commit, or push automatically; compare only locally known refs until the operator authorizes a Git action, and require explicit resolution when two clones edit the same entity."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
@@ -11,7 +11,20 @@ description: "Strategic git checkpointing for project-state facilities. Generate
 
 Strategic git checkpointing for `project-state/` facilities. Git is not in the write path — skills write to the local filesystem freely. This skill is called deliberately, at meaningful moments: end of a session, before a meeting, after a milestone completion, before running a report that others will see.
 
-The append-only substrate and file-per-entity schema mean syncs almost always resolve automatically. Merges are not scary here.
+The append-only ledger and file-per-entity schema reduce conflict frequency, but
+they do not coordinate separate clones. Advisory lockfiles work only for writers
+sharing one filesystem or server-backed substrate. Two clones that edit the same
+entity still require an explicit Git conflict resolution.
+
+## Session synchronization warning
+
+At the first Project State operation in a session, if an upstream branch is
+configured, compare `HEAD` with the locally known upstream ref using read-only Git
+state (for example, `git status --short --branch` and
+`git rev-list --left-right --count HEAD...@{upstream}`). Warn once if the branch
+is known to be behind or diverged. This check must not fetch or otherwise contact
+the remote, so it may be stale; say that plainly. Never auto-fetch, pull, commit,
+or push.
 
 ## Finding the repo root
 
@@ -96,11 +109,14 @@ Pull teammates' changes into the local facility. Safe because of the append-only
 
 1. Find the git root.
 2. Check for a remote: `git remote -v`. If none, report "No remote configured." and stop.
-3. Check for uncommitted local changes: `git status --short`. If any exist, warn: "You have uncommitted local changes. Consider running `project-git checkpoint` first so your work is preserved before syncing."
-   - Do not abort — the user may want to sync anyway and let rebase handle it.
+3. Check for uncommitted local changes: `git status --short`. If any exist, warn:
+   "You have uncommitted local changes. Checkpoint or otherwise preserve them
+   before syncing." Stop unless the operator explicitly chooses to continue.
 4. Run `git pull --rebase`.
 5. On clean success: report what came in — commits received, files changed, and any new activity log events from teammates (read the new NDJSON lines appended from remote).
-6. On rebase conflict: this should be rare given the append-only + file-per-entity design. If it happens, report exactly which file conflicted and what both sides changed. Do not attempt to resolve automatically — show the user both versions and ask which to keep.
+6. On rebase conflict, report exactly which file conflicted and what both sides
+   changed. Never choose a same-entity winner automatically; show both versions
+   and require explicit resolution.
 
 **Example output (clean sync):**
 ```
@@ -200,7 +216,10 @@ The scaffolder (`project-scaffolder`) should write this to the repo root at faci
 project-state/logs/*.ndjson merge=union
 ```
 
-This means `logs/activity.ndjson` merge conflicts — two teammates both appending events — are resolved automatically by taking all lines from both. No human intervention needed, ever.
+This lets Git retain lines from both sides when teammates append distinct activity
+events. It does not resolve duplicate or contradictory semantic events, and it
+does not apply to two edits of the same canonical entity; validate the merged log
+and resolve those cases explicitly.
 
 ---
 

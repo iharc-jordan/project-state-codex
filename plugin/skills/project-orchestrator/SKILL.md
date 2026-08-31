@@ -1,6 +1,6 @@
 ---
 name: project-orchestrator
-description: "The conductor of the project-* skill suite. Decides what to do next based on current state + the calendar (day of week, proximity to quarterly claim deadlines, SC meeting cadence, phase gate status, overdue milestones, annual questionnaire). Use whenever the user says 'what should I do today', 'what should I do this week', 'run the project', 'what's pending', 'what needs attention', 'morning briefing for the project', 'are there any deadlines coming up', 'what's the orchestrator saying', 'run the weekly routine', 'run the daily routine', 'kickoff the day', or any request asking the project to tell itself what to do next. Invokes other project-* skills as needed and hands decisions back to the user for approval. Thin by design — this skill routes, it does not do the work itself."
+description: "Read-only-by-default conductor for Project State. Rank what needs attention from canonical state, locally configured calendars, enabled capabilities, and due matrix entries. Use for what-next, deadline, daily/weekly routine, or orchestration requests. Invoke a generator only after explicit operator acceptance, a due enabled reporting-matrix entry, or an active pack's required trigger, and dispatch one report owner once per source event and period."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
@@ -9,7 +9,21 @@ description: "The conductor of the project-* skill suite. Decides what to do nex
 
 ## Purpose
 
-Be the agent that notices what time it is, what state the project is in, and what the sensible next action is. The orchestrator reads; other skills act. On any given day, invoking `project-orchestrator` produces a prioritized list of "what you (or I) should do now" rooted in the state and calendar, not a fixed routine.
+Be the agent that notices what time it is, what state the project is in, and what
+the sensible next action is. The orchestrator reads and recommends by default;
+other skills act only through the invocation gates below. A normal invocation
+produces one prioritized list rooted in canonical state and configured calendars,
+not a fixed routine or a fan-out of generators.
+
+Before invoking a mutating or generating skill, require one of:
+
+1. explicit operator acceptance of the proposed action;
+2. a due, enabled `reporting-matrix.yaml` / `automation/tasks.yaml` entry; or
+3. a required trigger declared by an active pack.
+
+For one source event and reporting period, select one owner and invoke it once.
+Suggestions, quiet checks, disabled matrix entries, unconfigured surfaces, and
+inactive capabilities remain read-only.
 
 It is thin. It knows the *rhythm* of a grant project; the details live in the other skills.
 
@@ -161,9 +175,13 @@ authors nothing and sends nothing.
    - `event-driven` / `on-publish` → **never** time-due; these fire from activity-log
      triggers (`phase-transition`, `milestone-completion`, `documents/published/`),
      not from the tick. Skip them here.
-3. Build the **due-list**: `[ {entry-id, generator, profile?, reason} ]`.
-4. For each due entry, invoke its `generator` (passing `profile` if present). The
-   generator produces its report **and** drops an outbox card.
+3. Build the **due-list**: `[ {entry-id, generator, profile?, reason, source-event,
+   period} ]`. Include only due enabled matrix entries, active-pack required
+   triggers, or actions explicitly accepted by the operator. Map each report to
+   the single owner in `CODEX.md`.
+4. Deduplicate on `{source-event, period, report-owner}` using existing run
+   pointers/activity. Invoke each remaining owner once (passing `profile` if
+   present). The generator produces its report **and** drops an outbox card.
 5. Surface the result to the user as the standard digest (🔴/🟡/🟢) noting which
    cards were just queued: "Queued 2 drafts for review → /queue."
 6. Append one `orchestrator.tick` event per dispatch to the activity log so the
@@ -178,8 +196,10 @@ re-running a tick on the same day must not double-queue (the per-period pointer 
 use it to preview what a scheduled run would do.
 
 ### `daily` (optional — only if the team wants a daily check)
-1. **Run `project-harvester`** — pull fresh intel from Slack/Gmail/GDocs/scsiwyg into `documents/inbox/`. Run before anything else so the inbox is populated before curator recommendations are made.
-2. **Run `project-document-curator`** — classify any new inbox docs; link to milestones/decisions where appropriate.
+1. If at least one harvest surface is configured and available, offer or run
+   `project-harvester` under the invocation gates. Otherwise skip it silently.
+2. If `documents/inbox/` contains files, offer or run
+   `project-document-curator`; otherwise skip it.
 3. Tail activity log since yesterday
 4. Check `at_risk` and `blocked` milestones
 5. Flag any unclassified docs remaining in inbox
@@ -250,7 +270,10 @@ Keep scheduler logs under `logs/cron-tick.log` when a CLI fallback is used.
 
 ## Discipline
 
-- **Don't do the work, delegate it.** This skill returns recommendations + invokes other skills; it doesn't draft reports, file claims, or send emails itself.
+- **Read first.** Return recommendations without invoking generators unless one
+  of the three invocation gates is satisfied.
+- **One owner once.** Do not ask multiple report generators to represent the same
+  source event and reporting period.
 - **Don't surprise the user.** Even when a next step is obvious, offer it — don't execute. Especially for anything going to PIC.
 - **Honor the quiet days.** If there's genuinely nothing to do, say so. A healthy project has quiet days.
 - **Respect phase.** In planning, focus on gate items. In execution, focus on rhythm. In closeout, focus on final reports. The orchestrator's priorities shift by phase.

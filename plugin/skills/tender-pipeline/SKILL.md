@@ -1,6 +1,6 @@
 ---
 name: tender-pipeline
-description: "The workflow layer of the tender-intelligence package. Move tenders through the pursuit lifecycle (discovered → preliminary_match → documents_required → under_review → qualified → bid_no_bid_pending → pursue/watch/partner_opportunity/dismissed → preparing_response → submitted → awarded/unsuccessful), open and record bid/no-bid decisions as ordinary facility decision entities, create pursuit tasks and deadline milestones, run the dismissal flow with reason codes, and on a win invoke project-scaffolder to spawn the delivery project. Trigger on 'move t-2026-0041 to under review', 'open a bid/no-bid on', 'record the decision', 'dismiss this tender', 'assign this tender to', 'we won', 'we lost', 'mark submitted', 'what's in the pipeline', 'set next action', or when tender-qualifier/tender-monitor suggest a transition."
+description: "Manage the tender pursuit lifecycle only when tender-intelligence is enabled and a tender entity exists, or when the operator explicitly requests capability setup. Preserve all workflow states, decision entities, tasks, deadline milestones, dismissal reasons, and win handoff. Never create a delivery project or mutate pipeline state without explicit confirmation."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.

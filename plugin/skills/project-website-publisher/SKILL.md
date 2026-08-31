@@ -1,6 +1,6 @@
 ---
 name: project-website-publisher
-description: Build and deploy a full project website (Next.js 16 App Router on Vercel/Netlify) that surfaces every dimension of the project — dashboard, Gantt, milestones, risks, decisions, people, blog (scsiwyg), wiki (scsiwyg), calendar, reporting documents, and about pages. Reads project-state/ YAML/JSON/MD at runtime via server components with ISR revalidation. Use whenever the user says "publish to the site", "update the project website", "deploy", "regenerate the website", "rebuild and deploy", "init the project website", "what URL for [doc]", or any request to surface project state on the project URL.
+description: "Own the public project website output. Invoke only when the operator explicitly requests website initialization/publishing, a configured website surface needs an update, or a due enabled matrix/active-pack trigger requires it. Preserve the established Next.js website contract and URLs; require explicit authorization for deployment and generate once per source event and period."
 ---
 
 > Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.

@@ -1,6 +1,6 @@
 ---
 name: project-intake
-description: "Doc-driven fast-path init: drop documents (proposal, MPA, SOW, milestone schedule, grant agreement) and pick a pack — the skill extracts what it can, fills manifest.yaml and reporting-matrix.yaml from pack defaults + doc extraction, shows one confirmation screen, writes everything, then calls project-automator generate so the schedule is immediately ready. No interview, no wizard steps. Trigger on: 'intake this project', 'set up from docs', 'configure from documents', '/project-intake', 'quick init', 'init from proposal'. Use instead of project-scaffolder/project-onboarding when documents are available and fast setup is preferred."
+description: "Source-first fast-path initialization from supplied proposals, agreements, schedules, or repository files. Extract only attributed facts, confirm applicable packs, group unresolved required routing questions, and preserve the standard manifest, reporting matrix, automation registry, and scaffold. Never infer objectives, milestones, contacts, eligibility, capabilities, or external surfaces beyond explicit source content. Use for intake, setup from documents, quick init, or re-analysis."
 ---
 
 > Codex adapter: Read [CODEX.md](../../../CODEX.md) before using this skill.
@@ -66,11 +66,11 @@ If no documents are provided: ask once — "Drop your project documents here (pr
 
 If user skips: proceed with pack defaults and empty manifest fields (valid-but-thin).
 
-### 1b. Infer or select pack
+### 1b. Detect and confirm a pack
 
-Try to infer the pack from documents before asking:
+Use explicit source signals to propose a candidate pack before asking:
 
-| Signal in documents | Inferred pack |
+| Signal in documents | Candidate pack or follow-up |
 |--------------------|---------------|
 | "Protein Industries Canada", "PCAIS", "PIC" | `pic-pcais` |
 | "NSERC", "IRAP", "Mitacs", "CFI", "SIF" | `grant-canada` |
@@ -79,7 +79,9 @@ Try to infer the pack from documents before asking:
 | "board of directors", "investors", "cap table" | `board-investor` |
 | SOW, "Statement of Work", "client deliverables" | `client-services` |
 
-If a pack is inferred: present it as a one-line confirmation — "Detected: pic-pcais (Protein Industries Canada). Correct?" — and proceed unless corrected. Do not run a pack selection wizard.
+If a candidate pack is detected, present it with its source as a one-line
+confirmation. Do not load it until confirmed, and do not run a pack selection
+wizard.
 
 If no pack is inferable and none was provided: show a compact pack list and ask for selection (not a wizard — a single prompt):
 ```
@@ -107,7 +109,9 @@ Run the extraction pass. Do not ask questions during extraction. Extract:
 - `project.start_date` — YYYY-MM-DD (look for: "project start", "commencement date", "effective date")
 - `project.end_date` — YYYY-MM-DD
 - `project.budget_total_cad` — total budget figure if present (optional, skip if not found)
-- `project.kind` — infer: grant_consortium | client_engagement | startup | open_source | generic
+- `project.kind` — classify only when the governing source states enough to
+  support one of: grant_consortium | client_engagement | startup | open_source |
+  generic; otherwise record a gap
 
 **Milestones** — for each milestone found:
 - `id` — assign sequentially M01, M02... if not already numbered
@@ -119,7 +123,8 @@ Run the extraction pass. Do not ask questions during extraction. Extract:
 
 **People / stakeholders**
 - Name, organization, role (look for signature blocks, "Parties", role tables, org charts)
-- Map roles to pack-defined role taxonomy where possible (e.g. "Principal Investigator" → `project_lead`, "Project Manager" → `funder_pm`)
+- Preserve the source role. Map it to a pack-defined role only when the mapping is
+  explicit or unambiguous; otherwise ask in the grouped routing questions.
 - Flag which stakeholder_group they belong to: internal.team | funder.{id} | customer.{id} | board | consortium.all
 
 **Cadence overrides** — look for explicit schedule statements that override pack defaults:
@@ -369,10 +374,15 @@ On confirmation, patches only the changed fields and appends an
 - **Never overwrite an existing `project-state/` without explicit `--force`.** Offer `re-analyze` instead.
 - **Never ask questions that documents have already answered.** If the doc contains the project name, don't ask for it.
 - **Never ask questions that pack defaults cover.** Reporting cadence is set by the pack; don't confirm each entry.
-- **One question only if both docs and pack defaults are silent.** Not a series of questions — one prompt that accepts multiple answers.
-- **Gaps don't block.** A facility with gaps is valid and operational. Gaps are recorded, not asked about.
+- **Group unresolved questions.** Ask only fields required by the schema, an
+  active pack, or routing; one prompt may accept multiple answers.
+- **Non-required gaps don't block.** Record them without inventing values.
+- **Do not infer activation.** Objectives, milestones, contacts, eligibility,
+  capabilities, automation, connectors, and delivery surfaces require explicit
+  source support and any applicable confirmation.
 - **Source attribution always.** Every manifest field written by intake carries a comment noting its source.
-- **project-automator is always called at the end.** The schedule must be ready without a separate step.
+- **Compile only applicable automation.** Call `project-automator` when the
+  confirmed matrix has enabled entries; otherwise leave automation disabled.
 
 ---
 
