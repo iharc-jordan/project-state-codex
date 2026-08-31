@@ -13,6 +13,17 @@ Turn the structured state under `project-state/` into readable reports in the fo
 
 **Design principle:** the report is a *view* of state. If the report is wrong, the state was wrong or the template was wrong. Reports are never a place where new facts are first recorded.
 
+Start with bounded state summary, authoritative phase plus reconciliation
+findings, active/at-risk/due items, and activity since the prior report. Open
+full entities only for items selected into the report. A full historical ledger
+scan requires an explicit request or report contract.
+
+Before generation, compute the deterministic report event identity from
+`report.generated`, reporting period, this output owner, canonical output path,
+and exact source revision when Git-backed. If it already exists and the output
+is present, return the existing report/card; do not regenerate, increment,
+advance pointers, queue another card, or notify again.
+
 ## Report catalog
 
 | Report                       | Format        | Cadence            | Audience                | File location                          |
@@ -84,7 +95,10 @@ Specifics below customize this skeleton.
 _Next claim due: <date> · Next SC meeting: <date> · Days to project end: <n>_
 ```
 
-Hand off to `project-notifier` for Slack delivery. Update `state.json:pointers.last_weekly_report` + `counters.weekly_reports`.
+After a newly generated draft is reviewed and the surface is configured, offer
+one `project-notifier` handoff. Update
+`state.json:pointers.last_weekly_report` + `counters.weekly_reports` only for the
+new deterministic report identity.
 
 ## Steering Committee pack
 
@@ -166,12 +180,17 @@ write external surfaces here.
 
 - **Never invent facts.** If `percent_complete` isn't current, report the last known value and flag the staleness. Do not estimate.
 - **Health ratings come from state, not vibes.** Override only if the caller provides an explicit reason; log the override.
+- **Reconciliation is visible.** Phase/lifecycle/increment/timezone/closeout
+  contradictions are reported as findings and may make health yellow; never
+  guess through them. Development-only advisories remain notes unless they
+  affect a required production/release path.
 - **Sources are traceable.** Every number in a report is backed by a file in `project-state/`. Reports reference that file by id in a footnote when depth matters.
 - **Pre-publication review.** If a report will go public (blog, press), route through `project-external-comms` for the 30/14-day SC review per MPA.
 
 ## Integration
 
-- **project-state** — reads everything; writes `reports/` entries, drops outbox cards into `outbox/queue/`, and bumps counters via state.
+- **project-state** — reads bounded summaries plus selected evidence details; writes `reports/`
+  entries, drops outbox cards into `outbox/queue/`, and bumps counters via state.
 - **project-milestone-manager** — primary milestone data source.
 - **project-phase-gate** — current phase + gate pending items.
 - **project-change-register** — pending / recent changes for SC pack and weekly.

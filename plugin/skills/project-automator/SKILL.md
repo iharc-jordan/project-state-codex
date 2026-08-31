@@ -51,9 +51,11 @@ editor, which this skill **must never overwrite** (see `update`).
 3. Read `project-state/automation/tasks.yaml` if present → existing `tasks[]`.
 4. Read `project-state/state.json` → phase, milestone pointers, `sprint_calendar`.
 5. Window: args, then `manifest.yaml:automation.window`, then default `23:00–05:00`.
-6. Timezone: `manifest.yaml:automation.timezone`. **REFUSE if absent** — report the missing key and
-   stop. Do not default to UTC, do not read the host machine's timezone, and do not compile a partial
-   schedule.
+6. Timezone: `manifest.yaml:automation.timezone`. For `status` or plan-only
+   inspection, a null value is a reconciliation finding and remains read-only.
+   For `generate`, `update`, preset apply, or enabling scheduled work, **REFUSE
+   if absent**. Do not default to UTC, read the host machine's timezone, or
+   compile a partial schedule.
 
    The window at step 5 is expressed in LOCAL time, so a guessed timezone does not produce a slightly
    wrong schedule, it produces a confidently wrong one: `23:00–05:00` interpreted as UTC fires the
@@ -65,16 +67,19 @@ editor, which this skill **must never overwrite** (see `update`).
    value, do not substitute a plausible default, and do not write a partial block"*, because a guessed
    value produces a confidently wrong filing date. Same shape, same answer.
 
-   `manifest-v2.yaml` has marked this key REQUIRED since it shipped while shipping it as `~`, and
-   nothing collected it (FB-002). `project-onboarding` Q1.8 now asks and `project-scaffolder` writes
-   it, so absence should be rare — but rare is not never, and an existing facility predating that
-   question will hit this refusal. Report it as a missing answer, not as a broken facility:
+   Existing disabled facilities may legitimately retain `~`. Report it as a
+   missing scheduling answer, not a broken facility:
 
    ```
    automation.timezone is not set in manifest.yaml. Scheduling needs it — the 23:00–05:00 window is
    local time, and guessing would fire the nightly jobs at the wrong hour.
    Set it to an IANA name (e.g. America/Vancouver) and re-run.
    ```
+
+7. If `automation/tasks.yaml` exists, compare its top-level `timezone` with the
+   manifest. A mismatch is projection drift. Report it in plan/status and refuse
+   mutation until the operator explicitly reconciles the manifest authority;
+   never pick the tasks value merely because it is non-null.
 
 
 ## Step 1 — Classify and normalize
@@ -124,6 +129,8 @@ proposal engine may write it. Non-negotiable rules:
 3. Never touch `status: proposed` tasks, adhoc tasks, or action tasks — they belong to
    the proposal engine, the operator, and presets.
 4. Keep `schema_version: 1`, `manifest_kind: automation_tasks`.
+5. On a write, set top-level `timezone` to the confirmed manifest timezone.
+   This is a projection, not an independent scheduling authority.
 
 ## Step 3 — Output by mode
 

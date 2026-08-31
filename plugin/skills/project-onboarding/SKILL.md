@@ -18,6 +18,15 @@ This skill does two distinct things that `project-scaffolder` does not:
 
 `project-scaffolder` is the technical initializer. This skill is the user-facing experience that feeds it with content that makes the result worth having.
 
+Apply the adapter's task/epic/program routing before Chapter 0. A routine task
+inside an existing product does not need a facility. An epic captures one shared
+outcome and only meaningful milestones, references, decisions, and risks. A
+program may use the full onboarding depth. Classification comes from the
+operator request and supplied evidence and is not persisted as a required
+manifest field. An explicit initialization request preserves the standard tree;
+scale changes only what is meaningfully populated and which unresolved
+questions are necessary.
+
 ## Source-first intake
 
 Before asking the operator anything, inspect the repository files and source
@@ -279,7 +288,7 @@ lifecycle default by design: it layers onto whatever shape the project already h
 pre-fills this question and never suppresses it.
 
 
-**Q1.8 — What timezone should scheduled work use?**
+**Q1.8 — What timezone should scheduled work use? (conditional)**
 
 > Automation fires in a nightly window — 23:00 to 05:00 by default. In which timezone?
 
@@ -288,14 +297,15 @@ Ask for an IANA name (`America/Vancouver`, `Europe/Berlin`). Offer the machine's
 property of the PROJECT, not of whoever happens to run the command, and a facility worked on from two
 machines in two zones would otherwise silently reschedule itself.
 
-**Never skip this question and never substitute a default.** `manifest-v2.yaml` has marked
-`automation.timezone` as REQUIRED since it shipped, while shipping the value as `~`, and no skill ever
-collected it (FB-002). `project-automator` now refuses rather than guessing, so an unanswered question
-here becomes a blocked automation run later — which is the intended trade: a 23:00–05:00 window
-interpreted as UTC fires the nightly jobs at 4pm in Vancouver, and a schedule that is confidently
-wrong is worse than one that will not start.
+Ask this only when automation is enabled, an active pack requires scheduled
+work, or the operator is configuring scheduling. Never substitute a default.
+When scheduling is out of scope, retain `automation.timezone: ~` and keep any
+disabled `automation/tasks.yaml:timezone` projection equally null. The
+automator must refuse to enable or compile scheduled work until an IANA timezone
+is confirmed.
 
-Write it to the working intake record as `automation.timezone`.
+Write a confirmed value to the working intake record as
+`automation.timezone`; otherwise record the unresolved null without asking.
 
 **Q1.9 — Which phase ladder?**
 
@@ -706,6 +716,10 @@ On initialization (Chapter 8), write:
 | `project-state/references/onboarding-intake.yaml` | The full working intake record — audit trail of how the substrate was built |
 | `project-state/state.json` | Initial health, counters, current phase |
 | `project-state/logs/activity.ndjson` | First entry: `onboarding.completed` with summary |
+
+For epic-scale intake, create only source-supported shared outcome entities.
+For task-scale work, do not reach this write step unless the operator explicitly
+overrode routing and supplied a reason to record Project State.
 
 ---
 

@@ -84,7 +84,11 @@ Also **append** the run to `project-state/reports/tech/manifest.json` (create it
 
 1. **Resolve & scan the source** (see *Resolving the source* — required). For a **codebase**: walk it from its root — detect languages/frameworks, map the directory structure and entry points, enumerate dependencies/integrations, read existing READMEs/docs, note config/deploy (Dockerfile, CI, vercel/netlify, tauri…). For a **Jira/Confluence** source: pull the configured projects/spaces and treat issues/pages as the corpus. Capture a structured scan you reuse for every report. If no source resolves, stop here and report it.
 
-2. **Load the substrate.** Read `project-state/manifest.yaml`, `milestones/`, `risks/`, `decisions/`, `phases/`, `reporting-matrix.yaml`, and the tail of `logs/activity.ndjson`. This is the product intel — business/funder/governance context — merged with the source scan in every report.
+2. **Load the substrate progressively.** Read state/phase summary,
+   active/at-risk/due entity summaries, applicable matrix entries, and bounded
+   recent activity. Open full milestone/risk/decision/phase entities only when
+   selected into a requested report. A full ledger scan requires explicit
+   full-suite scope.
 
 3. **Determine the scope.** The invoking prompt says either "ALL 11 reports" or "ONLY these reports: `<id>, <id>…`". Generate **only the requested ids** (default to all 11 if unspecified). Generating a subset must NOT touch the other reports' folders.
 
@@ -94,8 +98,11 @@ Also **append** the run to `project-state/reports/tech/manifest.json` (create it
 
 5. **Append the run** to `project-state/reports/tech/manifest.json` (create if missing; never drop prior runs): a `runs[]` entry with `stamp` (ISO), `git` (short HEAD if a git repo), and `reports` (the ids generated this run). Set/refresh top-level `project`.
 
-6. **Append one activity event** to `project-state/logs/activity.ndjson`:
-   `{"ts":"<ISO>","actor":"<operator>","event":"report.generated","detail":"Tech Reports — generated <N> report(s): <ids>."}`
+6. **Append one canonical activity event** through `project-state`:
+   `{"ts":"<ISO>","actor":"<operator>","event":"report.generated","id":"evt-<deterministic-id>","summary":"Tech Reports — generated <N> report(s): <ids>."}`
+   Derive the id from the owner, requested report IDs, shared output stamp/path,
+   reporting period, and exact source revision. If that identity and outputs
+   already exist, return them without a new run, manifest entry, or event.
 
 ## Report format
 

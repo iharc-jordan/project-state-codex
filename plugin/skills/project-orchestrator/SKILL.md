@@ -57,7 +57,10 @@ The orchestrator knows roughly when each clock ticks and offers the right next a
 
 On invocation:
 
-1. **Load state.** Get current phase, health, recent activity, pointers (last_weekly_report, last_sc_meeting, last_claim_submitted, next_claim_due, next_sc_meeting).
+1. **Load bounded state.** Get the state summary, authoritative phase plus
+   reconciliation findings, active/at-risk/due entities, recent activity with
+   `since`/`limit`/`cursor`, and required pointers. Drill into full entities only
+   for ranked items.
 2. **Compute windows.**
    - Days since last weekly report. If ≥7, flag "weekly due".
    - Days to next claim due date (Apr/Jul/Oct/Jan 20). If ≤14, flag "claim due soon". If ≤3, flag "claim due URGENT".
@@ -179,13 +182,16 @@ authors nothing and sends nothing.
    period} ]`. Include only due enabled matrix entries, active-pack required
    triggers, or actions explicitly accepted by the operator. Map each report to
    the single owner in `CODEX.md`.
-4. Deduplicate on `{source-event, period, report-owner}` using existing run
-   pointers/activity. Invoke each remaining owner once (passing `profile` if
-   present). The generator produces its report **and** drops an outbox card.
+4. Compute the adapter's deterministic event identity from
+   `{source-event, period, report-owner, canonical-output-path, source-revision}`
+   and compare existing activity/output. Invoke each remaining owner once
+   (passing `profile` if present). Exact repeats return the existing report/card
+   without counters, fan-out, or pointer changes.
 5. Surface the result to the user as the standard digest (🔴/🟡/🟢) noting which
    cards were just queued: "Queued 2 drafts for review in outbox/queue/."
-6. Append one `orchestrator.tick` event per dispatch to the activity log so the
-   configured scheduling views can show last-run.
+6. Append one deterministic `orchestrator.tick` event per new dispatch to the
+   activity log so configured scheduling views can show last-run. Never append
+   it for an exact repeat.
 
 **Discipline for the tick:** it dispatches generators, never sends. If nothing is
 due, say so — a tick with an empty due-list is a healthy quiet day. Idempotent:
@@ -218,7 +224,8 @@ When the user signals end of day, end of session, or "wrapping up":
 2. Hand off to `project-notifier` to post to Slack after the user reviews
 3. Check SC prep window (meeting in <14 days?) → start SC pack prep
 4. Check claim window (claim in <14 days?) → start claim prep
-5. Recompute `state.json:health`
+5. Ask `project-state` to reconcile material health conditions; write only if
+   the health fingerprint changed
 6. Update `state.json:pointers.last_weekly_report`
 
 ### `monthly` (last working day of month)

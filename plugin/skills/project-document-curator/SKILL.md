@@ -9,7 +9,13 @@ description: "Classify, index, and manage project documents — proposals, MPAs,
 
 ## Purpose
 
-Be the librarian. Every project document (docx, xlsx, pdf, md, docx) has a canonical path and metadata in `project-state/documents/index.yaml`. When a doc arrives, classify it, give it a stable `id`, decide whether it's source-of-truth, move it to the right folder, and cross-reference it from the manifest or a phase.
+Be the librarian. Every managed project document or externally owned document
+reference has stable identity, provenance, source-of-truth status, and an index
+entry in `project-state/documents/index.yaml`. A file already placed in the
+facility may move to its managed folder. A document owned by a drive, repository,
+or ticket system stays there and is represented by its stable existing
+path/reference unless an active pack/output contract or explicit operator request
+requires a managed copy.
 
 Without this skill, docs pile up with ambiguous names in the project root and nobody knows what the current MPA version is.
 
@@ -24,7 +30,8 @@ Without this skill, docs pile up with ambiguous names in the project root and no
 
 ## State routing
 
-All documents live under `project-state/documents/`:
+Managed document copies live under `project-state/documents/`; externally owned
+documents may remain reference-only index entries:
 
 | Folder            | Contents                                                                |
 | ----------------- | ----------------------------------------------------------------------- |
@@ -59,6 +66,11 @@ cited_by: []                # entity ids/paths that cite this document
 ```
 
 Rules: `origin` is recorded at the moment of arrival by whoever moves the file — never inferred from folder location afterwards. Never fabricate provenance during backfills: use `origin: unknown` when the true origin is not known. When any skill or session derives an artifact from a registered document, it appends a `became:` edge (and the derived entity may record the doc id in its own provenance). A citation is stable as `<slug>@<git commit>` — the commit service's snapshots make any cited revision retrievable.
+
+Use the index's established path/reference and provenance fields for an external
+source. Do not invent a second document body or copy comments/version history
+into Project State. Existing copied documents remain readable; apply this lean
+rule only on registration or next touch rather than bulk rewriting a facility.
 
 ## The classification decision
 
@@ -122,12 +134,15 @@ PRE-CHECK: Has project-inbox already triaged this document?
 1. Read the filename and the first 500 bytes / table of contents.
 2. Propose a classification (kind, phase, sot?) and show it to the user for confirmation.
 3. On confirmation:
-   a. Move the file to the appropriate folder (source-of-truth / working / published / pic-templates).
+   a. If the file is already managed in `documents/inbox/`, move it to the
+      appropriate managed folder. If its canonical owner is external, keep it
+      in place and index the stable reference; create a managed copy only when
+      the active contract or operator explicitly requires one.
    b. Assign an id: "doc-<kind>-<yyyy-mm-dd>-<slug>" OR preserve an existing id pattern.
    c. Append a new entry to documents/index.yaml (or update the existing entry if pre-triaged).
-      `classified_by` is single-valued and this skill is AUTHORITATIVE over `project-inbox`'s triage
-      pre-pass: REPLACE the key, never add a second one. Two skills appending it produced a duplicate
-      YAML key on 34 of 198 entries, and a normal loader silently discarded the first (FB-006). The
+       `classified_by` is single-valued and this skill is AUTHORITATIVE over `project-inbox`'s triage
+       pre-pass: REPLACE the key, never add a second one. Two skills appending it produced a duplicate
+       YAML key that a normal loader silently discarded (FB-006). The
       inbox's pass is not lost by overwriting — it is already in `logs/activity.ndjson`.
    d. If SoT and supersedes an older entry, update supersedes/superseded_by links.
    e. Update manifest.yaml cross-references where applicable (dates, governing_document_status, phase evidence).
@@ -162,7 +177,9 @@ Walk every file under `documents/`. Compare to `documents/index.yaml`:
 - Index entries with missing files on disk → `MISSING` warning
 - SoT entries with `superseded_by` pointing nowhere → `DANGLING` warning
 
-Return a short table: total docs, by kind, by phase, SoT count, warnings.
+Return a bounded summary table: total docs, by kind, by phase, SoT count, and
+warnings, with optional filters, `limit=50`, and a stable cursor. Read full
+document metadata/content only for explicit detail or audit scope.
 
 ## Integration with other skills
 

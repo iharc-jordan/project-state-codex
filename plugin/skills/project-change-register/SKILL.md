@@ -53,6 +53,12 @@ Change of control also triggers a 30-day notification obligation to PIC.
 - Vendor changes or additions (vendor = standard service provider with no access to IP/confidential info)
 - Milestone timeline changes < 3 months that do not affect project end date
 
+"Non-material" in this PIC classification is still a governed shared-project
+fact and may justify the established Change Log. It is not permission to log
+ordinary task-local code changes, commits, formatting, or test reruns. Those
+remain in Git/the active task unless the operator explicitly requests a Project
+State record and supplies a reason.
+
 ### Subcontractor vs. vendor — the key distinction
 
 - **Subcontractor:** any access to project IP or confidential information. Lists on "Subcontractor" tab. Changes require Change Order.
@@ -76,7 +82,9 @@ Input:
 - `responsible_party`
 
 Flow:
-1. Classify if not already done; refuse if classification is `material`.
+1. Apply the adapter materiality gate, then classify under the PIC rules. Refuse
+   task-local work with no reason and refuse this operation if PIC
+   classification is `material`.
 2. Write `changes/change-log/YYYY-MM-DD-<slug>.yaml` per schema.
 3. Log `change.logged` via `project-state`; bump `counters.change_log_entries`.
 4. Mark for SC approval — belongs in the next SC pack Section 4.
@@ -117,6 +125,10 @@ Return all COs with `status in {drafted, submitted, under_review}`. Used by SC p
 
 ## Discipline
 
+- **Project State materiality comes first.** A code change is not a Change Log
+  entry merely because this skill can classify changes. Shared governed scope,
+  schedule, budget, vendor, IP, or compliance facts qualify; explicit operator
+  overrides include their reason in the existing summary.
 - **PIC is the arbiter.** This skill's classification is advisory. When non-trivial, draft a Change Order and get PIC PM to confirm rather than guess.
 - **Change Orders are forward-looking by default.** Retroactive CO attempts flag a warning; user must explicitly acknowledge.
 - **Change of control notification clock.** If a CO involves change of control of a Consortium Member, also schedule a 30-day PIC notification reminder via `project-orchestrator`.

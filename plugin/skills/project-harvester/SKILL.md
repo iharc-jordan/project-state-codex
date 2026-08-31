@@ -7,7 +7,12 @@ description: "Harvest external signals from configured Slack, Gmail, Google Docs
 
 # project-harvester
 
-Pull external intelligence relevant to a project and deposit it into `project-state/documents/inbox/` for the `project-document-curator` to classify, link to milestones/decisions, and promote.
+Pull compact external signals relevant to a project into
+`project-state/documents/inbox/` for curation. Source systems remain authoritative
+for full issue bodies, comments, and document content. Project State stores stable
+identity/reference, provenance, and only the status or bounded excerpt necessary
+to decide whether a durable shared fact changed. Create a managed copy only when
+an active pack/output contract explicitly requires one.
 
 ---
 
@@ -40,7 +45,7 @@ Relevance is determined from the project manifest — no hardcoded rules. Every 
 - Posts on any *other* configured sites that contain project keywords in title or body — this catches consortium partner writing that references the project.
 
 ### Jira *(via the Atlassian MCP connector)*
-- Issues in `surfaces.jira.projects[]` (project keys, e.g. `PROJ`) created or **updated** since the cursor — title, status, assignee, latest comments.
+- Issues in `surfaces.jira.projects[]` (project keys, e.g. `PROJ`) created or **updated** since the cursor — stable key/URL, title, status, assignee, and updated timestamp. Do not copy full bodies or comments.
 - Issues matching `surfaces.jira.jql` (an explicit JQL filter) if set — overrides the project-key scan for power users.
 - Issues mentioning a project keyword in summary/description, and issues assigned to / commented on by anyone in the contact roster.
 
@@ -50,7 +55,7 @@ Relevance is determined from the project manifest — no hardcoded rules. Every 
 - Pages whose title or body contains a project keyword (catches partner documentation that references the project).
 
 ### Linear *(via the Linear MCP connector)*
-- Issues in `surfaces.linear.teams[]` (team keys) or `surfaces.linear.projects[]` updated since the cursor — title, state, assignee, latest comments.
+- Issues in `surfaces.linear.teams[]` (team keys) or `surfaces.linear.projects[]` updated since the cursor — stable id/URL, title, state, assignee, and updated timestamp. Do not copy full bodies or comments.
 - Issues matching `surfaces.linear.query` (free-text/filter) if set.
 - Issues mentioning a project keyword, or assigned to / commented on by a contact-roster member (matched by email where Linear exposes it).
 
@@ -158,7 +163,11 @@ Default cursor when missing: 7 days ago. Cursor is only advanced after a surface
 
 ## Output — inbox documents
 
-Each harvested item becomes a markdown file in `project-state/documents/inbox/`:
+Each harvested item becomes a compact reference/signal markdown file in
+`project-state/documents/inbox/`. For tickets, the body contains only the status
+snapshot and why it may affect shared Project State. For externally owned
+documents, it contains identity/provenance/reference and a bounded excerpt when
+needed for classification, not a replacement copy:
 
 ```
 YYYY-MM-DD-{surface}-{slug}.md
@@ -307,13 +316,14 @@ jql = surfaces.jira.jql or
 
 <atlassian-mcp search-issues tool>(jql, limit=50)        # e.g. searchJiraIssuesUsingJql / jira_search
 for each issue:
-  <atlassian-mcp get-issue tool>(issue.key)              # full fields + comments
+  fetch/select only missing stable metadata (key, URL, title, status, assignee, reporter, updated)
   emit inbox doc if:
     - the issue is in a watched project (all such issues are relevant), OR
-    - summary/description/comment contains a project keyword, OR
-    - assignee/reporter/commenter email ∈ contact_roster
+    - the configured JQL or returned summary matches a project keyword, OR
+    - assignee/reporter email ∈ contact_roster
   → frontmatter: source=jira, source_id=issue.key, issue_key, issue_url, issue_status,
     author=assignee||reporter, surface_timestamp=issue.updated
+  do not persist the issue body or comments; the issue URL is the evidence reference
 ```
 
 ### Step 5c — Confluence harvest (if `surfaces.confluence.enabled`, Atlassian MCP connected)
@@ -324,10 +334,11 @@ cql = surfaces.confluence.cql or
 
 <atlassian-mcp search-pages tool>(cql, limit=50)          # e.g. searchConfluenceUsingCql / confluence_search
 for each page:
-  <atlassian-mcp get-page tool>(page.id, body=true)
-  emit inbox doc if: in a watched space, OR title/body contains a project keyword
+  fetch stable metadata and, only when classification needs it, a bounded source excerpt
+  emit inbox doc if: in a watched space, OR the configured CQL/title/excerpt matches a keyword
   → frontmatter: source=confluence, source_id=page.id, page_id, page_url, space,
     doc_title=page.title, surface_timestamp=page.lastModified
+  retain page_url and version as evidence; do not copy the full page without an output contract
 ```
 
 ### Step 5d — Linear harvest (if `surfaces.linear.enabled`, Linear MCP connected)
@@ -339,13 +350,14 @@ for each page:
   query=surfaces.linear.query, updatedAfter=cursor_ts, limit=50
 )
 for each issue:
-  <linear-mcp get-issue / list-comments tool>(issue.id)
+  fetch/select only stable metadata (identifier, URL, title, state, assignee, creator, updatedAt)
   emit inbox doc if:
     - the issue is in a watched team/project, OR
-    - title/description/comment contains a project keyword, OR
-    - assignee/creator/commenter ∈ contact_roster (by email where exposed)
+    - configured query or returned title contains a project keyword, OR
+    - assignee/creator ∈ contact_roster (by email where exposed)
   → frontmatter: source=linear, source_id=issue.identifier, issue_key=issue.identifier,
     issue_url=issue.url, issue_status=issue.state, author=assignee, surface_timestamp=issue.updatedAt
+  do not persist the issue body or comments; the issue URL is the evidence reference
 ```
 
 ### Step 5e — GitHub harvest (if `surfaces.github.enabled`)
@@ -369,20 +381,20 @@ for each repo in surfaces.github.repos:   # or run surfaces.github.query instead
   # --- pull requests ---
   if 'pulls' in events:
     <gh pr list --repo {repo} --state all --search "updated:>={cursor_date}">
-    → one doc per PR touched since cursor: number, title, state (open/merged/closed),
-      author, body excerpt, merged_at.
+    → one reference per PR touched since cursor: number, URL, title, state
+      (open/merged/closed), author, merged_at.
   # --- releases ---
   if 'releases' in events:
     <gh release list --repo {repo}>  → filter published/updated > cursor
-    → one doc per release: tag, name, notes.
+    → one reference per release: tag, URL, name, published timestamp.
   # --- issues ---
   if 'issues' in events:
     <gh issue list --repo {repo} --state all --search "updated:>={cursor_date}">
-    → one doc per issue touched: number, title, state, labels, author, latest comment.
+    → one reference per issue touched: number, URL, title, state, labels, author, updated timestamp.
 
   emit each item if:
     - it's in a watched repo (all such activity is relevant), OR
-    - title/message/body contains a project keyword, OR
+    - title or commit-message metadata contains a project keyword, OR
     - author/committer/assignee ∈ contact_roster (by GitHub login or email where exposed)
   → frontmatter: source=github, source_id="{repo}#{kind}:{id}" (kind ∈ commit-digest|
     pr|release|issue; id = date | pr-number | tag | issue-number),
@@ -478,9 +490,10 @@ is emitted.
 
 Sources are swept by evidence tier (schema `evidence_source_tiers`):
 
-- **Tier 1 — Jira** (`hints.jira`): issues/comments/worklogs in the configured projects
-  matching frontier keywords, plus anything labeled per `hints.jira.labels`. Reference is
-  the issue key (durable, server-timestamped). An issue labeled `sred-ex-NN` /
+- **Tier 1 — Jira** (`hints.jira`): stable references and timestamps for matching issues and
+  explicitly cited worklog/comment evidence in the configured projects, plus anything labeled per
+  `hints.jira.labels`. Reference is the issue key or evidence permalink (durable,
+  server-timestamped); bodies and comments remain in Jira. An issue labeled `sred-ex-NN` /
   `sred-tu-NN` is author-asserted linkage: the proposal arrives pre-linked to that entity
   with high confidence — still confirmed by a human, never auto-logged.
 - **Tier 1 — Confluence** (`hints.confluence`): pages in the configured spaces matching

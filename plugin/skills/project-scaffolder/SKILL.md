@@ -13,6 +13,15 @@ Stand up a fresh `project-state/` in a new working directory. Ensures the facili
 
 Used once per project at kickoff. The experience runs as a 6-step wizard with a post-confirm build step.
 
+Before starting the wizard, apply the adapter's scale routing. A routine task in
+an existing product stays in the active Codex task/issue tracker and returns
+without creating files. An epic may justify a compact facility with one shared
+outcome and only meaningful milestones/references/risks. A program may justify
+the full operating set. This classification is runtime policy, never a new
+manifest field. If the operator explicitly requests initialization, preserve
+the complete standard directory/schema tree below but do not populate
+speculative entities.
+
 Before Step 1, inspect files and source documents the operator supplied or
 explicitly placed in scope. Pre-fill only directly supported values and preserve
 their attribution. Do not extrapolate objectives, milestones, contacts,
@@ -114,19 +123,19 @@ ladder meant hand-editing YAML for ten weeks. Resolution order:
 Never leave it unset. Unlike `phases.lifecycle`, where unset is a permanently valid answer meaning
 terminal, an unset preset means there is no phase ladder to be in.
 
-**`automation.timezone` — write it, and never invent it.** `templates/manifest-v2.yaml` has marked
-this REQUIRED since it shipped while shipping the value as `~`, and no skill collected it (FB-002).
-Resolution order:
+**`automation.timezone` — project-owned and never inferred.** It is required
+before enabled scheduled work can compile. Resolution order:
 
 1. The intake record's `automation.timezone`, from `project-onboarding` Q1.8.
-2. Otherwise ASK for an IANA name. The host machine's zone may be offered as a suggestion to confirm,
-   never written unseen — the facility's timezone is a property of the PROJECT, not of whoever ran the
-   command, and a project worked on from two machines in two zones would silently reschedule itself.
+2. When automation is enabled or an active pack requires scheduled work, ASK
+   for an IANA name. The host machine's zone may be offered as a suggestion to
+   confirm, never written unseen.
+3. When automation is disabled and nothing requires scheduling, preserve `~`
+   and do not invent a value merely to complete scaffolding.
 
-Do not write `~`, do not default to UTC. `project-automator` now refuses to compile a schedule without
-it, because the window above is local time and a guessed zone fires the nightly jobs at the wrong hour
-— confidently wrong beats not starting, which is why the refusal is the correct behaviour and this
-question is the thing that stops anyone meeting it.
+Do not default to UTC. If `automation/tasks.yaml` is emitted while disabled, its
+timezone must mirror the manifest value, including `~`. The automator refuses
+to enable or compile scheduled tasks until a real IANA timezone is confirmed.
 
 Both keys are ruled in decision `2026-08-21-twelve-rulings-facility-contract`, items 10 and 11.
 

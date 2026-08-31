@@ -51,6 +51,13 @@ All files land in `project-state/reports/unified-suite/YYYY-MM-DD/`.
 
 ### Phase 0 — Context assembly (required before any document)
 
+This deep scan is authorized only by the explicit full-suite request or its due
+configured trigger. Begin with bounded Project State summaries, then open only
+entities selected into the suite; the live codebase scan remains read-only.
+Before scanning, compute the deterministic report identity from owner, canonical
+suite path, reporting period, and exact source revision. Return an existing
+complete suite for an exact repeat without regenerating or logging again.
+
 ```
 0.1  Read project-state/ via project-state skill
      → manifest.yaml (identity, budget, dates, funder, packs_loaded)
@@ -224,7 +231,9 @@ Generate `00-suite-index.md`:
 
 Copy the bundle to `project-state/website/public/downloads/unified-suite/YYYY-MM-DD/`.
 Update the website reports page with download links.
-Log `report.generated` to `logs/activity.ndjson` with `target: "unified-suite"` and `doc_count: 15`.
+Log one canonical `report.generated` event through `project-state` with the
+deterministic event `id` and a summary naming the unified-suite path and document
+count. Do not use a parallel event representation.
 
 ### Phase 8 — Notification (optional)
 

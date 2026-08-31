@@ -94,8 +94,10 @@ Run the full classification pass on all documents with `triage_state: unprocesse
 
 5. **Log** to `logs/activity.ndjson`:
    ```json
-   {"event": "inbox.triage.document", "doc_id": "...", "designation": "imprint", "relevance_score": 88, "timestamp": "..."}
+   {"ts":"<ISO-8601>","actor":"project-inbox","event":"inbox.triage.document","id":"<document-id>","summary":"Triaged <filename> as imprint (relevance 88)."}
    ```
+   Existing lines using `timestamp`, `doc_id`, or `designation` remain readable;
+   new events always use the canonical envelope and deterministic identity rules.
 
 6. **Record the triaged filenames** in the explicit ledger `references/inbox-triaged.json` so downstream readers know exactly which harvested signals are handled — without inferring it from fragile file mtimes. Read-modify-write this shape, preserving any existing entries and their original timestamps:
    ```json
@@ -315,6 +317,11 @@ When `project-document-curator` encounters a document that already has `triage_s
 - `references/inbox-orientation.yaml` — structured orientation summary
 - `references/inbox-triaged.json` — explicit triaged-filename ledger for mtime-independent readers
 - `logs/activity.ndjson` — triage events (append-only)
+
+For externally owned documents, keep identity, provenance, source-of-truth
+status, and a stable reference. Copy content into managed Project State storage
+only when an active pack/output contract requires it; otherwise triage and index
+the reference without duplicating the source.
 
 ## Called by
 

@@ -48,7 +48,9 @@ key-result scoring — just baseline → current → target, a trend, and a stat
 ## Operations
 
 ### Read — "what are our goals / how are we tracking?"
-1. Read `objectives/*.yaml` and `kpis/*.yaml`.
+1. Read bounded objective/KPI summary fields first (`limit=50`, stable cursor,
+   optional status/horizon/category filters). Open full entities only for named
+   details or the selected report scope.
 2. For each objective, gather its KPIs (those in `key_results` **or** any KPI whose
    `delivers_to` points back to it). Compute each KPI's **attainment** and **trend**;
    the objective's attainment is the mean of its KPIs'.
@@ -56,12 +58,19 @@ key-result scoring — just baseline → current → target, a trend, and a stat
    and any **unassigned** KPIs. Headline **coverage** = % of objectives with ≥1 KPI.
 
 ### Create an objective
+Apply the materiality gate. Create only a shared outcome/commitment or an
+explicit reasoned operator record; task-local implementation goals stay in the
+active Codex task.
+
 Emit an `objective.created` intent to `project-state` with `title`, `horizon`
 (north-star|annual|quarterly), `category` (leadership|growth|operational|financial|mission),
 `status` (default `on-track`), and optional `narrative`, `key_results`, `milestones`,
 `confidence` (0..1), `target_date`. The id is `O<NN>-<slug>` (next NN).
 
 ### Create a KPI
+Apply the same gate: the metric must be a durable shared/reporting outcome or an
+explicit override, not a temporary task counter.
+
 Emit a `kpi.created` intent with `metric`, `unit`, `baseline`, `target`, `current`
 (defaults to baseline), `direction` (up|down), `cadence`, and optional `delivers_to`. The
 id is `KPI-<NN>-<slug>`.
@@ -71,6 +80,9 @@ Emit a `kpi.reading.added` intent with the KPI `id`, `value`, optional `date` (d
 today) and `note`. `project-state` appends `{date, value, note?}` to `history` (one per
 date — a same-date reading replaces that day's entry), and sets `current` + `as_of`. Prior
 readings are never rewritten.
+
+An exact same-date, same-value, same-note repeat is idempotent: return the
+existing reading/event and do not append, increment, or update activity.
 
 ## Computed fields (on read — never persisted)
 

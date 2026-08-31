@@ -33,6 +33,14 @@ The skill itself is generic. Funder/customer/recipient-specific behavior comes f
 - Submitting reports — always stops at a draft for human signoff
 - Defining the cadence — that's in the stakeholder reporting matrix
 
+## Idempotent report ownership
+
+Before drafting, compute the deterministic `report.generated` identity from the
+source event, reporting period, this owner, canonical output path, and exact
+source revision when available. If the event and artifact already exist, return
+the existing draft/outbox card and do not regenerate, increment, finalize, or
+notify. One source event and period has one report owner invocation.
+
 ## Sub-actions
 
 ### `draft <stakeholder> <report-kind>`

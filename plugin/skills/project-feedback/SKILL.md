@@ -9,8 +9,11 @@ description: "Register and triage defects or requests about Project State as sub
 
 ## Purpose
 
-Any bug-shaped report about the project-state product, from any source, becomes exactly one
-substrate record and exactly one GitHub issue, with working links both ways. The substrate record
+An explicitly captured, durable bug-shaped report about the Project State
+product becomes exactly one substrate record and at most one GitHub issue, with
+working links both ways. Routine task-local implementation defects stay in the
+active Codex task or configured issue tracker; do not create an FB record merely
+because coding work found a bug. The substrate record
 (`feedback/FB-NNN-<slug>.yaml`) is the source of truth; the GitHub issue is its projection —
 the same relationship `project-jira-publisher` has to Jira, using the same backlink idempotency.
 
@@ -84,10 +87,16 @@ touch the substrate.
 From an inline report: draft the record with the reporter's words verbatim in `description`,
 allocate FB-NNN, `status: captured`, log `feedback.captured`. Never touches GitHub.
 
+Apply the materiality gate first. Capture when the operator explicitly asks for
+Project State feedback, or when the report represents a durable cross-project
+workflow/data/safety contract. Otherwise return the configured issue-tracker
+route and leave Project State unchanged. A reasoned operator override is
+recorded in the existing description/summary fields.
+
 From signals (`capture --from-signals`): walk `documents/index.yaml` classified entries whose
 `action_flags` include `seed-issue` and that have no FB record linking them
 (`source_document` match). Draft one FB record per distinct claim (a single doc may yield
-several — Jen's kickoff doc yielded three). Provenance: `source_document`, `reported_via: doc`
+several). Provenance: `source_document`, `reported_via: doc`
 or `harvest`.
 
 ### `triage` — captured → triaged | rejected
@@ -119,7 +128,9 @@ harvester's GitHub signals). Closed → `status: resolved`, record `resolution`,
 
 ### `list`
 
-Open FB by status/component/severity. Feeds the weekly report one-liner and the P-SPP
+Return bounded FB summaries by status/component/severity with `limit=50` and a
+stable cursor. Full descriptions/reproduction details require a named record or
+explicit detail mode. Feeds the weekly report one-liner and the P-SPP
 workstream-G learning register.
 
 ## Issue body template
@@ -144,6 +155,9 @@ _Registered from project-state feedback record FB-NNN._
 
 - **One report, one record, one issue.** Dedup before filing; the `github_issue` backlink is
   the idempotency key — never strip it.
+- **External issue ownership is lean.** Once filed, keep the stable issue number,
+  URL, and necessary status/resolution snapshot. Do not copy issue comments or
+  later full bodies back into Project State.
 - **Reporters' words are evidence.** Keep the verbatim report in `description`; triage adds to
   the record, it doesn't rewrite the report.
 - **Verify before filing when the code is readable.** Every claim in a filed issue carries a

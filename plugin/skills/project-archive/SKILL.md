@@ -44,6 +44,14 @@ In v2.0 the skill splits into a **generic closeout core** and **pack-driven clos
 
 Branch once, on `state.json:lifecycle`.
 
+First run the `project-state` reconciliation dry-run. Terminal closeout requires
+consistent required objectives, milestones, gates, phase authority, and reports.
+Continuous closeout requires a meaningful current increment and freezes only
+that increment. Missing, stale, or contradictory data is a finding and blocks
+the close; never derive a convenient phase or invent an increment. Exact repeat
+requests for an already closed boundary return its existing records without
+another report, snapshot, counter change, or activity event.
+
 **`terminal` (or absent) — unchanged in every respect.** Final report at
 `reports/final-report-<date>.md`, archive directory at `project-state/archive-<closeout-date>/`, the
 full pack-driven closeout. This is the overwhelming majority of facilities and nothing about their

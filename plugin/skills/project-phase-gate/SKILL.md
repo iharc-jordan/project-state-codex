@@ -26,7 +26,8 @@ A pack can ship a `phase-gate.yaml` profile that adds or modifies gate criteria 
 
 ## What it owns
 
-- Reading the current phase from `state.json`
+- Reading the current phase from authoritative
+  `manifest.yaml:phases.current_phase`, with `state.json` as a checked mirror
 - Enforcing gate-in and gate-out checklists per the active preset + pack overrides
 - Refusing transitions with clear errors when checklists are incomplete
 - Writing transition events to `logs/activity.ndjson`
@@ -41,6 +42,12 @@ A pack can ship a `phase-gate.yaml` profile that adds or modifies gate criteria 
 - Doing the work to satisfy a gate — that's other skills + humans
 - Writing any file directly — every write routes through `project-state` for locking and logging
 - Deciding whether a project continues — only the operator knows that
+
+Every lifecycle or phase mutation is material by definition, but routine task
+progress is not a reason to invoke one. Before writing, run read-only
+reconciliation for manifest/state/transition phase, required objective and
+milestone status, gates, lifecycle, increments, and required reports. Surface
+contradictions and refuse to guess through them.
 
 ---
 
@@ -167,21 +174,28 @@ reader keeps working (spec §4.2).
 
 ## `open_increment(label)`
 
-1. Refuse if `current_increment` is already set and open — one open increment at a time.
+1. Refuse if `current_increment` is already set and open — one open increment at a time. If the same
+   normalized request already produced that open increment, return it without
+   another event or counter update.
 2. Allocate the next `INC-<NN>` from `state.json:counters.increments`.
 3. Write `increments/INC-<NN>-<label>/manifest.yaml` with `status: open`, `opened: <today>`.
 4. Reset `phases/` from the active preset: every phase back to `status: pending`, `started`/`ended`
    nulled, every `gate_out.checklist[].done` back to `false`, all `evidence` cleared. **Only safe
    because the outgoing increment's records were frozen first** — see `close_increment` step 5.
-5. Clear `state.json:gates`, set `current_increment`, set `current_phase` to the `cycles_back_to`
-   target of the phase that closed the previous increment (or the preset's first phase for `INC-01`).
+5. Clear `state.json:gates`, set `current_increment`, set
+   `manifest.yaml:phases.current_phase` to the `cycles_back_to` target of the phase that closed the
+   previous increment (or the preset's first phase for `INC-01`), and mirror that value to
+   `state.json:current_phase`.
 6. Log `increment.opened`.
 
 ## `close_increment(closed_what, label_of_next?)`
 
 The whole point of the design, and the operation that fixes the data loss.
 
-1. Refuse unless the current phase's `gate_out` checklist is satisfied — same rule as any transition.
+1. Refuse unless the current increment exists and the current phase's
+   `gate_out` checklist is satisfied — same rule as any transition. Also require
+   consistent objective/milestone/gate/report state for the increment; report
+   stale or contradictory data rather than inventing closure.
    A criterion may be closed `closed_unmet: true` with a reason; that satisfies the gate and is
    **preserved verbatim**, never rewritten.
 2. **Refuse without `closed_what`.** No default, no generated text, no "same as last increment". Ask:
@@ -189,8 +203,8 @@ The whole point of the design, and the operation that fixes the data loss.
    ```
    What did this closeout close? One or two sentences. Say what it did NOT close too.
 
-   Example, from CC4PS: "The loop: triage, dispatch, execute, reconcile — proven across fourteen
-   workloads and packaged as a plugin. Does NOT close the product."
+   Example: "This increment closes the validated release workflow. It does not
+   close the continuing product roadmap."
    ```
 
    This is the cheapest thing in the whole design and, on its own, removes most of the practical
@@ -218,10 +232,9 @@ cancelled is not one that closed, and recording it as closed recreates "the hist
 backwards" one level down. `closed_what` is still required; for a cancelled increment it records what
 was and was not delivered before the stop. Logs `increment.cancelled`.
 
-**`cancelled`, not `abandoned`.** Milestones already use `cancelled` for this exact idea and one is in
-live use in this repo's own facility. A second word for a concept the substrate already names is how a
-vocabulary splits — the same way phase `status` ended up with three of them (`SCHEMA.md`, phase
-manifest).
+**`cancelled`, not `abandoned`.** Milestones already use `cancelled` for this
+exact idea. A second word for a concept the substrate already names would split
+the vocabulary.
 
 ## `convert_to_continuous(label?)`
 
@@ -233,17 +246,22 @@ no startup check that rewrites state. Nothing happens until asked.
    facility already has becomes increment 1.**
 3. **If the facility is at or past its closeout-equivalent phase:** ask for `closed_what` (the one
    thing only a human knows), freeze `phases/` and `gates` into `INC-01`, mark it `closed`, then open
-   `INC-02` and set `current_phase` to the boundary phase's `cycles_back_to` target.
+   `INC-02`, set `manifest.yaml:phases.current_phase` to the boundary phase's `cycles_back_to`
+   target, and mirror it to `state.json:current_phase`.
    **If it is mid-flight:** `INC-01` stays `open`, nothing is frozen, no `closed_what` is needed yet.
 4. If a `reports/final-report-<date>.md` exists, reference it from `closeout_report` **in place**. It
    is not moved and not renamed. The word *final* stays in the filename of the report that was, at the
    time, final.
 5. Log `lifecycle.converted`, then `increment.opened` / `increment.closed` as applicable.
 
-**No pre-existing record is edited.** One directory is created, two manifest keys are written, and
-`phases/` is copied — never moved. Afterwards `state.json:current_phase` is read from the same place
-as before, so a reader that knows nothing about increments sees a facility that is executing, exactly
-as it would have.
+If a facility already declares `continuous` but has no meaningful current or
+closed increment, do not pretend conversion succeeded earlier. Return a
+reconciliation finding and require an explicit repair/open operation.
+
+**No historical record is edited.** One directory is created, the lifecycle/current-increment keys
+are written, and `phases/` is copied — never moved. Afterwards the manifest remains phase authority
+and `state.json:current_phase` remains its projection, so a reader that knows nothing about
+increments still sees a facility that is executing.
 
 ## `revert_to_terminal()`
 
@@ -269,13 +287,13 @@ and any criterion closed unmet, and the history records that the project went ba
 **After (continuous):**
 
 ```
-close_increment(closed_what: "v1: the loop proven across fourteen workloads and packaged as a
-                             plugin. Does NOT close the product.",
+close_increment(closed_what: "v1: the validated release workflow shipped as a plugin. It does not
+                             close the continuing product roadmap.",
                 label_of_next: "v1.1")
 ```
 
 - `increments/INC-01-v1/` now holds a frozen `phases/` and `gates.json`. The release gate's evidence
-  survives, including `execution.spec_without_material_defect` closed unmet after six assessments.
+  survives, including any criterion deliberately closed unmet with its recorded reason.
 - `phases/` is reset, `current_phase` is `02-build-loops`, `current_increment` is `INC-02-v1.1`.
 - `health.overall_percent` still reads all-time; `health.increment.percent` reads v1.1 only.
 - The activity log shows an increment closing and another opening — forward, which is what happened.

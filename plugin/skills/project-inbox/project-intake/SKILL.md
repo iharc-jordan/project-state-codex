@@ -18,6 +18,12 @@ docs + pack → extract → propose → confirm → manifest + matrix + schedule
 
 Three phases, one confirmation screen, zero repeated questions.
 
+Apply the adapter's scale routing before gathering. Routine task-local work does
+not initialize Project State. Epic intake captures one shared outcome and only
+meaningful milestones/references/risks. Program intake may populate the full
+facility. Scale is runtime policy, not a manifest field; an explicit initialize
+request still uses the established standard tree and schema.
+
 The output is identical to what project-scaffolder + project-onboarding produce —
 a valid `project-state/` with a filled manifest, a seeded reporting matrix, and a
 compiled `automation/tasks.yaml` — but the path is document-first rather than
@@ -244,13 +250,18 @@ Always include `internal.team` as the baseline stakeholder.
 3. Merge entries from multiple packs — deduplicate by `report` name if the same report appears in two packs.
 4. Write to `project-state/reporting-matrix.yaml`.
 
-### 3d. Call project-automator generate
+### 3d. Project automation projection
 
-After writing the matrix, immediately run `project-automator generate` to compile
-`automation/tasks.yaml` (the canonical cadence registry). This makes the schedule ready without a separate step.
+After writing the matrix, run `project-automator generate` only when automation
+was explicitly confirmed enabled, an applicable active pack requires scheduled
+work, and a project timezone is confirmed. Otherwise write/retain a disabled
+`automation/tasks.yaml` registry with an empty `tasks` list whose top-level
+timezone exactly mirrors `manifest.yaml:automation.timezone`, including `~`.
+Do not create scheduled work merely because matrix entries exist.
 
-If project-automator needs a timezone and none was found in documents or manifest:
-ask once — "What timezone for scheduled jobs? (e.g. America/Vancouver)" — before calling.
+If scheduling is enabled and no timezone was found in documents or manifest,
+ask once — "What timezone for scheduled jobs? (e.g. America/Vancouver)" — before
+calling. If scheduling is disabled, leave it unresolved and consistent.
 
 ### 3e. Write milestone files
 
@@ -258,6 +269,12 @@ For each extracted milestone, write `project-state/milestones/M<NN>-<slug>.yaml`
 ```yaml
 schema_version: 1
 id: M01
+kind: milestone
+created: "[ISO-8601]"
+created_by: project-intake
+last_modified: "[ISO-8601]"
+last_modified_by: project-intake
+phase: "[current phase id]"
 title: "[extracted title]"
 description: "[extracted description]"
 owner_org: "[extracted or gap: TODO]"
@@ -265,7 +282,6 @@ planned_end: "[YYYY-MM-DD or gap: TODO]"
 completion_criteria: "[extracted or gap: TODO]"
 percent_complete: 0
 status: not_started
-last_modified: "[ISO-8601]"
 # source: doc:[filename]
 ```
 
@@ -295,8 +311,13 @@ fields:
 
 Append to `project-state/logs/activity.ndjson`:
 ```json
-{"ts":"[ISO-8601]","event":"project.intake.completed","actor":"project-intake","data":{"docs_processed":N,"fields_extracted":N,"gaps":N,"packs":[...],"schedule_compiled":true}}
+{"ts":"[ISO-8601]","actor":"project-intake","event":"project.intake.completed","id":"evt-<deterministic-id>","summary":"Processed N source documents; extracted N fields with N unresolved gaps; automation <compiled|left disabled>."}
 ```
+
+Use the adapter's deterministic identity inputs (source document identities,
+confirmed pack set, and normalized resulting intake facts). An exact re-analysis
+of unchanged inputs returns the existing event and does not append, increment,
+or fan out again.
 
 ### 3h. Git initialization
 
@@ -403,6 +424,6 @@ On confirmation, patches only the changed fields and appends an
 |-----------|-----|
 | Have docs (proposal, MPA, SOW, schedule) | **project-intake** ← this skill |
 | No docs, want guided questions | project-onboarding |
-| No docs, want fast bare init | project-scaffolder instant |
-| Deterministic from a known manifest | project-scaffolder --config |
+| No docs, explicit standard initialization | project-scaffolder |
+| Known manifest or intake record supplied | project-scaffolder using that supplied record |
 | Existing facility, new docs arrived | project-intake re-analyze |

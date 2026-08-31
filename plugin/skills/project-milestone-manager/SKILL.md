@@ -32,9 +32,11 @@ Every other field (planned/actual dates, deliverables, owner, budget category, s
 
 ## Operations
 
-### `list_milestones(filter?)`
+### `list_milestones(filter?, limit=50, cursor?, detail=false)`
 
-Read every file under `milestones/`. Return an array sorted by id. Optional filters:
+Return bounded summary rows sorted by id, with a stable next cursor when more
+results exist. Do not load full YAML bodies unless detail mode or a named
+milestone requires them. Optional filters:
 - `status: planned | in_progress | at_risk | complete | blocked` — `blocked` renders in the **At Risk** column in the kanban
 - `owner_short: "OrgA" | "OrgB"`
 - `proposal_phase: "Phase 1 – ..."` (loose match)
@@ -48,7 +50,9 @@ Read one milestone file and return the full parsed YAML.
 
 ### `create_milestone(...)`
 
-Rarely needed — we seeded 13 at scaffold. Use when Schedule A is amended via Change Order to add a milestone. Require:
+Create only for a source-supported shared deliverable, an approved scope change,
+or an explicit operator request. Scaffolding does not imply a fixed milestone
+count. When a governed schedule is amended, require:
 - `id` (Mxx format, next available)
 - `title`
 - `owner_org`, `owner_short`
@@ -93,9 +97,13 @@ Return:
 - Count by status
 - Count by owner org
 - Count by proposal phase
-- "On-track?" — green if all `in_progress` milestones are on or ahead of schedule; yellow if any behind; red if any blocked
+- delivery posture from the adapter's material health semantics. A blocked
+  required milestone can be red; a material schedule risk can be yellow;
+  development-only advisories do not affect this rollup.
 
-Store the result under `state.json:health` via `project-state`, which logs `health.assessed`.
+Store the result under `state.json:health` via `project-state` only when the
+normalized material-condition fingerprint changes. Exact repeats return the
+existing `health.assessed` event without touching state or activity.
 
 #### `overall_percent` is all-time, and now says so
 
@@ -120,10 +128,9 @@ Two changes, both additive:
 Never write `health.increment` on a terminal facility — its absence is how a reader knows there is only
 one pass.
 
-Also report `milestones_total` as a count of **unique** ids. A facility with two files claiming the
-same id (this repo's own facility has two `M10`s) otherwise makes `counters.milestones` and
-`milestones_total` disagree with nothing explaining why. `project-state`'s validator reports the
-collision; this operation must not paper over it.
+Also report `milestones_total` as a count of **unique** ids. Duplicate IDs would
+otherwise make file counts and the health projection disagree. `project-state`'s
+validator reports the collision; this operation must not paper over it.
 
 #### Which number to show
 
@@ -156,6 +163,10 @@ Event logged: `tracking.regenerated` with `target: "milestones.xlsx"`.
 
 ## Discipline rules
 
+- **Apply the materiality gate.** Routine task progress, ordinary commits, and
+  test reruns do not create/update milestones or events. A shared commitment,
+  durable delivery risk, governed scope, or explicit reasoned operator override
+  may do so.
 - **Never silently accept a 0%→100% jump without a completion event.** If `percent_complete` is set to 100, `status` must become `complete` and `actual_end` must be set.
 - **Never let `percent_complete` go backward.** If an update would decrease it, require an explicit user confirmation and append a note to `technical_progress` explaining the regression.
 - **Always update `technical_progress` when `percent_complete` changes.** If the user provides a number but no narrative, ask them for one line of context. PIC requires the narrative.

@@ -25,7 +25,10 @@ clones coordinate through Git and explicit conflict resolution.
 
 Walk up from the current working directory until a `project-state/manifest.yaml` is found. That directory is the project root. If none is found:
 - If the user asked a read-only question, say so and stop.
-- If the operator asked to initialize, hand off to `project-scaffolder` or `project-onboarding`.
+- If the operator explicitly asked to initialize, apply the adapter's
+  task/epic/program routing and hand off to `project-scaffolder` or
+  `project-onboarding`. Ordinary code work is not an implicit initialization
+  request.
 
 ```bash
 # Locate state (pseudocode)
@@ -79,36 +82,63 @@ Before every write, verify the document has all common frontmatter. Refuse to wr
 
 **Get state.** Return parsed `state.json`.
 
-**Get current phase.** `state.json:current_phase` → read `phases/<phase>/manifest.yaml`.
+**Get current phase.** Read `manifest.yaml:phases.current_phase` as authority,
+compare `state.json:current_phase`, and read `phases/<phase>/manifest.yaml`.
+Report a disagreement; do not choose a phase from milestone status.
 
 **Get entity.** Input: `kind` + `id`. Locate file by filename convention (see SCHEMA.md). Return parsed YAML.
 
-**List entities.** Input: `kind`, optional filters (status, owner, phase). Return array.
+**List entities.** Input: `kind`, optional filters (status, owner, phase),
+`limit=50` (maximum 200), `cursor`, and `detail=false`. Return bounded summary
+fields plus a stable next cursor. Read and return full YAML only for explicit
+detail mode or a named entity.
 
-**Tail activity log.** Input: `n=50`. Return last n lines of `logs/activity.ndjson` parsed.
+**Read activity.** Input: optional `since`, `limit=50` (maximum 200), and
+`cursor`. Return parsed canonical fields plus accepted legacy aliases. A cursor
+is the last returned timestamp plus deterministic line position; it is a read
+token, not new canonical state.
 
 **Count entities.** Return counters from `state.json`.
 
-**Validate.** Walk every YAML/JSON in `project-state/`; confirm it parses **under a duplicate-key-strict loader** and has required frontmatter. Report deviations; do not auto-fix. Full check list under "Validate the state" below.
+**Validate/reconcile.** Walk every YAML/JSON in `project-state/`; confirm it
+parses **under a duplicate-key-strict loader** and has required frontmatter.
+Mechanically compare unique-ID counters, maximum valid event timestamp,
+manifest/transition/state phase, manifest/tasks timezone, lifecycle/increments,
+closeout consistency, deterministic event IDs, and material health conditions.
+Dry-run and report proposed repairs by default; never auto-fix. An explicit
+apply request performs ordinary canonical writes one at a time. Full check list
+under "Validate the state" below.
 
 ### Canonical write operations (with locking + logging)
 
 For every canonical entity or ledger write:
 
-1. **Find lockfile.** Check `<target>.lock`. If it exists and its `acquired + ttl_seconds` is in the future, wait (up to 30 s) or abort.
-2. **Acquire lock.** Write `<target>.lock` = `{actor, acquired, ttl_seconds: 300}`.
-3. **Read current state** of the target if it exists.
-4. **Check staleness.** If the caller passed a `base_last_modified` and the current file's `last_modified` is newer, return a CONFLICT to the caller. Do not overwrite.
-5. **Apply the change.** Update `last_modified`, `last_modified_by`, fields under change. Preserve all other fields.
-6. **Write the file.**
-7. **Release lock.** Delete `<target>.lock`.
-8. **Append to activity log.** One NDJSON line: `ts, actor, event, id, summary`. `summary` is
+1. **Apply materiality.** If the fact is task-local and the operator did not
+   explicitly override with a reason, return where it belongs and make no
+   Project State write.
+2. **Find lockfile.** Check `<target>.lock`. If it exists and its `acquired + ttl_seconds` is in the future, wait (up to 30 s) or abort.
+3. **Acquire lock.** Write `<target>.lock` = `{actor, acquired, ttl_seconds: 300}`.
+4. **Read current state** of the target if it exists.
+5. **Check staleness.** If the caller passed a `base_last_modified` and the current file's `last_modified` is newer, return a CONFLICT to the caller. Do not overwrite.
+6. **Compute deterministic identity.** Follow `CODEX.md`: retain entity IDs
+   where required and otherwise use the existing `id` field for the event
+   identity. Search the relevant target/log before writing.
+7. **Suppress exact repeats.** If the target already has the normalized result
+   and the matching identity exists, return that record without touching the
+   target, counters, output fan-out, or `last_activity`.
+8. **Apply the change.** Update `last_modified`, `last_modified_by`, fields under change. Preserve all other fields.
+9. **Write the file.**
+10. **Release lock.** Delete `<target>.lock`.
+11. **Append to activity log.** One NDJSON line: `ts, actor, event, id, summary`. `summary` is
    canonical; `detail` and `note` are read-only aliases a reader must accept, in that order, and a
    line whose structured fields say everything needs none of the three. Never
    rewrite existing lines to match. The event table and validation rules in this
    skill plus the facility's checked-in `project-state/SCHEMA.md` are authoritative.
-9. **Update state.json counters or pointers** only when the operation requires it
-   (also under the lock).
+12. **Update state.json projections** only when the operation requires it (also
+    under the lock): counters are unique canonical IDs and `last_activity` is
+    the maximum valid canonical `ts`. Phase remains the manifest/transition
+    authority mirrored into state; health follows only material conditions or
+    a reasoned governed override.
 
 One durable fact change produces one canonical entity update, its required
 counter/pointer change, and one matching activity event. Do not duplicate the
@@ -133,7 +163,7 @@ fact here before a report presents it.
 | Record / resolve decision           | `decision.recorded`         | `counters.decisions` on new |
 | Propose a stop                      | `stop.proposed`             | `counters.stops`       |
 | Confirm / reject stop               | `stop.stopped` / `stop.rejected` | —                 |
-| Log change (non-material)           | `change.logged`             | `counters.change_log_entries` |
+| Log change (material or operator-overridden) | `change.logged`      | `counters.change_log_entries` |
 | Draft change order                  | `change-order.drafted`      | `counters.change_orders` |
 | Submit change order                 | `change-order.submitted`    | —                      |
 | Approve change order                | `change-order.approved`     | —                      |
@@ -325,7 +355,9 @@ Two rules this skill enforces regardless of what the caller asks:
 ## Examples
 
 ### "What phase are we in?"
-Read `state.json:current_phase`. Read `phases/<phase>/manifest.yaml`. Return phase label + gate-out checklist with done/pending counts.
+Read `manifest.yaml:phases.current_phase`, compare its `state.json` mirror and
+successful transition/lifecycle history, then read the authoritative phase
+manifest. Return the phase label, gate-out counts, and any disagreement.
 
 ### "Update M03 percent complete to 35%"
 1. Load `milestones/M03-cdi-pilot-fermentation-trials.yaml`.
@@ -362,7 +394,10 @@ An open decision is a normal decision record in the `open` state — same `decis
 4. A later confirm/reject sets `status: stopped` or `status: rejected` and logs `stop.stopped` / `stop.rejected`. The skill never decides *whether* to stop — it only records the proposal and the operator's call.
 
 ### "Show me recent activity"
-Tail `logs/activity.ndjson`. Default to last 50 events. Pretty-print with timestamp + actor + event + any `id`/`summary`.
+Read the last 50 events by default, or honor `since`/`limit`/`cursor`.
+Pretty-print timestamp, actor, event, id, and canonical/legacy summary. Return a
+cursor when more matching lines exist; do not deep-scan the full history unless
+asked.
 
 ### "Validate the state"
 
@@ -378,9 +413,21 @@ Walk every YAML/JSON, parse, check frontmatter completeness. Report:
 - Orphan references (e.g., a decision pointing to a nonexistent change-order)
 - Stale lockfiles (older than TTL)
 - Phase manifests against the phase-manifest schema in `SCHEMA.md`
+- `state.json` counters against unique canonical entity IDs
+- `state.json:last_activity` against the maximum valid event `ts`
+- `manifest.yaml:phases.current_phase`, successful transition/lifecycle events,
+  and `state.json:current_phase` for disagreement (never infer phase from
+  milestone completion)
+- `manifest.yaml:automation.timezone` against `automation/tasks.yaml:timezone`;
+  a null/missing manifest value or a mismatch is a finding, never a default
+- duplicate deterministic IDs for new events and exact repeated
+  validation/release/report evidence; preserve legacy lines
+- health against material delivery, reporting, compliance, security, and
+  production-path conditions; development-only advisories remain notes
 - Lifecycle consistency — see below
 
-Return a summary; never auto-fix.
+Return a bounded summary and proposed repairs. Dry-run is the default; apply
+only after an explicit operator request.
 
 #### Duplicate keys must fail the parse
 
@@ -433,10 +480,31 @@ and stop.
   naming a phase id in the same preset. Declaring `continuous` against a terminal-only preset
   (`grant-default`) is an **error**, not a warning.
 - `current_increment`, where present, names an existing increment whose `status` is `open`.
+- A continuous facility has a meaningful current or closed increment. None is a
+  reconciliation finding, not permission to invent or backfill one.
 - Every increment at `status: closed` or `cancelled` has `closed`, `phase_at_close`, `closed_what`, a
   frozen `phases/`, and a `gates.json`.
 - `increment` references on milestones name existing increments.
 - `cycles_back_to` on any phase manifest names a phase id in the active preset.
+- Terminal closeout has no incomplete required objective/milestone/gate/report.
+  Completed work in later phases than the current governed phase, or a closed
+  terminal history reopened as continuous without increments, is surfaced for
+  reconciliation rather than silently reclassified.
+
+#### Health semantics
+
+- **red** — critical delivery blocker, failed required compliance gate,
+  production/security release failure, or blocked required milestone.
+- **yellow** — material delivery risk, overdue reporting/compliance obligation,
+  or unresolved structural contradiction.
+- **green** — no material blocker. Non-production development advisories remain
+  visible as notes but do not independently lower health.
+
+Compute the normalized set of material conditions and use its deterministic
+event identity as the health fingerprint. If it matches the latest
+`health.assessed` result, do not write another event or touch `last_activity`.
+Preserve a schema-valid explicit governed override only with its reason and
+provenance; report, but do not guess through, a conflict with computed health.
 
 The lifecycle and increment invariants in this skill are authoritative for the
 public package.

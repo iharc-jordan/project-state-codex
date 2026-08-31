@@ -30,6 +30,12 @@ The first publish **creates** the issue and writes `jira_key: PROJ-123` back ont
 entity's YAML. Every later run **updates** that issue by key. So re-running after edits
 syncs changes and never duplicates. The `jira_key` is the link of record; don't remove it.
 
+Jira remains the owner of individual ticket bodies, comments, and workflow
+history. Project State stores the stable key/URL and only the status snapshot
+needed for a shared objective, milestone, risk, decision, or report. Do not
+import full external records. Existing copied content remains readable and is
+not bulk rewritten.
+
 ## Configure (once)
 
 Add a `jira` surface to `manifest.yaml` (non-secret config only):
@@ -86,6 +92,12 @@ export JIRA_API_TOKEN=…           # required
   external surfaces — Jira issues are outward-facing.
 - **Token only in env**, never in `manifest.yaml` or any committed file.
 - **`jira_key` is the link** — re-runs update, they don't duplicate. Don't strip it.
+- **Status rollups require a configured adapter.** Map Jira status to a Project
+  State milestone only when this surface is enabled and an explicit mapping is
+  configured; otherwise report the external status without mutating the
+  milestone. Never infer mappings from label names.
+- **No inbound body/comment copies.** Keep stable references and the necessary
+  status/resolution snapshot only.
 - Jira Cloud REST v2 (plain-text descriptions). For Jira Server/Data Center, the same
   endpoints work with a PAT; set `JIRA_EMAIL` to any value and use the PAT as the token,
   or adapt the auth header in `publish.py`.
