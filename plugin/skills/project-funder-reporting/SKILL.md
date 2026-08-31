@@ -22,6 +22,8 @@ The skill itself is generic. Funder/customer/recipient-specific behavior comes f
 - Filling the configured template (xlsx / docx / pdf / md)
 - Generating the cover delivery (Gmail draft via `project-notifier`)
 - Writing the report artifact to `reports/<stakeholder>/<YYYY-QN>-<report-kind>.<ext>`
+- For a quarterly claim profile, also writing the established
+  `reports/claims/YYYY-QN.yaml` claim record through `project-state` locking
 - Emitting an outbox card (`gmail_draft` with deep-link) into `outbox/queue/` for review
 - Logging the deliverable and signoff to the activity log
 
@@ -44,12 +46,12 @@ Marks a draft as PL-signed-off, writes signoff event to activity log, hands to `
 
 ## Outbox emission (queue the draft for review)
 
-When `draft` produces a funder report, **emit an outbox card** so it surfaces in the
-`/queue` UI for human review and action. Unlike internal status reports, funder
+When `draft` produces a funder report, **emit an outbox card** for human review and
+action. A separately installed compatible UI may render the queue. Unlike internal status reports, funder
 reports usually end in an *external send the human performs* — so the card is a
 `gmail_draft` carrying the deep-link to the already-created Gmail draft. Card files
 live in `project-state/outbox/queue/` as a `<id>.md` + `<id>.meta.yaml` pair
-(contract: `docs/OUTBOX.md`).
+using the card fields defined below.
 
 Two-part pattern for a quarterly claim:
 1. **The deliverable** — the filled `.xlsx` stays under `reports/pic-submissions/`.
@@ -75,7 +77,7 @@ expires: 2026-07-20
 ```
 
 The card is always `status: queued`. The Gmail draft already exists (notifier made
-it); approving in the UI only reveals the deep-link — it never sends. If
+it); approval only reveals the deep-link — it never sends. If
 `project-notifier` hasn't produced a draft yet (no deep-link available), still emit
 the card with `surface: gmail` and `action_required` describing the manual step, and
 omit `deep_link`. Board-pack and invoice profiles follow the same shape with their own

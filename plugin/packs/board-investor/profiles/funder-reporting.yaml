@@ -25,7 +25,7 @@ reports:
         extract: "blockers + risks"
         from_period: "previous month"
       metrics:
-        source: "kpis/*.yaml"        # the substrate KPI entities (kind: kpi) — see docs/SCHEMA.md
+        source: "kpis/*.yaml"        # Project State KPI entities (kind: kpi)
         select: "delivers_to in objectives where horizon in [annual, north-star]"
         format: "{metric}: {current}{unit} (target {target}; {delta} since previous month)"
       asks:

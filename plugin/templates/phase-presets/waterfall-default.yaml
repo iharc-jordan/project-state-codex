@@ -6,7 +6,7 @@ description: |
   re-enters build and is a new increment rather than a second pass through the same one. A waterfall
   project that ships once and is handed off simply never declares a lifecycle and behaves exactly as
   before. Continuous behaviour is inert unless the facility declares phases.lifecycle: continuous.
-  See docs/CONTINUOUS-LIFECYCLE-SPEC.md.
+  The phase and increment fields below are the public lifecycle contract.
 
 phases:
   - id: "01-requirements"

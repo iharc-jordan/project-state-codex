@@ -36,8 +36,8 @@ The skill itself is generic. Meeting-shape comes from the profile loaded by the 
 ## Outbox emission (queue the draft for review)
 
 A review meeting produces two card-worthy drafts; emit both into
-`project-state/outbox/queue/` as `<id>.md` + `<id>.meta.yaml` pairs (contract:
-`docs/OUTBOX.md`), always `status: queued`:
+`project-state/outbox/queue/` as `<id>.md` + `<id>.meta.yaml` pairs using the
+fields below, always `status: queued`:
 
 1. **Pre-read pack** — `kind: doc`, `surface: none`, artifact = the assembled
    agenda + pack markdown (or a cover note linking the `.docx` under `reports/`).

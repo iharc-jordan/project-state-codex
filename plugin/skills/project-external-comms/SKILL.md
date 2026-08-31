@@ -50,7 +50,7 @@ Reviewer pauses the clock. Common reasons: confidentiality concern, patent-filin
 This skill does not author content, so it emits at a different moment than the
 generators: **when an item flips to `cleared`** (clock elapsed AND signoffs
 complete), emit an outbox card into `project-state/outbox/queue/` announcing the
-content is now safe to send externally. Contract: `docs/OUTBOX.md`; always
+content is now safe to send externally. Use the outbox fields defined below; always
 `status: queued`.
 
 - `kind` mirrors the content class: `paper`/`abstract`/`talk` → `doc`,

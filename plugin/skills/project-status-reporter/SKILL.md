@@ -90,7 +90,8 @@ Hand off to `project-notifier` for Slack delivery. Update `state.json:pointers.l
 
 **Inputs:** everything, but specifically shaped for the PIC Appendix A standard agenda (9 topics: Introduction; Review of Previous Minutes; Project Schedule/Overview/Milestones; Change Orders & Change Log; Project Finances; Publications/Media; IP Update; Regulatory Check-In; Key Contact Updates; Open Discussion / Lessons Learned; Action Steps Review; Next Meeting).
 
-**Output:** one `.docx` following PIC's agenda format. Use `python-docx` for rendering (shared primitives with `project-doc-suite-generator`). Embed:
+**Output:** one `.docx` following PIC's agenda format. Use `python-docx` for
+rendering (shared primitives with `project-doc-suite`). Embed:
 - Gantt-style view of milestones (status, % complete, planned vs. actual)
 - Finances table (budget vs. spend — if available)
 - Active risks (top 5 by score)
@@ -124,17 +125,16 @@ One page. Designed for a glance. Sections: phase + gate, health, milestones tabl
 
 ## Outbox emission (queue the draft for review)
 
-After writing any report to `reports/`, **also drop an outbox card** so the draft
-surfaces in the `/queue` UI for human review. This is what makes reporting a UI-first,
-review-not-author flow: the report generates on its own, lands in the queue, and the
-person reviews/approves/actions it — the system never sends.
+After writing any report to `reports/`, **also drop an outbox card** for human review.
+The file queue is the public contract; a separately installed compatible UI may render
+it. The person reviews/approves/actions it — the system never sends.
 
 A card is a file pair in `project-state/outbox/queue/`:
 
 1. **The artifact** — `<id>.md`. Reuse the report markdown you just produced (for
    docx/xlsx reports, write a short markdown cover note that links to the file under
    `reports/`). `<id>` is `YYYY-MM-DD-<slug>` (e.g. `2026-05-22-weekly-status`).
-2. **The card** — `<id>.meta.yaml`, matching the contract in `docs/OUTBOX.md`:
+2. **The card** — `<id>.meta.yaml`, using this public contract:
 
 ```yaml
 id: 2026-05-22-weekly-status
@@ -176,6 +176,7 @@ write external surfaces here.
 - **project-phase-gate** — current phase + gate pending items.
 - **project-change-register** — pending / recent changes for SC pack and weekly.
 - **project-funder-reporting** — does the detail work for quarterly claims and other funder reports.
-- **project-doc-suite-generator** — shares docx/xlsx rendering primitives; produces baseline report bundles.
+- **project-doc-suite** — shares docx/xlsx rendering primitives and owns the full
+  unified documentation bundle.
 - **project-notifier** — routes the finished report to Slack, Gmail draft, or Calendar hold.
 - **project-blog-publisher** — downstream consumer for public-friendly progress.

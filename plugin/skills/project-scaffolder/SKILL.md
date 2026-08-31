@@ -32,84 +32,13 @@ defined below.
 
 ---
 
-## Presentation Protocol
+## Codex interaction
 
-project-state runs on two surfaces. Detect and adapt before Step 1.
-
-### Surface detection
-
-Check the runtime context:
-- **Claude Coworker / claude.ai web** → HTML artifact mode. Each wizard step is a rendered HTML artifact with real buttons.
-- **Claude Code (CLI)** → Markdown mode. Each step uses Mermaid blocks, tables, and bold numbered options.
-
-Default to HTML artifact mode. If artifact rendering is not available, fall back to markdown mode automatically.
-
-### Design system (HTML artifact mode)
-
-All HTML artifacts share this design system. Generate consistent, minimal UI:
-
-```
-Container:  font-family: system-ui; max-width: 680px; margin: 0 auto; padding: 24px
-Colors:
-  primary-green:    #22c55e  (active step, confirm button, selected border)
-  primary-green-bg: #f0fdf4  (selected card background)
-  text-main:        #111827
-  text-muted:       #6b7280
-  border:           #e5e7eb
-  badge-production: bg #dcfce7  text #166534
-  badge-starter:    bg #fef9c3  text #a16207
-  badge-new:        bg #dbeafe  text #1e40af
-
-Components:
-  ProgressBar     — flex row of N divs (height 4px, border-radius 2px).
-                    Completed steps = primary-green, pending = border-color.
-  StepLabel       — "Step N of 6 — [Name]" in 12px text-muted, margin-bottom 20px.
-  SectionTitle    — 18px font-weight 600, margin-bottom 4px.
-  SectionSubtitle — 14px text-muted, margin-bottom 20px.
-  OptionCard      — padding 12px 16px, border 1px solid border-color, border-radius 8px,
-                    background #fff, cursor pointer, width 100%, text-align left,
-                    display flex, justify-content space-between, align-items center.
-                    Left: title (14px 600) + subtitle (13px text-muted, margin-top 2px).
-                    Right: badge pill (11px, padding 2px 8px, border-radius 12px).
-  SelectedCard    — OptionCard with border 2px solid primary-green, background primary-green-bg.
-  NavRow          — display flex, justify-content space-between, margin-top 24px.
-                    Back button: outline style (border border-color, bg #fff).
-                    Primary button: background primary-green, color #fff, border none,
-                    padding 10px 20px, border-radius 8px, font-weight 600.
-  FormField       — label (12px text-muted font-weight 500) + input (full width,
-                    padding 8px 12px, border 1px border-color, border-radius 6px,
-                    font-size 14px, margin-top 4px, margin-bottom 16px).
-  ToggleCard      — OptionCard with a toggle pill on the right instead of a badge.
-                    Toggle on: background primary-green. Toggle off: background border-color.
-  SummaryRow      — display grid, grid-template-columns 160px 1fr, gap 8px,
-                    padding 10px 0, border-bottom 1px border-color, font-size 14px.
-                    Label: text-muted. Value: text-main font-weight 500.
-  StatusRow       — 3-column (icon 24px | filename | note text-muted). Icon: ✅ or ⬜.
-```
-
-Mermaid in HTML artifacts: use a `<pre class="mermaid">` block and load mermaid.js from CDN:
-```html
-<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-<script>mermaid.initialize({startOnLoad:true, theme:'neutral'})</script>
-```
-
-Button click behaviour: clicking any option or the primary button sends a message back to Claude with the selection. Claude then generates the next step artifact.
-
-### Markdown mode (Claude Code)
-
-Each step begins with a progress line:
-```
-── Step N of 6: [Step Name] ──────────────────────────────────────
-```
-
-If the step has a diagram, emit a `\`\`\`mermaid` block immediately after the progress line.
-
-Options are presented as a markdown table with bold `**N**` in the first column. The final line of each step is a prompt:
-```
-> Type a number (or numbers separated by spaces) to select:
-```
-
----
+Use ordinary Markdown for all steps: a progress line, Mermaid diagram where it
+clarifies the phase or gate, compact tables, and numbered choices. Pre-filled
+source-supported values appear as attributed confirmation rows. Group unresolved
+required, pack-driven, or routing-critical questions and wait for the operator's
+answer before advancing. No files are written before the Step 6 confirmation.
 
 ## Wizard Steps
 
@@ -127,27 +56,7 @@ Preselect only a pack explicitly requested or directly supported by an inspected
 source, show the supporting source, and require confirmation. A capability or
 surface keyword is not a pack selection and must not enable anything.
 
-**HTML artifact:**
-- ProgressBar (1 of 6 active)
-- StepLabel
-- SectionTitle: "Which compliance pack fits your project?"
-- SectionSubtitle: "Packs configure reporting cadence, phase gates, and stakeholder routing. You can select more than one — they compose cleanly."
-- 7 OptionCards (one per pack) + 1 for "None / custom":
-
-  | Pack | Subtitle | Badge |
-  |------|----------|-------|
-  | `pic-pcais` | Protein Industries Canada PCAIS consortium | production |
-  | `grant-canada` | Canadian grants — NSERC, IRAP, SIF, CFI, Mitacs + 13 more | starter |
-  | `client-services` | Client engagement with QBR cadence | starter |
-  | `board-investor` | Board and investor reporting | starter |
-  | `agile-default` | Engineering team, sprint cadence | starter |
-  | `open-source-community` | Community-governed open-source | starter |
-  | None / custom | Bare presets — configure manually | — |
-
-- Note below cards: "Tip: grant-canada + pic-pcais covers the full PIC lifecycle. **SR&ED is not in this list** — it is a capability, not a pack. It brings its own entity kinds, validator and bundled pack, and needs a fiscal year end this step doesn't ask for. Finish here, then run `/sred-onboarding`."
-- NavRow: no Back | Continue →
-
-**Markdown output:**
+**Codex output:**
 ```
 ── Step 1 of 6: Pack Selection ──────────────────────────────────
 
@@ -191,7 +100,7 @@ packs-configure-not-code principle; `FB-003` is what happens when pack knowledge
 instead. Unset means terminal, is permanently valid, and is never warned about, so leaving it is always
 the safe answer — and the post-closeout diagnostic asks at the moment the answer is actually knowable.
 
-Spec: `docs/CONTINUOUS-LIFECYCLE-SPEC.md` §4.1.
+The lifecycle resolution rules above are authoritative for this public adapter.
 
 **`phases.preset` — write it, always.** This is the key FB-003 is about: five presets shipped in
 `templates/phase-presets/` and nothing ever wrote the manifest key that selects one, so choosing a
@@ -222,27 +131,7 @@ question is the thing that stops anyone meeting it.
 Both keys are ruled in decision `2026-08-21-twelve-rulings-facility-contract`, items 10 and 11.
 
 
-**HTML artifact:**
-- ProgressBar (2 of 6 active)
-- Mermaid diagram of the 6-phase lifecycle with the default phase highlighted:
-  ```mermaid
-  graph LR
-    P1[01 LOI] --> P2[02 Approval] --> P3["03 Planning ◀"] --> P4[04 Execution] --> P5[05 Closeout] --> P6[06 Archive]
-    style P3 fill:#22c55e,color:#fff,stroke:#16a34a
-  ```
-- SectionTitle: "Which phase are you starting in?"
-- 4 OptionCards:
-
-  | Phase | Title | When to choose |
-  |-------|-------|----------------|
-  | `01-loi` | LOI / Pre-proposal | Still writing the application |
-  | `02-approval` | Approval | Applied — waiting for funder decision |
-  | `03-planning` *(default)* | Planning | Award confirmed, MPA in progress |
-  | `04-execution` | Execution | Project already underway |
-
-- NavRow: ← Back | Continue →
-
-**Markdown output:**
+**Codex output:**
 ```
 ── Step 2 of 6: Phase Selection ─────────────────────────────────
 
@@ -268,30 +157,23 @@ graph LR
 
 **Purpose:** Collect project name, funder, program, PI/PL, and dates. These seed `manifest.yaml`.
 
-**HTML artifact:**
-- ProgressBar (3 of 6 active)
-- SectionTitle: "Tell me about the project"
-- FormFields in two columns where space allows:
-  - Project short name (slug, e.g. `atlas`)
-  - Project long name (full title)
-  - Funder / sponsor organization
-  - Program / contract name
-  - Project Lead name + email
-  - Project start date (date input)
-  - Project end date (date input, optional)
-  - Proposal / LOI document path (optional, file path hint)
-- NavRow: ← Back | Continue →
-
-**Markdown output:**
-Present questions one at a time in sequence. After each response, confirm and move to the next:
+**Codex output:**
+Present the unresolved identity fields as one grouped prompt, preserving any
+source-supported values as attributed confirmations:
 ```
 ── Step 3 of 6: Project Identity ────────────────────────────────
 
-I'll ask a few questions about the project. Answer each in turn.
+Confirm or complete the unresolved project identity fields below.
 
-  1. Project short name (used as slug, e.g. atlas):
+  - Project short name (used as slug, e.g. atlas)
+  - Project long name
+  - Funder / sponsor and program / contract
+  - Project Lead name and email
+  - Project start date and optional end date
+  - Proposal / source-document path, if supplied
 ```
-Then after each answer: `Got it. Next:`
+After the response, confirm the resolved identity block and surface only remaining
+required gaps.
 
 ---
 
@@ -299,24 +181,7 @@ Then after each answer: `Got it. Next:`
 
 **Purpose:** Capture consortium members, the Project Lead organization, and the team sharing model.
 
-**HTML artifact:**
-- ProgressBar (4 of 6 active)
-- SectionTitle: "Consortium and team sharing"
-- Sub-section: **Lead organization** — FormField (org name)
-- Sub-section: **Consortium members** — repeating group:
-  - Org name + role (member / partner / advisor) + contact email
-  - "+ Add member" button
-- Sub-section: **Team sharing model** — 3 OptionCards:
-
-  | Model | Description |
-  |-------|-------------|
-  | **Git** *(recommended)* | `project-state/` lives in a git repo. `project-git` handles checkpointing and sync. Append-only logs merge without conflicts. |
-  | **Shared drive** | Dropbox / Google Drive / OneDrive. No git. Advisory lockfiles handle concurrency. |
-  | **Single user** | One user, local only. No sharing needed. |
-
-- NavRow: ← Back | Continue →
-
-**Markdown output:**
+**Codex output:**
 ```
 ── Step 4 of 6: Consortium & Sharing ────────────────────────────
 
@@ -339,23 +204,7 @@ Then after each answer: `Got it. Next:`
 
 **Purpose:** Configure which external surfaces the project uses. Surface config is stored in `manifest.yaml:surfaces` and read by `project-notifier`.
 
-**HTML artifact:**
-- ProgressBar (5 of 6 active)
-- SectionTitle: "Which surfaces does the team use?"
-- SectionSubtitle: "You can enable or reconfigure these at any time in manifest.yaml."
-- 4 ToggleCards, all off by default:
-
-  | Surface | What it does |
-  |---------|-------------|
-  | **Slack** | Posts status updates and alerts to configured channels |
-  | **Gmail** | Creates drafts — never auto-sends |
-  | **Google Calendar** | Proposes meeting holds and deadline reminders |
-  | **scsiwyg blog** | Publishes project narrative posts through a review queue |
-
-- Each toggle card, when enabled, expands a FormField for the key config value (channel name / calendar ID / site slug)
-- NavRow: ← Back | Continue →
-
-**Markdown output:**
+**Codex output:**
 ```
 ── Step 5 of 6: Surfaces ────────────────────────────────────────
 
@@ -377,36 +226,7 @@ Which surfaces does the team use? Toggle on/off.
 
 **Purpose:** Show the complete configuration before writing anything. Nothing touches the filesystem until the user confirms here.
 
-**HTML artifact:**
-- ProgressBar (6 of 6 active)
-- SectionTitle: "Ready to scaffold — review before writing"
-- SummaryRows covering all collected inputs:
-  - Project: [long name] (`[slug]`)
-  - Pack(s): [selected packs]
-  - Phase: [selected phase]
-  - Funder: [funder]
-  - Lead org: [lead org]
-  - Consortium: [N members]
-  - Surfaces: [enabled list]
-  - Sharing: [model]
-  - Git: Yes — will `git init` + write `.gitattributes` / No — shared drive
-- Mermaid preview of what will be created:
-  ```mermaid
-  graph TD
-      root[project-root/] --> ps[project-state/]
-      root --> ga[.gitattributes]
-      ps --> mf[manifest.yaml]
-      ps --> st[state.json]
-      ps --> rm[reporting-matrix.yaml]
-      ps --> ph[phases/]
-      ps --> docs[documents/]
-      ps --> logs[logs/]
-      ps --> ms[milestones/ — empty]
-      ps --> ppl[people/ — empty]
-  ```
-- NavRow: ← Edit | **Scaffold Now** (primary green)
-
-**Markdown output:**
+**Codex output:**
 ```
 ── Step 6 of 6: Review & Confirm ───────────────────────────────
 
@@ -443,36 +263,7 @@ graph TD
 
 Triggered immediately after the user confirms in Step 6. Write all files now.
 
-**HTML artifact:**
-- Brief animated progress message: "Scaffolding your project..."
-- Then replace with result card:
-  - SectionTitle: "Project scaffolded ✓"
-  - StatusRows for each created file/directory (✅ written / ⬜ empty / ⚠ TODO):
-
-    | Icon | Path | Note |
-    |------|------|------|
-    | ✅ | `project-state/manifest.yaml` | 3 TODOs remain (MPA date, review designates, funder contacts) |
-    | ✅ | `project-state/state.json` | Phase: [selected] |
-    | ✅ | `project-state/reporting-matrix.yaml` | Seeded from [pack] defaults |
-    | ✅ | `project-state/automation/tasks.yaml` | Compiled from matrix by project-automator |
-    | ✅ | `project-state/logs/activity.ndjson` | `project.scaffolded` event |
-    | ✅ | `.gitattributes` | `merge=union` on logs (if git model) |
-    | ✅ | Git repo | Initial commit: "project-state: facility scaffolded — [slug]" |
-    | ⬜ | `project-state/milestones/` | Empty — seed with `/project-milestone-manager` |
-    | ⬜ | `project-state/people/` | Empty — add via `/project-state` |
-    | ⬜ | `project-state/lessons-learned/` | Empty — capture with `/project-lessons`; shape in `templates/lesson-learned.md` |
-
-  - SectionTitle: "What would you like to do next?"
-  - 4 OptionCards as next-step buttons:
-
-    | # | Action | Skill |
-    |---|--------|-------|
-    | 1 | Seed milestones from proposal document | `/project-milestone-manager` |
-    | 2 | Add team members | `/project-state` |
-    | 3 | Checkpoint to git | `/project-git checkpoint` |
-    | 4 | Done for now | — |
-
-**Markdown output:**
+**Codex output:**
 ```
 ── Scaffolded ✓ ─────────────────────────────────────────────────
 
@@ -484,7 +275,7 @@ Triggered immediately after the user confirms in Step 6. Write all files now.
 | ✅     | project-state/automation/tasks.yaml         | Compiled from matrix           |
 | ✅     | project-state/logs/activity.ndjson          | project.scaffolded event       |
 | ✅     | .gitattributes                              | merge=union on logs            |
-| ✅     | Git repo initialized                        | Initial commit made            |
+| ✅     | Git repo initialized                        | No commit made                 |
 | ⬜     | project-state/milestones/                   | Empty — seed later             |
 | ⬜     | project-state/people/                       | Empty — add later              |
 | ⬜     | project-state/lessons-learned/               | Empty — capture later          |
@@ -510,7 +301,8 @@ After files are written (Step 7), initialize git if the git sharing model was se
    # Append-only logs: keep all lines from both sides (never a real conflict)
    project-state/logs/*.ndjson merge=union
    ```
-4. Stage and commit: `git add . && git commit -m "project-state: facility scaffolded — <project.name>"`
+4. Leave the new files uncommitted. Offer `project-git checkpoint` as a separate,
+   deliberate action; never stage or commit as part of scaffolding.
 
 If shared-drive model: skip git entirely. Note in Step 7 output: "Git checkpointing is available if you switch to git sharing later."
 
@@ -528,8 +320,8 @@ If shared-drive model: skip git entirely. Note in Step 7 output: "Git checkpoint
   facility that already exists (FB-001).
 - **Never overwrite existing files.**
 - **Atomic failure.** If scaffolding aborts mid-way, clean up anything partially created.
-- **Surface-aware.** Detect HTML vs. markdown mode before Step 1 and stay consistent throughout all steps.
-- **One step at a time.** Generate one artifact or one markdown step, wait for response, then generate the next. Do not bundle multiple steps.
+- **Consistent presentation.** Use the Markdown interaction format throughout.
+- **One step at a time.** Generate one Markdown step, wait for response, then generate the next. Do not bundle multiple steps.
 
 ---
 

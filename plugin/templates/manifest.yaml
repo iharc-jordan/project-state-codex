@@ -110,7 +110,7 @@ pic_contacts:
 # there is no phases.lifecycle key here and there should not be — a PIC/grant project genuinely ends.
 # If your project continues past closeout (a product, a retainer, an ops facility), you want the v2
 # template (templates/manifest-v2.yaml) with a preset that declares cycles_back_to, plus
-# phases.lifecycle: continuous. See docs/CONTINUOUS-LIFECYCLE-SPEC.md.
+# phases.lifecycle: continuous. The selected preset must support a cycle.
 phases:
   - id: "01-loi"
     label: "Letter of Intent"
@@ -230,7 +230,7 @@ tech_reports:
     repo: ~                                    # github: "owner/name" (private; team token reads it)
     path: ~                                    # local: an explicit directory to study
 
-# Concurrency model for shared-drive writes. See docs/CONCURRENCY.md.
+# Advisory locks coordinate writers sharing this filesystem, not separate Git clones.
 concurrency:
   model: "shared-drive"
   write_rules: "file-per-entity, frontmatter timestamps, advisory lockfiles, append-only logs"

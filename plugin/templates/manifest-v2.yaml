@@ -74,7 +74,7 @@ phases:
   # LEAVE THIS UNSET IF UNSURE. Absent means terminal, is permanently valid, and is never warned
   # about. Only presets that declare cycles_back_to on a phase can be continuous; grant-default
   # cannot, by design. Written by project-phase-gate / project-onboarding, not by hand.
-  # Spec: docs/CONTINUOUS-LIFECYCLE-SPEC.md
+  # Lifecycle behavior is enforced by project-phase-gate and the selected preset.
   lifecycle: ~                           # terminal | continuous | ~ (absent == terminal)
 
 # ----------------------------------------------------------------------------
@@ -145,7 +145,7 @@ surfaces:
 #       engagement_lead: ~
 
 # ----------------------------------------------------------------------------
-# Automation — compiled by project-automator into automation/schedule.yaml
+# Automation — compiled by project-automator into automation/tasks.yaml
 #
 # The reporting matrix is the source of truth for WHAT runs. This block
 # configures WHERE and WHEN jobs are allowed to run. project-automator
@@ -159,7 +159,7 @@ automation:
     end:   "05:00"                       # latest finish time (next-day if end < start)
   timezone: ~                            # IANA tz string, e.g. "America/Vancouver" — REQUIRED
   # on_change: regenerate               # future: auto-recompile when matrix changes
-  # schedule_path: "automation/schedule.yaml"   # default output path
+  # schedule_path: "automation/tasks.yaml"      # canonical registry path
 
 # ----------------------------------------------------------------------------
 # Concurrency model (unchanged from v1.x)

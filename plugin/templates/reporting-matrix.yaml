@@ -37,7 +37,7 @@ entries:
 
   # ===== Achievement-triggered examples =====
   # These use event-driven cadence kinds. project-automator compiles them into
-  # event-hook definitions (not crons) in automation/schedule.yaml.
+  # event-hook definitions (not crons) in automation/tasks.yaml.
   # The host (keep-state) fires these when the named event occurs in state.json.
 
   # - id: milestone-completion-report

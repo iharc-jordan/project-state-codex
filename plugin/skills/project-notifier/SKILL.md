@@ -120,7 +120,7 @@ matching queued card (match on `artifact` filename or `artifact_ref` → card `i
    `queue/`).
 2. Set `deep_link` to the created Gmail draft URL or Calendar event URL.
 3. Leave `status` untouched — backfilling a link is **not** approval. The card stays
-   `queued`; the human still reviews and actions it from `/queue`.
+   `queued`; the human still reviews and actions it from the file queue or a compatible viewer.
 4. Route the write through `project-state` so the edit is logged
    (`outbox.deep_link.backfilled`).
 

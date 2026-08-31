@@ -97,7 +97,7 @@ Run the full classification pass on all documents with `triage_state: unprocesse
    {"event": "inbox.triage.document", "doc_id": "...", "designation": "imprint", "relevance_score": 88, "timestamp": "..."}
    ```
 
-6. **Record the triaged filenames** in the explicit ledger `references/inbox-triaged.json` so downstream surfaces (the keep-state-app inbox count) know exactly which harvested signals are handled — without inferring it from fragile file mtimes. Read-modify-write this shape, preserving any existing entries and their original timestamps:
+6. **Record the triaged filenames** in the explicit ledger `references/inbox-triaged.json` so downstream readers know exactly which harvested signals are handled — without inferring it from fragile file mtimes. Read-modify-write this shape, preserving any existing entries and their original timestamps:
    ```json
    {
      "files": {
@@ -107,7 +107,7 @@ Run the full classification pass on all documents with `triage_state: unprocesse
      "updated_at": "2026-06-18T21:00:00Z"
    }
    ```
-   Key by the document's **filename as it sits in `documents/inbox/`** (basename, not doc_id). Add an entry for every inbox file you triaged in this pass; leave already-present entries untouched. This file is the source of truth for "already triaged" and is written by every triage run, in either app (Cowork or the keep-state-app's triage job), so the two stay consistent.
+   Key by the document's **filename as it sits in `documents/inbox/`** (basename, not doc_id). Add an entry for every inbox file you triaged in this pass; leave already-present entries untouched. This file is the source of truth for "already triaged" for every compatible reader.
 
 After processing all documents, run `orient` automatically to regenerate `references/inbox-orientation.yaml`.
 
@@ -313,7 +313,7 @@ When `project-document-curator` encounters a document that already has `triage_s
 - `references/imprint/<doc-id>-<slug>.<ext>` — copies of imprint documents
 - `references/imprint/index.yaml` — imprint document registry
 - `references/inbox-orientation.yaml` — structured orientation summary
-- `references/inbox-triaged.json` — explicit triaged-filename ledger (so the keep-state-app inbox count is mtime-independent and consistent across apps)
+- `references/inbox-triaged.json` — explicit triaged-filename ledger for mtime-independent readers
 - `logs/activity.ndjson` — triage events (append-only)
 
 ## Called by

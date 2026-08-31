@@ -141,7 +141,7 @@ Record each field not found as a gap: `{key, blocks: [...]}`.
 
 Present a single confirmation screen. Nothing has been written yet.
 
-**Format (markdown mode — Claude Code):**
+**Codex Markdown format:**
 
 ```
 ── Intake Proposal — [project.name] ─────────────────────────────
@@ -173,11 +173,9 @@ Options:
   [s] Skip all gaps and confirm
 ```
 
-**Coworker / HTML artifact mode:**
-
-Render as three collapsible sections (Extracted / Pack defaults / Gaps) inside a card.
-Each extracted field shows a `[doc: source]` badge. Pack entries show a `[pack-id]` badge.
-Gaps show a `[fill later]` pill. A single "Confirm and write →" primary button.
+Keep the same Extracted / Pack defaults / Gaps grouping in Markdown. Label each
+extracted field with `[doc: source]`, each pack entry with `[pack-id]`, and each
+gap with `[fill later]` before the confirmation prompt.
 Milestones render as a compact inline table (id | title | owner | date).
 People render as role chips.
 
@@ -305,9 +303,10 @@ Append to `project-state/logs/activity.ndjson`:
 If the directory is not already inside a git repo:
 1. Run `git init`
 2. Write `.gitattributes` with `project-state/logs/*.ndjson merge=union`
-3. `git add . && git commit -m "project-state: facility initialized via intake — [project.name]"`
+3. Leave the facility uncommitted and offer `project-git checkpoint` separately.
 
-If already in a git repo: skip init, add `.gitattributes` entry if missing, stage + commit.
+If already in a git repo: skip init and add the `.gitattributes` entry if missing.
+Never stage or commit as part of intake.
 
 ---
 
@@ -324,13 +323,13 @@ After all files are written, show a status summary:
   ✅  project-state/milestones/              [N files]
   ✅  project-state/logs/activity.ndjson     [project.intake.completed]
   ✅  .gitattributes                         [logs merge=union]
-  ✅  git commit                             [initial commit]
+  ⬜  git checkpoint                         [operator decides when]
 
   Gaps recorded (N): run /project-state gaps to review
   Schedule ready:    run /project-automator status to verify
 
 Next:
-  /project-automator status      — verify cron schedule
+  /project-automator status      — verify cadence registry
   /project-state gaps            — review and fill recorded gaps
   /project-milestone-manager     — update milestone progress
   /project-orchestrator          — see what's due this week
@@ -391,7 +390,8 @@ On confirmation, patches only the changed fields and appends an
 - **project-state** — all writes route through it; intake-record.yaml, activity.ndjson appended
 - **project-automator** — called automatically at end of Phase 3 to compile automation/tasks.yaml
 - **project-milestone-manager** — milestone files written by intake are ready for progress updates immediately
-- **project-orchestrator** — reads the compiled schedule.yaml; works immediately after intake
+- **project-orchestrator** — reads the compiled `automation/tasks.yaml`; works
+  immediately after intake
 - **project-onboarding** — the deep interview path; use when documents are unavailable or a guided tour is preferred
 - **project-scaffolder** — the manual wizard path; intake calls its directory-creation logic internally
 

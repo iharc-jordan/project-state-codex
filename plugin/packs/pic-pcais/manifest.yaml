@@ -57,7 +57,7 @@ conflicts_with:
 # facility's own manifest.yaml:phases.lifecycle always wins. Nothing is ever written blind, and
 # a facility that leaves its lifecycle unset stays permanently valid.
 # Resolution order: facility > pack default > terminal.
-# Spec: docs/CONTINUOUS-LIFECYCLE-SPEC.md section 4.1
+# Lifecycle behavior is enforced by project-phase-gate and the selected preset.
 defaults:
   # An MPA has an end date, a final report, and a holdback release. Structurally barred
   # from continuous anyway: grant-default declares no cycles_back_to.

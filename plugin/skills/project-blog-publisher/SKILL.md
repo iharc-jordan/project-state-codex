@@ -107,7 +107,7 @@ If SC review returns revisions, increment version and re-start the review clock 
 ## Outbox emission (queue the draft for review)
 
 Every blog draft emits an outbox card into `project-state/outbox/queue/` as a
-`<id>.md` + `<id>.meta.yaml` pair (contract: `docs/OUTBOX.md`), always
+`<id>.md` + `<id>.meta.yaml` pair using the fields below, always
 `status: queued`. The draft post body is the artifact.
 
 - `kind: blog_post`, `surface: scsiwyg`.

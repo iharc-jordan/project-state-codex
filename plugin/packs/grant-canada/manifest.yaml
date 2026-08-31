@@ -72,7 +72,7 @@ conflicts_with:
 # facility's own manifest.yaml:phases.lifecycle always wins. Nothing is ever written blind, and
 # a facility that leaves its lifecycle unset stays permanently valid.
 # Resolution order: facility > pack default > terminal.
-# Spec: docs/CONTINUOUS-LIFECYCLE-SPEC.md section 4.1
+# Lifecycle behavior is enforced by project-phase-gate and the selected preset.
 defaults:
   # A grant ends: a deadline, a decision, and either an award or a rejection.
   # A grant project that continues is a new grant, not a new increment.

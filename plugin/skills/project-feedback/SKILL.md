@@ -14,10 +14,10 @@ substrate record and exactly one GitHub issue, with working links both ways. The
 (`feedback/FB-NNN-<slug>.yaml`) is the source of truth; the GitHub issue is its projection —
 the same relationship `project-jira-publisher` has to Jira, using the same backlink idempotency.
 
-Design of record: `docs/FEEDBACK-AND-ISSUES-SPEC.md` (adopted 2026-08-11). This SKILL.md
-implements spec pieces 1–4 (Tier 1). Pieces 5–7 (outbox `github_issue` queue action,
-orchestrator tick, pilot deposit endpoint) are spec'd but not built; until piece 5 lands,
-filing is **direct** (`feedback.file_mode: direct` in the manifest) with explicit confirmation.
+This skill is the complete public Tier 1 contract. The private outbox
+`github_issue` action, orchestrator integration, and pilot deposit endpoint are
+not bundled and are unsupported here. Filing remains **direct**
+(`feedback.file_mode: direct`) with explicit confirmation.
 
 ## Trigger phrases
 
@@ -65,7 +65,7 @@ Ids allocate from `counters.feedback` under the `state.json` advisory lock, via 
 ```yaml
 feedback:
   enabled: true
-  repo: "Atomic-47-Labs/project-state"   # defaults to surfaces.github.repos[0]
+  repo: "<owner>/<repo>"                 # defaults to surfaces.github.repos[0]
   default_labels: ["bug"]
   label_map: { bug: [bug], enhancement: [enhancement], question: [question], docs: [documentation] }
   file_mode: direct          # direct until spec piece 5 (queue action) lands; then queue
@@ -74,8 +74,8 @@ feedback:
     skill_errors: false      # opt-in; drains logs/feedback-candidates.ndjson
 ```
 
-GitHub access: `gh` CLI locally/desktop; `ps_github` MCP connector on the appliance. Tokens
-never touch the substrate.
+GitHub access uses an available authenticated connector or `gh` CLI. Tokens never
+touch the substrate.
 
 ## Operations
 
@@ -96,7 +96,7 @@ or `harvest`.
    Duplicate → set `duplicate_of`, close as dup, never file.
 2. **Verify in repo**: grep/read the claimed files; set `verified_in_repo` +
    `verification_note` with file:line citations. Unverifiable reports still proceed, marked
-   unverified — pilot reporters can't read the code and their reports are still evidence.
+   unverified — reporters may not be able to read the code and their reports are still evidence.
 3. Classify `type`, `component`, `severity`; map labels from `feedback.label_map`.
 
 ### `file` — triaged → filed
@@ -104,11 +104,11 @@ or `harvest`.
 Render the issue body (template below). In `file_mode: direct`: show the drafted issue to the
 user, get explicit confirmation, run `gh issue create`, write `github_issue` + `github_url`
 back, `status: filed`, log `feedback.filed`. A record that already has `github_issue` is
-**updated** (`gh issue edit` / comment), never re-created. `severity: data-risk` records may
-file without the confirmation pause — with a loud log line — per spec §9 proposal.
+**updated** (`gh issue edit` / comment), never re-created. Every external create or
+update requires confirmation, including `severity: data-risk`.
 
-When piece 5 lands, default switches to queueing an outbox card (`kind: github_issue`) and the
-queue's approve action performs the create.
+An internal version may later replace direct filing with a queued
+`kind: github_issue` action; that feature is unavailable in this public adapter.
 
 ### `sync` — filed → resolved
 

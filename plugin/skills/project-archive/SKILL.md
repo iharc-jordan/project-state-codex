@@ -75,7 +75,7 @@ that this closure was a formality, and it is the single cheapest thing in the wh
 continuous facility can still actually end. Reaching those phases runs the full terminal closeout,
 archive directory and all. Continuous means *not necessarily ending*, not *unable to end*.
 
-Spec: `docs/CONTINUOUS-LIFECYCLE-SPEC.md` §4.5.
+The lifecycle and increment rules above are authoritative for the public package.
 
 ## Migration from v1.x
 

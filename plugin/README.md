@@ -1,9 +1,9 @@
 # Project State (Claude Code plugin)
 
-A generic operational substrate for multi-stakeholder projects. It bundles **41
+A generic operational substrate for multi-stakeholder projects. It bundles **43
 skills** that turn routine reporting into a byproduct of normal work — milestones,
 objectives/KPIs, phase gates, document curation, status reports, funder/grant
-compliance, and a local kanban dashboard. Behavior is configured by swappable
+compliance, and local website/reporting surfaces. Behavior is configured by swappable
 **compliance packs**, not hardcoded logic.
 
 ## Install
@@ -36,7 +36,7 @@ Then start a project:
 
 Skills are auto-discovered and namespaced under `project-state:` — e.g.
 `/project-state:project-milestone-manager`, `/project-state:project-orchestrator`,
-`/project-state:project-kanban`. Claude also invokes them automatically by their
+and `/project-state:project-status-reporter`. Claude also invokes them automatically by their
 descriptions when you say things like "record a decision" or "draft the weekly".
 
 ## What's inside
@@ -45,13 +45,13 @@ descriptions when you say things like "record a decision" or "draft the weekly".
 |-------|--------|
 | Foundation | `project-state` (memory layer), `project-scaffolder`, `project-onboarding`, `project-admin` |
 | Core ops | `project-phase-gate`, `project-document-curator`, `project-milestone-manager`, `project-goal-tracker`, `project-status-reporter`, `project-inbox` |
-| Surfaces & automation | `project-orchestrator`, `project-notifier`, `project-review-meeting`, `project-funder-reporting`, `project-change-register`, `project-blog-publisher`, `project-website-publisher`, `project-jira-publisher`, `project-kanban`, `project-doc-suite`, `project-tech-reports` |
+| Surfaces & automation | `project-orchestrator`, `project-notifier`, `project-review-meeting`, `project-funder-reporting`, `project-change-register`, `project-blog-publisher`, `project-website-publisher`, `project-jira-publisher`, `project-doc-suite`, `project-tech-reports` |
 | Compliance (pack-driven) | `project-sred-tracker`, `project-sred-reviewer` |
 | Polish | `project-onboarder`, `project-ip-tracker`, `project-external-comms`, `project-lessons`, `project-archive`, `project-git`, `project-harvester`, `project-feedback` |
 | Grant | `grant-state`, `grant-scaffolder`, `grant-ingestor` |
 
 **Packs** (`packs/`): `pic-pcais`, `grant-canada`, `sred-canada`, `board-investor`,
-`client-services`, `agile-default`, `open-source-community`. Six skills are
+`client-services`, `agile-default`, `open-source-community`, `tender-pursuit`. Six skills are
 profile-driven — they read their behavior from the active pack's YAML profiles.
 
 **Templates** (`templates/`): scaffolder seeds — phase presets, phase manifests,

@@ -70,4 +70,4 @@ User can in MindMap Studio: **Load Vibe** → pick `~/Desktop/mindmap-inbox/late
 
 ## Full spec
 
-See `docs/MINDMAP-VIBE.md` in the project-state repo (or `reference.md` in this skill folder).
+See `reference.md` in this skill folder for the bundled format and launcher notes.

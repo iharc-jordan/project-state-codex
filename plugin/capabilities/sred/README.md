@@ -2,10 +2,12 @@
 
 **Hosting shape:** capability (extension *into* a project-state facility, enabled per project).
 SR&ED has no standalone existence — it rides a delivery project's milestones, people, and
-harvest — so it does not meet the state bar (`CAPABILITY-PLUGINS.md` §3). There is no
+harvest — so it is enabled only inside a Project State facility. There is no
 desk-pattern variant: SR&ED intelligence belongs to the project doing the experimental work.
 
-**Spec:** [`docs/SRED-CAPABILITY-SPEC.md`](../../docs/SRED-CAPABILITY-SPEC.md) is authoritative.
+The manifest, schema, routine, templates, validator, and hard rules in this
+directory are the authoritative public capability contract. The private design
+specification is not bundled.
 
 ## What enabling this capability adds to a project
 

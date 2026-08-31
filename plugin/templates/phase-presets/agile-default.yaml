@@ -8,7 +8,7 @@ description: |
   release closes an increment and opens the next rather than reopening a phase and clobbering the
   first pass's gate evidence. Continuous behaviour is inert unless the facility declares
   phases.lifecycle: continuous, so a team using this preset terminally is unaffected.
-  See docs/CONTINUOUS-LIFECYCLE-SPEC.md.
+  The phase and increment fields below are the public lifecycle contract.
 
 phases:
   - id: "01-discovery"

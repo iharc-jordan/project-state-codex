@@ -50,8 +50,8 @@ A phase ladder assumes the project ends. Most do. Some don't — a product ships
 a retainer renews, an ops facility never closes. For those, the terminal ladder loses gate history on
 phase re-entry, dilutes the rollup, and offers no correct forward move.
 
-The lifecycle declaration says which kind of thing this facility is. Spec:
-`docs/CONTINUOUS-LIFECYCLE-SPEC.md`.
+The lifecycle declaration says which kind of thing this facility is. The rules in
+this skill and the selected phase preset are authoritative for the public package.
 
 ## `get_lifecycle()`
 

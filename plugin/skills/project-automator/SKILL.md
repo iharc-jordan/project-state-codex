@@ -11,7 +11,7 @@ description: "Compile confirmed enabled reporting-matrix entries into automation
 
 The reporting matrix is the source of truth for *what* runs. This skill is the compiler
 that turns the matrix into the **canonical cadence registry** — `project-state/automation/tasks.yaml` —
-the single file every scheduling host fires from and the kanban calendar edits.
+the single file every configured scheduling host reads and any compatible editor updates.
 
 Two tracks:
 
@@ -21,8 +21,8 @@ Two tracks:
 | **Achievement** | Matrix entries with `kind: ad-hoc \| post-event \| on-publish \| event-driven` | Event tasks (no fire time) that the scheduler's activity-log event hooks fire |
 
 Output: `project-state/automation/tasks.yaml`. The matrix stays the source of *what*;
-the registry owns *when* — including any reschedules the operator makes by dragging
-cards on the calendar, which this skill **must never overwrite** (see `update`).
+the registry owns *when* — including operator reschedules made by any compatible
+editor, which this skill **must never overwrite** (see `update`).
 
 > **Retired:** `automation/schedule.yaml` (v2.0 output). No host ever consumed it.
 > If `status` finds one, report it as legacy and offer to delete it.
@@ -108,14 +108,13 @@ the 1st with `lead_time_days: 2` → `dom: 28`).
 `ad-hoc`, `post-event`, `on-publish`, and `event-driven` all compile to a task whose
 cadence is just `{kind: <matrix kind>}` — no fire time. The scheduler's activity-log
 event hooks fire them on `on_event` / `on` / `trigger` matches (`phase.transition`,
-`milestone.completed`, `documents/published/`); the calendar renders them in the
-event-driven tray. Preserve the trigger verbatim on the task as `trigger: <value>`
+    `milestone.completed`, `documents/published/`). Preserve the trigger verbatim on the task as `trigger: <value>`
 so the hook matcher needs no matrix lookup.
 
 ## Step 2 — Write discipline (the override-preservation rule)
 
-`tasks.yaml` is **shared-write**: this skill, the calendar UI, and the scheduler's
-proposal engine all write it. Non-negotiable rules:
+`tasks.yaml` is **shared-write**: this skill and any configured scheduling editor or
+proposal engine may write it. Non-negotiable rules:
 
 1. Take the advisory lockfile (`automation/tasks.yaml.lock`, 300s TTL) before writing.
 2. **Never modify an existing task.** If `auto-<entry.id>` already exists, leave it —
@@ -148,16 +147,14 @@ Sources: built-ins below, `templates/cadence-presets/*.yaml`, and the active pac
 | `agile-default` | sprint-aligned retro + planning set (needs `sprint_calendar`) |
 | `milestone-checkins` | per `--milestone <id>`: weekly review + due-minus-7 review, scoped `{milestone, until: due}` so they retire when it completes |
 
-The kanban applies the same presets through `lib/automation.ts:applyPreset` (the
-"Set up cadence" picker and chat-to-schedule `apply-preset` op) — one implementation
-server-side; this skill is the CLI/headless door to it.
+Compatible scheduling hosts may expose the same presets, but none is bundled in
+the public package. This skill is the portable Project State entrypoint.
 
 ## What this skill does NOT do
 
 - Does not register crons or fire tasks. Hosts fire; the orchestrator `tick` dispatches.
 - Does not call generators directly.
-- Does not modify the reporting matrix (single exception: nothing — enable toggles go
-  through the UI's comment-preserving matrix write, not this skill).
+- Does not modify the reporting matrix; enable toggles remain an explicit matrix edit.
 - Does not overwrite operator reschedules (Step 2 rule 2).
 - Does not send, post, or draft anything.
 
@@ -165,7 +162,6 @@ server-side; this skill is the CLI/headless door to it.
 
 - **`project-intake` / `project-scaffolder`** call `project-automator generate` as their
   final step, so a new project's calendar is populated and armed out of the gate.
-- **Hosts** (kanban scheduler, `/api/cron/tick`, appliance runner) fire from `tasks.yaml`;
-  they detect changes by mtime.
-- **The kanban Calendar view** (`/calendar`) renders the registry with next-due/last-run,
-  edits cadences by drag, and applies presets — all against the same file this skill writes.
+- **Configured hosts** fire from `tasks.yaml` and may detect changes by mtime.
+- An optional compatible calendar may render and edit the same registry. The public
+  package does not include a scheduler, server endpoint, or calendar application.

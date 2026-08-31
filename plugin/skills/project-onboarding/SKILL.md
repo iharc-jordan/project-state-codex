@@ -37,102 +37,13 @@ routing decision. Group related unresolved fields into one prompt. Already
 settled chapters become compact confirmation passes; do not repeat their
 questions.
 
-## Presentation Protocol
+## Codex interaction
 
-### Surface detection
-
-At invocation, detect the rendering surface:
-- **Coworker / claude.ai** — check if HTML artifact rendering is available. If yes, use HTML artifact mode.
-- **Claude Code (CLI)** — use markdown mode.
-
-Store the detected surface in the working session as `surface: coworker | claude-code`. Apply consistently across all chapters.
-
-### Design system (shared with project-scaffolder)
-
-```
-Colors:
-  primary-green    #22c55e     buttons, progress fill, badges
-  primary-green-bg #f0fdf4     active card backgrounds
-  text-main        #111827     headings and body
-  text-muted       #6b7280     labels and metadata
-  border           #e5e7eb     card and section borders
-  amber-bg         #fffbeb     synthetic-content warning
-  red-bg           #fef2f2     gap / missing field warning
-
-Components:
-  ProgressBar      — step N of M with chapter name, filled segments
-  ChapterCard      — full-width card, chapter title + purpose prose
-  QuestionBlock    — question label + freeform input field (in Coworker) or bold prose prompt (in CLI)
-  PreFilledField   — value bubble + "Confirm or correct?" label (shown when inbox-orientation has data)
-  OptionCard       — selectable pack/option card, outlined → green-bg on select
-  SummaryRow       — label | value | source badge (document / conversation / synthetic)
-  GapRow           — field name | impact | resolution options [provide now / leave gap / synthesize]
-  QualityBar       — label + filled-block progress bar (█░) + N/3 score
-  StatusRow        — ✓ / ○ prefix + field + status text
-  NavRow           — [Back] [Next] or [Confirm] buttons (Coworker) / numbered prompt (CLI)
-```
-
-### HTML artifact mode (Coworker)
-
-Each chapter = one self-contained HTML artifact. Replace the artifact on every chapter advance (do not accumulate).
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-  <style>
-    body { font-family: system-ui; max-width: 720px; margin: 2rem auto; color: #111827; }
-    .progress { display: flex; gap: 4px; margin-bottom: 1.5rem; }
-    .seg { height: 6px; flex: 1; border-radius: 3px; background: #e5e7eb; }
-    .seg.done { background: #22c55e; }
-    .seg.active { background: #86efac; }
-    .chapter-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
-    .chapter-label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; }
-    .chapter-title { font-size: 1.25rem; font-weight: 700; margin: .25rem 0 .75rem; }
-    .question { background: #f9fafb; border-radius: 8px; padding: 1rem 1.25rem; margin: .75rem 0; }
-    .question label { font-size: 0.8rem; color: #6b7280; display: block; margin-bottom: .5rem; }
-    .prefilled { border-left: 3px solid #22c55e; background: #f0fdf4; padding: .75rem 1rem; border-radius: 6px; }
-    .source-badge { font-size: .7rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 9px; }
-    .gap-row { border-left: 3px solid #ef4444; background: #fef2f2; padding: .5rem .75rem; margin: .5rem 0; border-radius: 4px; }
-    .synth-notice { background: #fffbeb; border: 1px solid #fbbf24; border-radius: 6px; padding: .75rem 1rem; font-size: .85rem; }
-    .quality-bar { display: flex; align-items: center; gap: .75rem; margin: .5rem 0; font-size: .9rem; }
-    .bar-label { width: 120px; color: #374151; }
-    .bar-fill { font-family: monospace; color: #22c55e; font-size: 1.1rem; }
-    .score { color: #6b7280; font-size: .85rem; }
-    .btn { padding: .5rem 1.25rem; border-radius: 6px; font-size: .9rem; cursor: pointer; border: none; }
-    .btn-primary { background: #22c55e; color: white; }
-    .btn-secondary { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
-    .nav-row { display: flex; gap: .75rem; margin-top: 1.5rem; }
-  </style>
-</head>
-<body>
-  <!-- ProgressBar: 9 segments, fill per chapter index -->
-  <!-- ChapterCard: chapter label + title + purpose prose -->
-  <!-- Chapter-specific content (questions, summary rows, etc.) -->
-  <!-- NavRow: Back (if Ch > 0) + Next / Confirm -->
-</body>
-</html>
-```
-
-Key rule: **use PreFilledField instead of QuestionBlock** for any field where `inbox_orientation` has a value with `triage_confidence: high | medium`. Show the pre-filled value and ask "Confirm or correct?" — the user should only need to press Next unless something is wrong.
-
-### Markdown mode (Claude Code)
-
-```
-── Chapter N of 9: [Chapter Name] ──────────────────────────────
-
-[Chapter purpose prose]
-
-**[Question label]**
-[Pre-filled value if available, labeled [pre-filled from documents]]
-> [Question prompt]
-```
-
-NavRow = numbered options or a single bold CTA: **Type your answer or press Enter to confirm.**
-
----
+Use ordinary Markdown: a chapter progress line, attributed pre-filled values,
+compact tables, and grouped prompts. A chapter with all required values resolved
+becomes a confirmation row. Preserve the source design's progress, gap, synthetic
+content, quality, and navigation information as text; do not generate a separate
+interactive presentation surface.
 
 ## Trigger phrases
 
@@ -149,11 +60,7 @@ compact attributed confirmation and ask only unresolved required, pack-driven,
 or routing-critical questions. Offer to return to any chapter if the operator
 wants to add more later.
 
-At the start of each chapter, render a progress marker using the detected surface:
-
-**HTML artifact mode:** Render a new artifact with a 9-segment ProgressBar (filled = completed chapters, active = current chapter) and a ChapterCard with the chapter name and purpose prose.
-
-**Markdown mode:**
+At the start of each chapter, render this Markdown progress marker:
 ```
 ── Chapter N of 9: [Chapter Name] ──────────────────────────────
 ```
@@ -271,7 +178,9 @@ Chapters with pre-filled data should:
 >
 > Let me ask a few questions to recommend the right combination.
 
-**Ask the following questions in sequence.** Each question should be asked in natural prose — not as a numbered list. Wait for an answer before asking the next one.
+**Ask only unresolved questions, grouped by topic.** Use natural prose and preserve
+the source attribution beside every pre-filled answer. After each grouped response,
+surface only required or routing-critical gaps that remain.
 
 **Q1.1 — Government funder:**
 > Does this project receive funding from a government program, grant, or public research body?
@@ -418,9 +327,9 @@ of the two to change — do not silently resolve it.
 
 Present the full recommended combination with a one-line description of each pack's contribution. Confirm before proceeding.
 
-**HTML artifact (Coworker):** After Q1.6, render the recommended pack combination as a row of OptionCard components in selected (green-bg) state. Show each pack's one-line contribution beneath its card. Add an [Add pack] OptionCard in unselected state for any pack not recommended. Render a NavRow: [Back] [Confirm selection →].
-
-**Markdown mode (Claude Code):** Present as a markdown table: `| Pack | Contribution |` with recommended packs listed. Ask "Does this look right? Reply with any packs to add or remove."
+Present the recommended pack combination as a Markdown table:
+`| Pack | Contribution |`. Ask: "Does this look right? Reply with any packs to
+add or remove."
 
 Write the confirmed pack selection to the working intake record.
 
@@ -600,9 +509,9 @@ SYNTHETIC CONTENT OFFERED
 [List any gaps where synthesis could help, with a description of what would be generated]
 ```
 
-**HTML artifact (Coworker):** Render the CAPTURED section as a list of StatusRow components (✓ green prefix). Render each gap as a GapRow with three inline action buttons: [Provide now] [Leave gap] [Synthesize]. Render a synth-notice (amber) beneath any gap where synthesis is offered. NavRow: [Back] [Continue →].
-
-**Markdown mode (Claude Code):** Render the gap report as the code block shown above. After the block, ask for each gap in sequence: "For [field]: provide now, leave blank, or want me to synthesize a starting point?"
+Render the gap report as the code block shown above. Group only unresolved
+required questions, offering: provide now, leave a non-required gap, or request
+an explicitly labelled synthetic starting point where synthesis is permitted.
 
 **For each gap, offer one of three paths — ask before doing anything:**
 
@@ -649,9 +558,8 @@ SYNTHETIC CONTENT (will be labeled)
 [list any synthetic fields or documents]
 ```
 
-**HTML artifact (Coworker):** Render each section (WILL CREATE / PACKS LOADED / SYNTHETIC CONTENT) as a group of SummaryRow components. Source badges (document / conversation / synthetic) appear inline on each row. Synthetic rows are highlighted with amber-bg. A single large [Initialize project-state/ →] button with a warning note beneath: "This creates the project-state/ directory. Nothing is permanent except the activity log." NavRow: [Back] [Initialize →].
-
-**Markdown mode (Claude Code):** Render the pre-flight summary as the code block shown above. Ask: "Ready to initialize? Type 'yes' to proceed."
+Render the pre-flight summary as the code block shown above, label every source
+and synthetic value, then ask: "Ready to initialize? Type 'yes' to proceed."
 
 Ask for explicit confirmation: "Ready to initialize? This will create the `project-state/` directory structure. You can always add to it — nothing is permanent except the activity log."
 
@@ -682,9 +590,7 @@ Run the following checks and present results:
 - **Goals clarity** (0–3): 0 = no goals captured, 1 = brief description, 2 = detailed goals + anti-patterns, 3 = goals + positive + negative examples
 - **Stakeholder depth** (0–3): 0 = no stakeholders, 1 = names only, 2 = names + roles, 3 = names + roles + preferences
 
-**HTML artifact (Coworker):** Render the orientation quality as three QualityBar components inside a ChapterCard. Each bar shows label, filled-block graphic (█░), and score. Add an overall summary line beneath. Then render suggested next steps as OptionCard components (each clickable to trigger the corresponding action). NavRow: [Done].
-
-**Markdown mode (Claude Code):** Render as the code block below:
+Render orientation quality and suggested next steps as the code block below:
 
 ```
 Orientation quality

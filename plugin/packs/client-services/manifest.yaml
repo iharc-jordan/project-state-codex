@@ -39,7 +39,7 @@ conflicts_with:
 # facility's own manifest.yaml:phases.lifecycle always wins. Nothing is ever written blind, and
 # a facility that leaves its lifecycle unset stays permanently valid.
 # Resolution order: facility > pack default > terminal.
-# Spec: docs/CONTINUOUS-LIFECYCLE-SPEC.md section 4.1
+# Lifecycle behavior is enforced by project-phase-gate and the selected preset.
 defaults:
   # Retainers renew and follow-on SOWs land against the same customer, the same risk register,
   # and the same people. client-engagement-default cycles 04-wrap -> 03-engagement and keeps

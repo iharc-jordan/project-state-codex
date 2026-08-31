@@ -32,7 +32,7 @@ memory does not.
 <!--
 WHY THIS TEMPLATE EXISTS
 
-docs/SCHEMA.md has defined `lessons-learned/YYYY-MM-DD-<slug>.md` for a long time, and
+Project State defines `lessons-learned/YYYY-MM-DD-<slug>.md`, and
 skills/project-lessons has always written exactly that path. What was missing was a shape to copy and
 a directory to copy it into. This repo's own facility has the directory and five lessons in it;
 CRMA47, a newer facility, has no such directory, and the scaffolder's output listing never mentions

@@ -41,8 +41,9 @@ or copy a bearer token from a local authentication file.
 
 Create a new project end to end.
 
-1. Confirm `org`, `name`, and compliance `pack` with the user. Derive the state
-   repo name (default `<name>-state`, owner = the GitHub org).
+1. Confirm `org`, `name`, compliance `pack`, local target, and proposed private
+   repository name with the user. Obtain explicit authorization for repository
+   creation, commit, and push; otherwise stop after the local scaffold.
 2. Scaffold the substrate locally by invoking **`project-scaffolder`** in the
    target directory — it creates `project-state/` with the chosen pack.
 3. Create the private repo and push:

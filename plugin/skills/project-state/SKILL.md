@@ -36,22 +36,26 @@ while dir != "/":
 raise "No project-state/ found walking up from " + cwd
 ```
 
-`$PROJECT_STATE_DIR`, when set, short-circuits the walk (the appliance runner and prototype installs use this).
+`$PROJECT_STATE_DIR`, when set, short-circuits the walk for explicitly configured runners.
 
-## Substrate binding — one substrate, two transports
+## Substrate binding
 
-Some skills (today: `project-harvester`; the pattern is available to any `*-state` facility) can persist either to the local filesystem or to a remote project-state.app substrate. This skill owns the resolver; adopting skills route through it. Spec: `docs/HARVEST-CONNECTIVITY-ROADMAP.md` §3.
+The public package fully supports the local file binding described above. The
+private remote deposit backend and its authentication/protocol specification are
+not bundled, so environment variables alone are not enough to activate it.
 
-**Resolution (fail-safe toward local):**
+Use a deposit binding only when an installed internal adapter supplies the
+protocol and the operator explicitly configures and authorizes that endpoint.
+Then preserve the existing invariant: one project has one canonical substrate,
+an unreachable remote never falls back to local writes, and server-side locking,
+deduplication, cursor advance, identity, and activity logging remain atomic.
+Otherwise report the deposit binding as unsupported and use the file binding
+without prompting for cloud setup.
 
-1. If `$PS_ENDPOINT` is set AND a personal `ksm_` token is available (`$PS_TOKEN`, else `~/.config/project-state/token`) → **deposit binding**: reads/writes go over HTTPS to that endpoint, authenticated with the token. Identity is the token's email — server-resolved, never claimed.
-2. Otherwise → **file binding**: root per "Finding `project-state/`" above. This is the default and the base case — a machine with no cloud config behaves exactly as documented in the rest of this file, and no skill may prompt the user about cloud setup.
-
-**Rules (binding):**
-
-- A project has **one** canonical substrate. A given machine is either file-local or deposit-remote for a project — never both. The deposit binding handles an unreachable endpoint by keeping the batch and retrying, then stopping with a report; it never falls back to writing local files (that forks the substrate).
-- The five harvest persist verbs and their mappings live in `project-harvester`'s "Substrate binding" section (`read-context`, `seen?`/`mark-seen`, `write-doc`, `advance-cursor`, `append-activity`). On the deposit binding, locking, dedup, cursor advance, and activity logging are enforced server-side by the deposit module — the same write protocol in this file, executed by the app.
-- Harvest cursors are file-per-entity at `harvest/cursors/{email}--{surface}.yaml` — one writer per file, no lock. The `state.json` advisory-lock protocol still applies to everything else.
+The harvester's persistence interface remains `read-context`,
+`seen?`/`mark-seen`, `write-doc`, `advance-cursor`, and
+`append-activity`. In the public adapter those verbs resolve to the local
+Project State files and canonical write gateway.
 
 ## Schema
 
@@ -100,9 +104,9 @@ For every canonical entity or ledger write:
 7. **Release lock.** Delete `<target>.lock`.
 8. **Append to activity log.** One NDJSON line: `ts, actor, event, id, summary`. `summary` is
    canonical; `detail` and `note` are read-only aliases a reader must accept, in that order, and a
-   line whose structured fields say everything needs none of the three. Never rewrite existing lines
-   to match. Full vocabulary and validator severity: `docs/SCHEMA.md` → Activity log → "The
-   descriptive field".
+   line whose structured fields say everything needs none of the three. Never
+   rewrite existing lines to match. The event table and validation rules in this
+   skill plus the facility's checked-in `project-state/SCHEMA.md` are authoritative.
 9. **Update state.json counters or pointers** only when the operation requires it
    (also under the lock).
 
@@ -170,10 +174,10 @@ Those are owned by the capability's `schema/events.yaml`, not by this table.
 
 A **capability** is a plugin that extends the substrate with new entity kinds, its own event
 vocabulary, its own validator, and a bundled default pack. `install` makes a capability *available*
-(it lands at the plugin or appliance layer). **`enable` makes it active for one project**, and that is
+(it lands at the plugin or installed-adapter layer). **`enable` makes it active for one project**, and that is
 a memory-layer verb — it writes the manifest, so it routes through here like every other write.
 
-Normative spec: `docs/CAPABILITY-PLUGINS.md` §5. Capabilities ship under `capabilities/<id>/` with a
+Capabilities ship under `capabilities/<id>/` with a
 `plugin.yaml` declaring `namespace.prefix`, `payload.schema`, `payload.validator`, and
 `payload.packs.bundled`, plus a `templates/manifest-block.yaml` describing the config the block
 requires.
@@ -212,7 +216,7 @@ A write operation — take the `manifest.yaml` lock for the whole sequence.
 8. **Seed the reporting matrix** from the bundled pack's `reporting-matrix-defaults.yaml`, merging
    into `reporting-matrix.yaml`. Existing entries with the same id are left alone.
 9. **Arm the schedule.** Hand off to `project-automator update` so the seeded entries compile into
-   `automation/schedule.yaml` immediately. A capability that is enabled but unarmed is the failure
+   `automation/tasks.yaml` immediately. A capability that is enabled but unarmed is the failure
    mode this step exists to prevent.
 10. **Log `capability.enabled`** with `{id, version, pack}`.
 
@@ -270,7 +274,7 @@ further work, so re-entering an earlier phase would overwrite that phase's gate 
 criterion closed unmet.
 
 If this project continues, declare it:  project-phase-gate set-lifecycle continuous
-Nothing about conversion is destructive; see docs/CONTINUOUS-LIFECYCLE-SPEC.md section 6.
+Nothing about conversion is destructive; preserve prior phase and increment evidence.
 ```
 
 **Warn, never refuse.** A facility legitimately gains a milestone during closeout — a late deliverable
@@ -434,7 +438,8 @@ and stop.
 - `increment` references on milestones name existing increments.
 - `cycles_back_to` on any phase manifest names a phase id in the active preset.
 
-Spec: `docs/CONTINUOUS-LIFECYCLE-SPEC.md`.
+The lifecycle and increment invariants in this skill are authoritative for the
+public package.
 
 ## Reference files
 

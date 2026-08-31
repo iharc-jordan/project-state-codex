@@ -9,7 +9,7 @@ description: "Own the 11-report technical-intelligence suite for one project. In
 
 ## Purpose
 
-Produce a focused, **single-project** intelligence suite of 11 markdown reports that explain what this project is, how it's built, and how ready/novel/extensible it is — every claim traceable to something observable in the codebase or the `project-state/` substrate. This is the in-substrate, refreshable home of the former `doc-suite-generator-v2` software suite (cross-portfolio synthesis and the "portfolio position" report are intentionally excluded).
+Produce a focused, **single-project** intelligence suite of 11 markdown reports that explain what this project is, how it's built, and how ready/novel/extensible it is — every claim traceable to something observable in the codebase or the `project-state/` substrate. Cross-portfolio synthesis and the "portfolio position" report are intentionally excluded.
 
 **Two source layers, merged before writing:**
 - **The source under study** — a codebase (the enclosing repo, or a connected GitHub repo) OR an alternative source (Jira/Confluence). Owns HOW. **Required** — see *Resolving the source*.
@@ -32,7 +32,7 @@ These reports study a **source**. Resolve it in this priority — and if none re
 ## Trigger phrases
 - "tech reports" / "generate the tech suite" / "refresh the tech reports"
 - "technical intelligence reports" / "document the codebase"
-- A **Refresh** from the keep-state-app *Tech Reports* page (job id `tech-reports`)
+- A **Refresh** from a separately installed compatible viewer (job id `tech-reports`)
 
 ## The report catalog (11 types)
 

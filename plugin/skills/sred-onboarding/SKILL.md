@@ -48,10 +48,9 @@ on re-orientation), then gets out of the way.
 
 ## Presentation protocol
 
-Follow the shared protocol in `project-onboarding` — surface detection
-(`coworker` → HTML artifact mode, `claude-code` → markdown mode), the same design system, the
-same components (`ProgressBar`, `ChapterCard`, `QuestionBlock`, `SummaryRow`, `StatusRow`,
-`NavRow`). Seven segments in the progress bar.
+Follow the shared Markdown protocol in `project-onboarding`: seven progress
+segments, attributed pre-filled values, grouped unresolved questions, summaries,
+status rows, and explicit confirmation before writes.
 
 One deviation: **the deadline strip is red-bg, not green.** Once Chapter 3 computes a real
 filing date, render it at the top of every subsequent chapter. It is the only number in this

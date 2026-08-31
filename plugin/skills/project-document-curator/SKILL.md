@@ -36,9 +36,9 @@ All documents live under `project-state/documents/`:
 
 The index is at `documents/index.yaml`. Two top-level lists: `docs:` for published-document entries
 (canonical; readers tolerate `documents:`/`entries:` but always WRITE `docs:`) and `classified:` for
-one entry per ingested document. Its schema is in `docs/SCHEMA.md` → "Document index
-(`documents/index.yaml`)". *(Before 2026-08-21 this line pointed at `project-state/SCHEMA.md` entry
-"Document registry" — wrong path, and no such section existed. The shape was undocumented.)*
+one entry per ingested document. The public package supports the canonical list
+names and provenance fields defined below. The missing private document-index
+design is not bundled; do not invent additional fields or migrations from it.
 
 ## Provenance & lineage fields (v4.2 — every entry SHOULD carry these)
 

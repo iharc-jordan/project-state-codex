@@ -6,7 +6,7 @@ description: |
   is a new increment against the same customer, the same risk register, and the same people — not a
   reopened phase. 05-archive stays a genuine sunset for when the relationship actually ends.
   Continuous behaviour is inert unless the facility declares phases.lifecycle: continuous.
-  See docs/CONTINUOUS-LIFECYCLE-SPEC.md.
+  The phase and increment fields below are the public lifecycle contract.
 
 phases:
   - id: "01-discovery"

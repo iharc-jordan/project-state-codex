@@ -145,8 +145,8 @@ authors nothing and sends nothing.
 **Algorithm:**
 
 1. Read `project-state/automation/tasks.yaml` (`tasks[]`) — the **canonical cadence
-   registry** (`project-automator` compiles it from the matrix; the kanban calendar
-   writes operator reschedules into it, so it always carries the live schedule).
+   registry** (`project-automator` compiles it from the matrix; compatible editors
+   may write operator reschedules into it, so it carries the live schedule).
    Resolve each task's target: `kind: matrix` → the matching `reporting-matrix.yaml`
    entry (generator, profile, surface; the matrix `enabled` flag is authoritative for
    matrix tasks); `kind: action` → the named skill action; `kind: adhoc` → the task's
@@ -183,9 +183,9 @@ authors nothing and sends nothing.
    pointers/activity. Invoke each remaining owner once (passing `profile` if
    present). The generator produces its report **and** drops an outbox card.
 5. Surface the result to the user as the standard digest (🔴/🟡/🟢) noting which
-   cards were just queued: "Queued 2 drafts for review → /queue."
+   cards were just queued: "Queued 2 drafts for review in outbox/queue/."
 6. Append one `orchestrator.tick` event per dispatch to the activity log so the
-   Schedule view can show last-run.
+   configured scheduling views can show last-run.
 
 **Discipline for the tick:** it dispatches generators, never sends. If nothing is
 due, say so — a tick with an empty due-list is a healthy quiet day. Idempotent:
@@ -238,9 +238,10 @@ When the user signals end of day, end of session, or "wrapping up":
 - Circulate agenda 5+ business days prior
 
 ### `baseline` (on phase transition, milestone completion, or on demand)
-- Call `project-doc-suite-generator` to produce the baseline report bundle
-- Output: `project-state/reports/baseline/Baseline-Reports-YYYY-MM-DD/` with styled `.docx` + `.xlsx`
-- Copy to website `public/downloads/baseline/` for static serving
+- Under the invocation gates, call `project-doc-suite` once to produce the
+  unified documentation bundle
+- Output: `project-state/reports/unified-suite/YYYY-MM-DD/`
+- Copy to website `public/downloads/unified-suite/YYYY-MM-DD/` for static serving
 - Log `report.generated` event to activity log
 
 ### `phase-check` (weekly during planning and closeout, monthly during execution)
@@ -256,14 +257,13 @@ The orchestrator does not run itself. It is invoked:
   (for example, early each weekday). The scheduler is a thin trigger; all scheduling *logic* lives
   in the `tick` routine reading `automation/tasks.yaml` (falling back to
   `reporting-matrix.yaml` when no registry exists), so the schedule is testable
-  and inspectable in the substrate rather than buried in scheduler config. The optional kanban
-  **Calendar view** (`/calendar`) renders the same registry with computed next-due and
-  last-run so a human can see what the next tick will do.
+  and inspectable in the substrate rather than buried in scheduler config. An optional
+  compatible calendar may render the same registry with computed next-due and last-run.
 
 `project-state/manifest.yaml` does not specify schedules; those are managed via the `schedule` skill and should be configured separately.
 
-**Registering a recurring trigger.** The public package does not include the kanban
-Schedule view. In Codex, use the product's recurring-automation support when the
+**Registering a recurring trigger.** The public package does not include a scheduler
+or calendar application. In Codex, use the product's recurring-automation support when the
 operator requests scheduling; on Windows, Task Scheduler is an optional CLI fallback.
 Never register a trigger silently or bypass normal approval and sandbox settings.
 Keep scheduler logs under `logs/cron-tick.log` when a CLI fallback is used.
@@ -280,6 +280,9 @@ Keep scheduler logs under `logs/cron-tick.log` when a CLI fallback is used.
 
 ## Integration
 
-Calls every other skill in the suite, including `project-doc-suite-generator` for baseline report bundles. Does not read or write state directly — goes through `project-state`. Its output is often consumed by the user verbally, but it may also write an orchestrator-run snapshot to `reports/adhoc/orchestrator-YYYY-MM-DD.md` for audit.
+Routes to the single applicable owner, including `project-doc-suite` for a full
+documentation bundle. It does not mutate canonical state directly; it goes
+through `project-state`. Its own derived run snapshot may be written to
+`reports/adhoc/orchestrator-YYYY-MM-DD.md`, then logged through `project-state`.
 
 - **project-git** — suggested at end of daily routine and end-of-session; the orchestrator surfaces the checkpoint prompt but never calls `git commit` automatically.

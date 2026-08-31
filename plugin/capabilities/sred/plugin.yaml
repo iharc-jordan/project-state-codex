@@ -11,7 +11,7 @@ plugin:
     The system drafts only; it never files and never asserts eligibility.
   authors:
     - "David Olsson <david@atomic47.co>"
-  spec: "docs/SRED-CAPABILITY-SPEC.md"
+  spec: "README.md"
   released: "2026-08-17"
 
 compatibility:

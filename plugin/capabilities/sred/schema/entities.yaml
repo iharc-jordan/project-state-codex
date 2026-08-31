@@ -1,5 +1,5 @@
 # sred capability — schema extension (entity kinds + directories)
-# Registered with the memory layer at enable. Normative source: docs/SRED-CAPABILITY-SPEC.md §4.
+# Registered with the Project State canonical gateway when the capability is enabled.
 schema_version: 1
 capability: sred
 

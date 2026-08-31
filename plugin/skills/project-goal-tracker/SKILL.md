@@ -14,7 +14,7 @@ Milestones are **outputs** — "did we ship the thing." Objectives and KPIs are 
 layer: high-level objectives (meta / leadership / north-star), the KPIs that quantify them,
 and the dated readings that show the trend.
 
-Two file-per-entity kinds (full schema in `docs/SCHEMA.md`):
+Two file-per-entity kinds, with their public fields defined below:
 
 - **Objective** `objectives/O<NN>-<slug>.yaml` — the qualitative aim. Owns a basket of KPIs
   (`key_results`), an explicit operator `status`, and optionally the `milestones` that
@@ -83,8 +83,9 @@ readings are never rewritten.
 
 ## Surfaces
 
-- **Goals view** (`/goals` in the kanban) renders objective cards with KPI sparklines
-  (baseline + target guide lines), trend, attainment bars, and an "add reading" affordance.
+- **Optional Goals view** — a separately installed compatible viewer may render
+  objective cards from these canonical files. The public package does not bundle
+  that viewer; use the computed fields above in file/report workflows.
 - **Board/investor packs** read `kpis/*.yaml` for the monthly update's metrics section
   (see `packs/board-investor/profiles/funder-reporting.yaml`).
 - **Wiki** `[[O01]]` / `[[KPI-01]]` resolve to objective/KPI entities and earn backlinks,

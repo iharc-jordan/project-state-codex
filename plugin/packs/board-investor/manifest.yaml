@@ -29,7 +29,7 @@ provides:
 # facility's own manifest.yaml:phases.lifecycle always wins. Nothing is ever written blind, and
 # a facility that leaves its lifecycle unset stays permanently valid.
 # Resolution order: facility > pack default > terminal.
-# Spec: docs/CONTINUOUS-LIFECYCLE-SPEC.md section 4.1
+# Lifecycle behavior is enforced by project-phase-gate and the selected preset.
 defaults:
   # Board and investor reporting does not close out - it recurs for the life of the company.
   lifecycle: continuous

@@ -4,7 +4,7 @@
 **Version:** 1.0.0
 **Compatible core:** ≥4.1
 **Maturity:** beta
-**Shape:** bundled default pack of the `sred` capability plugin (`capabilities/sred/`) — behavior only. Entities, skills, templates, and the validator ship with the capability, not this pack. Spec: `docs/SRED-CAPABILITY-SPEC.md`.
+**Shape:** bundled default pack of the `sred` capability (`capabilities/sred/`) — behavior only. Entities, skills, templates, validator, and the authoritative public rules ship with the capability, not this pack.
 
 ## What this pack does
 

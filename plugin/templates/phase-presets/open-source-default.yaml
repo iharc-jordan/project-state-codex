@@ -6,7 +6,7 @@ description: |
   development opens a new increment rather than reopening a phase. 04-archived stays a genuine
   sunset — archiving an open-source project is a real ending, not an increment boundary.
   Continuous behaviour is inert unless the facility declares phases.lifecycle: continuous.
-  See docs/CONTINUOUS-LIFECYCLE-SPEC.md.
+  The phase and increment fields below are the public lifecycle contract.
 
 phases:
   - id: "01-incubation"

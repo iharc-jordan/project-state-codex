@@ -72,11 +72,13 @@ Terminalize with evidence; prompt a `project-lessons` retrospective (what the wi
 
 ### `pipeline` — the board in words
 
-Summarize the facility's tenders grouped by lifecycle band (Discovery / Review / Decision / Pursuit / Closed), with score, days remaining, owner, next action — same grouping the kanban renders. Flag: act-now unowned; decisions past due; deadlines within 10 days; stale `under_review` (> 7 days without activity).
+Summarize the facility's tenders grouped by lifecycle band (Discovery / Review / Decision / Pursuit / Closed), with score, days remaining, owner, next action. Flag: act-now unowned; decisions past due; deadlines within 10 days; stale `under_review` (> 7 days without activity).
 
-## Kanban integration
+## Optional viewer integration
 
-`project-kanban` renders lanes from `workflow.status` using the band grouping above. This skill is the only writer of that field, so the board is always a truthful projection of state — regenerate the view, never hand-edit it.
+A separately installed compatible viewer may render lanes from `workflow.status`
+using the band grouping above. This skill is the only writer of that field, so every
+view remains a truthful projection of state — regenerate a view, never hand-edit it.
 
 ## Output format
 

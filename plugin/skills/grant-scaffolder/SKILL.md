@@ -13,141 +13,28 @@ Initialize a `grant-state/` submission facility and manage the award handoff to 
 1. **At submission start** — scaffold the facility.
 2. **On award** — freeze the facility, spawn `project-state/`, carry forward artifacts.
 
-## Presentation Protocol
+## Codex flow
 
-### Surface detection
+Use ordinary Markdown. Inspect supplied program sources before this flow, then:
 
-At invocation, detect the rendering surface:
-- **Coworker / claude.ai** — HTML artifact mode (interactive wizard)
-- **Claude Code (CLI)** — markdown mode (progress line + mermaid + numbered prompts)
+1. **Program selection** — show the 19 playbooks and their matching terms in a
+   compact table. Propose the source-supported candidate with confidence and
+   require confirmation; use `_agnostic-core` when none is confirmed.
+2. **Project inputs** — summarize the fields below with attribution and group
+   unresolved required questions. Do not enable Slack, Gmail, Calendar, or any
+   other surface unless the operator confirms it and the surface is available.
+3. **Compliance preview** — render the applicable gate map as Mermaid and a
+   required / recommended / not-applicable table. Preserve every gate rule below.
+4. **Review and confirm** — show all inputs and the exact facility tree. Obtain
+   explicit confirmation before creating files or initializing Git.
+5. **Build result** — show a checklist of files created and the next intake step.
 
-### Design system
+For an award handoff, show the award fields and carry-forward counts in Markdown,
+including the grant-state to project-state flow. Obtain explicit confirmation
+before freezing the grant facility or creating the sibling Project State
+facility.
 
-Shared with `project-scaffolder`. Colors: primary-green `#22c55e`, primary-green-bg `#f0fdf4`, text-main `#111827`, text-muted `#6b7280`, border `#e5e7eb`, amber-bg `#fffbeb`.
-Components: ProgressBar, OptionCard, SelectedCard, FormField, ToggleCard, SummaryRow, StatusRow, NavRow.
-
-### Wizard steps (scaffolding path)
-
-**Step 1 — Program Selection**
-
-_HTML artifact:_ 4-step ProgressBar (Step 1 active). SectionTitle "Select your program." Display the 19 playbooks as OptionCards in a 4-column grid with program name and one-line description. Include a search/filter input above the grid. One "Other / not listed" fallback card triggers `_agnostic-core`. NavRow: [Next →] (disabled until one card selected).
-
-_Markdown:_ Progress: `Step 1 of 4 — Program Selection`. Present as markdown table with playbook ID + matches. Ask: "Which Canadian program are you applying to? Type the program name."
-
----
-
-**Step 2 — Project Inputs**
-
-_HTML artifact:_ 4-step ProgressBar (Step 2 active). SectionTitle "Project details." Display playbook match result as a SelectedCard (green-bg, program name, match confidence badge). Then a series of FormField components:
-- Project short name (slug)
-- Project long name
-- Deadline (date picker or ISO input; show "Continuous intake" toggle)
-- Lead organization
-- PI name + email
-- Consortium shape (3 OptionCards: single-applicant / single-pi-with-partners / multi-party-consortium)
-- Provinces / regions (multi-select chips)
-- Indigenous engagement (3 OptionCards: Yes / No / Unsure — Unsure shows amber OCAP note)
-- Surfaces (3 ToggleCards: Slack / Gmail / Calendar)
-- Parent directory (text field)
-
-NavRow: [Back] [Next →].
-
-_Markdown:_ Ask each input in sequence. For consortium shape, display as numbered options. For surfaces, ask as yes/no per surface.
-
----
-
-**Step 3 — Compliance Gate Preview**
-
-_HTML artifact:_ 4-step ProgressBar (Step 3 active). SectionTitle "Compliance gates for [program]."
-
-Top: a Mermaid diagram showing the gate activation map for the selected playbook:
-```mermaid
-graph LR
-  Program --> GBA+
-  Program --> Bilingual
-  Program --> Stacking
-  Program --> IP[IP Declaration]
-  IndigenousYes --> OCAP
-  IndigenousYes --> DataSov[Data Sovereignty]
-  IndigenousYes --> IndEng[Indigenous Engagement]
-  CFI/SIF --> Env[Environmental]
-  CIHR/SSHRC --> Ethics[Ethics-REB]
-  CIHR/Genome --> Biosafety
-  CostShare --> CostShareGate[Cost-Share]
-```
-
-Below: a table of gates with status chips — `required` (green) / `recommended` (amber) / `not-applicable` (gray). Each gate has a one-line description.
-
-NavRow: [Back] [Next →].
-
-_Markdown:_ Render as Mermaid code block. Then show a markdown table of gates with required / recommended / N/A status.
-
----
-
-**Step 4 — Review & Confirm**
-
-_HTML artifact:_ 4-step ProgressBar (Step 4 active). SectionTitle "Review and confirm."
-
-Left panel: SummaryRows for all inputs (Program, Deadline, Lead org, PI, Consortium shape, Provinces, Indigenous engagement, Surfaces, Directory). Each row shows source badge if pre-filled from inbox documents.
-
-Right panel: facility directory tree preview:
-```
-grant-state/<slug>/
-├── manifest.yaml
-├── state.json
-├── program-record.yaml
-├── sections/          (N sections from playbook)
-├── gates/             (N gates)
-├── letters/
-├── budget/
-├── sources/
-├── documents/
-│   ├── inbox/
-│   └── working/
-└── logs/
-    ├── activity.ndjson
-    └── decisions.ndjson
-```
-
-Large [Scaffold grant-state/ →] button. Warning: "This creates the grant-state/ directory and initializes git."
-NavRow: [Back] [Scaffold grant-state/ →].
-
-_Markdown:_ Show summary table of all inputs. Show facility tree as code block. Ask: "Ready to scaffold? Type 'yes' to confirm."
-
----
-
-**Step 5 — Build Output**
-
-After scaffolding completes:
-
-_HTML artifact:_ StatusRow list of every file created (✓ prefix). Then 2 next-step OptionCards:
-- "Drop program documents → grant-state/documents/inbox/ and run /grant-ingestor triage"
-- "Invite collaborators → run /project-notifier to share access"
-
-_Markdown:_ Render StatusRows as a checklist. Print next-step instruction block.
-
----
-
-### Award handoff wizard (on "we won the grant")
-
-Present as a 3-step mini-wizard:
-
-**Step A — Award details:** FormFields for award date, sponsor ref, award amount, conditions, target directory for project-state/.
-
-**Step B — Carry-forward preview:** SummaryRows showing what will be carried forward (N people, N milestones, IP rationale, N gates). Mermaid diagram of the handoff flow:
-```mermaid
-graph LR
-  GS[grant-state/ frozen] -->|people| PS[project-state/ created]
-  GS -->|milestones re-baselined| PS
-  GS -->|IP rationale| PS
-  GS -->|gate snapshots| PS
-```
-
-**Step C — Confirm:** [Freeze grant-state/ and create project-state/ →] button. On completion, render StatusRows of all actions taken.
-
----
-
-## Inputs (ask the user if not provided — only in markdown / Claude Code mode)
+## Inputs (ask only when unresolved after source inspection)
 
 1. **Program name** — which Canadian program? (used to match playbook)
 2. **Deadline** — ISO date, or `null` for continuous-intake programs
@@ -243,7 +130,8 @@ After scaffolding, initialize a git repo in the facility's parent directory:
    ```
    grant-state/logs/*.ndjson merge=union
    ```
-4. Initial commit: `git commit -m "grant-state: facility scaffolded — <slug>"`
+4. Leave the new facility uncommitted. Offer a scoped Git checkpoint as a
+   separate, deliberate action and require explicit acceptance before staging.
 
 ## Output
 
