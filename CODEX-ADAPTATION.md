@@ -7,16 +7,20 @@ This branch adapts Atomic 47 Labs Project State public v4.9.0 at commit
 for Codex while preserving the public Project State deliverable contract.
 
 - `upstream` is `https://github.com/Atomic-47-Labs/project-state-plugin-public.git`.
-- `origin` is the independent private mirror
-  `https://github.com/iharc-jordan/project-state-codex-private.git`.
+- `origin` is the independent public adaptation repository
+  `https://github.com/iharc-jordan/project-state-codex.git`.
 - `main` and `upstream-v4.9.0` remain exactly at the upstream baseline.
-- `codex-lean` contains only the adaptation commits.
-- `codex-v4.9.0-lean.1` identifies the validated adaptation revision.
+- `codex-lean` is the public default branch and contains only the adaptation
+  commits.
+- `codex-v4.9.0-lean.1` identifies the first validated adaptation revision.
+- `codex-v4.9.0-lean.2` identifies the public-sharing documentation revision;
+  it changes no Project State runtime contract. Tags are immutable.
 - Atomic47 attribution, upstream links, and the MIT license are retained.
 
-The independent mirror is intentional: GitHub does not support making a private
-fork of a public repository. It is not presented as an Atomic47 fork or upstream
-release.
+The repository began as an independent private mirror because GitHub does not
+support making a private fork of a public repository. It was made public for
+sharing with Atomic47 after the adaptation was validated. It is not presented
+as an official Atomic47 fork or upstream release.
 
 ## Preserved public interface
 
@@ -43,6 +47,38 @@ The compatibility changes are intentionally narrow:
 
 No Project State manifest field, alternate state format, connector, or hosted
 gate was added.
+
+## Redundancies removed
+
+The adaptation does not remove Project State's shared project ledger. It removes
+places where the public Claude package would otherwise duplicate state or
+process already owned by Codex, the repository, an issue tracker, or a canonical
+document store.
+
+| Redundant overlap | Canonical owner after adaptation | What Project State still owns |
+|---|---|---|
+| Personal preferences and recurring operator habits copied into project files | Codex Memories | Checked-in shared project facts; memory can never override them. |
+| Repository commands, coding rules, release requirements, and execution constraints repeated in project state | The nearest `AGENTS.md` | Project objectives, milestones, decisions, risks, reporting obligations, and compliance evidence. |
+| Temporary implementation objectives and conversational completion state persisted as durable project facts | The active Codex task or Goal | Durable objective and milestone rollups needed by the wider project or its reports. |
+| Full engineering tickets copied into Project State | Jira, GitHub, or Linear when configured | Stable ticket references, cross-ticket milestone rollups, decisions, risks, and reporting context. |
+| Full source documents copied into the ledger by default | Their canonical drive or repository | Document inventory, stable references, provenance, status, and a managed copy only when a pack explicitly requires one. |
+| Reports treated as another source of truth | Canonical Project State entities | Reports remain derived views; a new fact found while reporting is first written to its canonical entity. |
+| Several writers creating parallel forms of the same project fact | `project-state` as the only canonical entity and ledger mutation gateway | Report and automation generators may write their owned derived artifacts, then record the pointer and activity event through `project-state`. |
+| Multiple report generators reacting to the same event | One report owner selected by output type, source event, and reporting period | Every configured report path and format remains available, but it is generated once. |
+| Orchestrator-driven report fan-out on ordinary reads | Read-only orchestration by default | A generator runs only after operator acceptance, a due enabled reporting-matrix entry, or an active pack requirement. |
+| Current and retired automation registries both presented as authoritative | `automation/tasks.yaml` | Existing automation behavior and logs remain; retired `automation/schedule.yaml` guidance is not regenerated. |
+| A legacy document-suite generator alongside the unified suite | `project-doc-suite` | `project-doc-suite-generator` remains discoverable only as a forwarding alias, so callers retain compatibility without a second implementation. |
+| Optional skills activating merely because they are discoverable | Applicable pack, capability, configured surface, due matrix entry, or explicit request | All skill entrypoints remain discoverable and available when their prerequisites exist. |
+| Long onboarding questionnaires before examining available evidence | Supplied repository files and canonical source documents first | Only unresolved required, pack-driven, or routing-critical questions are asked, with source attribution preserved. |
+| Advisory lockfiles described as cross-clone Git coordination | Lockfiles for shared-drive/server writers; Git synchronization for separate clones | Project State still supports team sharing, warns on known divergence, and requires explicit same-entity conflict resolution without automatic fetch, pull, commit, or push. |
+| Claude/Coworker UI mechanics embedded in operational policy | Normal Codex Markdown interaction | Unique fields, approvals, error conditions, workflow dependencies, and output contracts remain. |
+| Dangling links to private documents and assumed Atomic47-only services | Bundled public resources or an explicit unsupported boundary | Public behavior is not invented; configured, available integrations continue to work. |
+
+The practical result is one durable shared ledger rather than a second personal
+memory, task list, ticket database, document store, automation registry, and set
+of competing reports. A team can still share the ledger through Git or a
+properly coordinated shared filesystem; the adaptation only makes ownership and
+conflict behavior explicit.
 
 ## Codex packaging note
 
@@ -156,23 +192,27 @@ No validation step scaffolds or mutates a Project State project.
 
 ## Installation and release discipline
 
-Validate in `C:\Users\JordanStevenson\plugins\project-state-next` first. Only
-after the exact branch passes:
+The public `codex-lean` branch is installed by cloning it to
+`$HOME/plugins/project-state` (or `%USERPROFILE%\plugins\project-state` on
+Windows) and running `codex plugin add project-state@personal`. The repository
+itself is not duplicated into a second payload: its root Codex manifest points
+directly to `plugin/skills/`.
 
-1. push baseline `main`, `codex-lean`, and the baseline tag only to the private
-   mirror;
-2. tag the validated branch `codex-v4.9.0-lean.1` and push that tag;
-3. retain the prior unversioned source as
-   `C:\Users\JordanStevenson\plugins\project-state-pre-lean-c0b55ba`;
-4. move the validated clone to
-   `C:\Users\JordanStevenson\plugins\project-state`;
-5. leave the personal marketplace source at `./plugins/project-state`;
-6. update only the local Codex cachebuster suffix and reinstall
-   `project-state@personal`;
-7. retain the backup until a later real-project task succeeds.
+Release invariants are:
 
-The cachebuster is an installation-local manifest change after the immutable
-release tag. It is not part of the mirrored adaptation commit.
+1. keep `main` and `upstream-v4.9.0` at the exact upstream baseline;
+2. put Codex adaptations only on `codex-lean` and make that the public default;
+3. require every changed file to map to a justification ID and every adaptation
+   commit to record `Why`, `Compatibility`, and `Validation`;
+4. run the read-only contract validator and applicable Codex package probes on
+   the exact revision before tagging it;
+5. never scaffold or mutate a Project State project as part of package
+   validation; and
+6. retain the original attribution, upstream links, and MIT license.
+
+An installation may use a local version cachebuster after an immutable release
+tag. That machine-local manifest change is not part of the public adaptation
+commit or release tag.
 
 ## Later internal-version migration
 
