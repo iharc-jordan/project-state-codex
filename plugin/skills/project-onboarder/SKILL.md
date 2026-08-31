@@ -3,6 +3,8 @@ name: project-onboarder
 description: "Produce a personalized onboarding brief for a new teammate joining the project, grounded in project-state/. Use whenever the user says 'onboard [name]', 'new teammate joining', 'brief for [name]', 'get [name] up to speed', 'someone new from [org]', 'onboarding doc for [person]', 'welcome pack', 'what does [role] need to know', 'bring [name] into the project', or any request to introduce someone to the project. Produces a one-pager with their role, what they own, who their key contacts are, the MPA/PIC basics they need, and a 'first week' action list. Tailors content by role (Project Lead / Finance Rep / Communications / Signing Authority / Technical Contributor / PIC liaison)."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project Onboarder
 
 ## Purpose

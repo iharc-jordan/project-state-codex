@@ -3,6 +3,8 @@ name: sred-onboarding
 description: "Guided onboarding for the Canadian SR&ED capability. Runs seven chapters: claimant identity (legal name, Business Number, fiscal year end), advisor engagement, capability enablement, the capture lens (Layer 2 innovation criteria), first uncertainty capture from real in-flight work, evidence-source wiring, and an orientation check that ends on a real filing date. Refuses to enable without a fiscal year end — every SR&ED deadline is computed from it. Writes through project-state's capability enable verb; delegates the criteria interview and TU capture to project-sred-tracker. Never asserts eligibility and never files. Use when the user says 'set up SR&ED', 'onboard SR&ED', 'enable SR&ED', 'turn on SR&ED tracking', 'start capturing SR&ED', 'we want to claim SR&ED', 'get us ready for the T661', 'how do we start with SR&ED', or when project-onboarding hands off after the operator answers yes to the SR&ED question."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # SR&ED Onboarding
 
 ## Purpose

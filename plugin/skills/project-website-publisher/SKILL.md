@@ -3,6 +3,8 @@ name: project-website-publisher
 description: Build and deploy a full project website (Next.js 16 App Router on Vercel/Netlify) that surfaces every dimension of the project — dashboard, Gantt, milestones, risks, decisions, people, blog (scsiwyg), wiki (scsiwyg), calendar, reporting documents, and about pages. Reads project-state/ YAML/JSON/MD at runtime via server components with ISR revalidation. Use whenever the user says "publish to the site", "update the project website", "deploy", "regenerate the website", "rebuild and deploy", "init the project website", "what URL for [doc]", or any request to surface project state on the project URL.
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project Website Publisher
 
 This skill initialises, updates, and deploys a full project website from the `templates/website/` App Router starter. The website reads `project-state/` at request time — there is no static content pipeline and no rebuild needed for data changes.

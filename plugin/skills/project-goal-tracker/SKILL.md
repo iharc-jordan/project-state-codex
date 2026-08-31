@@ -1,7 +1,9 @@
 ---
 name: project-goal-tracker
-description: "Track objectives, goals, and KPIs — the outcome layer over milestones. Milestones track outputs (did we ship it); this skill tracks outcomes (did shipping it move the number). Use whenever the user says 'set a goal', 'add an objective', 'track a KPI', 'what are our goals', 'how are we tracking against target', 'add a reading for <metric>', 'update the cycle-time metric', 'are we on track for the annual objective', 'set a north-star', 'record this month's numbers', 'link this milestone to a goal', or any request to read or write objectives/KPIs. Objectives live in objectives/O<NN>-<slug>.yaml (the aim), KPIs in kpis/KPI-<NN>-<slug>.yaml (baseline → current → target with a dated history). Also trigger when project-funder-reporting (board/investor packs) needs the KPI snapshot for a metrics section, or project-status-reporter wants outcome progress. All writes route through project-state; attainment and trend are computed on read, never stored."
+description: "Track project objectives, goals, and KPIs as the outcome layer over milestones. Use for setting or reviewing goals, recording KPI readings, checking progress against targets, linking milestones to objectives, or supplying outcome snapshots to reports. All writes route through project-state; attainment and trend are derived on read rather than stored."
 ---
+
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
 
 # Project Goal Tracker
 

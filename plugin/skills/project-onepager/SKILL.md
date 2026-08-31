@@ -1,7 +1,9 @@
 ---
 name: project-onepager
-description: "Generate audience-framed documents from project state — one-pagers, briefs, deep-dives, whitepapers. A document is a RECIPE (audience × altitude × purpose × evidence filters) stored in reports/custom-defs/, rendered against current state into branded HTML (print-ready → PDF) with every claim carrying provenance back to a typed record. Audience voice comes from pack profiles (onepager.yaml) or built-in defaults; drafts land in outbox/queue/ for review — never sent or published automatically. Recipes regenerate: re-running one against newer state refreshes the document and reports what changed. Use whenever the user says 'one-pager', 'write a brief', 'leave-behind', 'whitepaper', 'exec summary doc', 'funder one-pager', 'make a doc for <audience>', 'regenerate the onepager', or when the reporting matrix schedules a onepager entry. Reads state through project-state; distributes via project-blog-publisher / project-website-publisher / project-notifier after human approval."
+description: "Generate audience-framed one-pagers, briefs, deep-dives, and whitepapers from Project State. Store each document recipe in reports/custom-defs, render claims with provenance, and report changes when regenerating against newer state. Use for one-pagers, briefs, leave-behinds, whitepapers, executive summaries, funder documents, or scheduled one-pager entries. Draft for human review; never send or publish automatically."
 ---
+
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
 
 # Project One-Pager (documents as views over state)
 

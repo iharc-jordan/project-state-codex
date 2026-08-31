@@ -3,6 +3,8 @@ name: project-funder-reporting
 description: Generic funder/customer reporting engine. Reads funder-specific behavior from a profile YAML loaded by the active pack — claim form template, deadlines, format spec, cover-email template, signoff routing. The PIC pack ships a profile that reproduces v1.x quarterly claim behavior (Apr/Jul/Oct/Jan 20, MS & financial xlsx, percent_complete + technical_progress mapping). Other packs ship customer-invoicing profiles, board-pack profiles, and stage-gate profiles. Use whenever the user says 'draft the [stakeholder] report', 'quarterly claim', 'monthly invoice', 'board pack', 'funder report', 'customer billing', 'prepare the report', or any request to produce a stakeholder-bound recurring report. Also trigger when the orchestrator detects an upcoming reporting deadline from the stakeholder reporting matrix. Drafts only — never submits.
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project Funder Reporting (v2.0 — was project-claim-prep)
 
 This skill produces stakeholder-bound recurring reports — anything that one named recipient (or recipient group) needs at a defined cadence in a defined format. Funder claims are one case; customer invoices, board packs, milestone-billing reports, and stage-gate submissions are others.

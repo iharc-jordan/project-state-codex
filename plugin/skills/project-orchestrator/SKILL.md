@@ -3,6 +3,8 @@ name: project-orchestrator
 description: "The conductor of the project-* skill suite. Decides what to do next based on current state + the calendar (day of week, proximity to quarterly claim deadlines, SC meeting cadence, phase gate status, overdue milestones, annual questionnaire). Use whenever the user says 'what should I do today', 'what should I do this week', 'run the project', 'what's pending', 'what needs attention', 'morning briefing for the project', 'are there any deadlines coming up', 'what's the orchestrator saying', 'run the weekly routine', 'run the daily routine', 'kickoff the day', or any request asking the project to tell itself what to do next. Invokes other project-* skills as needed and hands decisions back to the user for approval. Thin by design — this skill routes, it does not do the work itself."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project Orchestrator
 
 ## Purpose

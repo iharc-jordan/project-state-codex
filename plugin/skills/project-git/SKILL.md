@@ -3,6 +3,8 @@ name: project-git
 description: "Strategic git checkpointing for project-state facilities. Generates commit messages automatically from the activity log. Sub-actions: checkpoint (commit local changes), push (share with team), sync (pull teammates changes, rebase-safe), status (what has changed since last commit). Use when the user says 'checkpoint the project', 'commit my work', 'sync with the team', 'push the state', 'what have I changed', 'share my changes', 'end of session', 'before the meeting', or any request to checkpoint, share, or receive project-state changes via git."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project Git
 
 ## Purpose

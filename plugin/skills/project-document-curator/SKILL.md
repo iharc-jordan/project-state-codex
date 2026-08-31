@@ -3,6 +3,8 @@ name: project-document-curator
 description: "Classify, index, and manage project documents — proposals, MPAs, signed Schedule A workbooks, PIC templates, quarterly claim forms, meeting minutes, publications, and any other file that lands in the project. Use this skill whenever the user says 'I just dropped a doc', 'classify this file', 'catalog the inbox', 'what docs do we have', 'where is the MPA', 'promote this to source of truth', 'update the document index', 'a PIC form arrived', 'archive the old proposal', 'the signed MPA is here', 'what is the source of truth for X', or any request to ingest, find, classify, or promote documents inside a `project-state/` project. Also trigger when any project-* skill needs to reference a specific document by canonical path, or when the user drops a file into `project-state/documents/inbox/`."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project Document Curator
 
 ## Purpose

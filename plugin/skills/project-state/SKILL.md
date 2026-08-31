@@ -3,6 +3,8 @@ name: project-state
 description: "The shared memory of a grant-funded project. Read, write, or validate project state — manifest, current phase, milestones, decisions, risks, changes, people, documents, activity log. Trigger on 'what's the project state', 'record a decision', 'log this change', 'update milestone M03', 'who is on the steering committee', 'what phase are we in', 'append to activity log', 'check state health', 'validate the manifest', or any request that reads or writes `project-state/`. Also trigger automatically whenever another project-* skill (phase-gate, document-curator, milestone-manager, status-reporter, notifier, sc-meeting, claim-prep, change-register, orchestrator) needs to read or write state — they route through this one. Also owns the capability lifecycle — enable, disable, and validate a capability plugin (sred, tender-intelligence) for this project: 'enable SR&ED', 'turn on the sred capability', 'is SR&ED enabled', 'disable the capability'. Works for any `project-state/` found by walking up from cwd."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project State — the memory layer
 
 ## Purpose

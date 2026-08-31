@@ -3,6 +3,8 @@ name: tender-qualifier
 description: "The intelligence layer of the tender-intelligence package. Score tenders against the facility's capability profiles (deterministic filter + semantic match with cited evidence), qualify them against retrieved document packages (mandatory requirements, disqualifiers, eligibility confidence), extract structured requirements from tender documents, and detect within-facility duplicates. Sub-actions: score (default), qualify, extract, dedupe. Trigger on 'score the new tenders', 'qualify t-2026-0041', 'does this tender fit us', 'extract the requirements from this RFP', 'check for duplicate tenders', 'why did this tender score 91', 'rescore against the new profile', or after tender-harvester reports new records. Never marks a tender compliant without human approval."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # tender-qualifier
 
 Turn discovered tenders into scored, explained, human-decidable opportunities. Reads and writes tender entities through the `project-state` memory layer only.

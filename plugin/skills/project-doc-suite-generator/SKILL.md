@@ -3,6 +3,8 @@ name: project-doc-suite-generator
 description: "⚠️ DEPRECATED in v3.0 — use project-doc-suite instead. project-doc-suite generates the same governance Office files plus a full software documentation suite, all from a unified context that reads both project-state/ and the live codebase. This skill will be removed in v3.1. If you are on v2.x and cannot upgrade, this skill still functions: generates index, tracker xlsx, project plan, risk register, milestone specs, architecture overview, and roadmap/KPIs from project-state/ only."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project Doc Suite Generator
 
 > ⚠️ **Deprecated in v3.0.** Use `project-doc-suite` instead.

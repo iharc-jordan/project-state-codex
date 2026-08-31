@@ -3,6 +3,8 @@ name: project-archive
 description: Project closeout and archival drive. Generic core handles final reports, lessons summary assembly, archive directory creation, audit-trail finalization. Funder/customer-specific closeout items (PIC final reports, FTE confirmation, holdback release, MPA close) come from the active pack's archive profile. PIC pack ships the v1.x closeout flow. Client-services pack ships customer-final-deliverable + sunset workflow. Use whenever the user says 'close the project', 'closeout', 'final report', 'wrap up', 'submit final reports', 'archive the project', 'ready to close', 'holdback release', 'project end', or any request related to the closeout phase.
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project Archive (v2.0 — generic core + pack-driven closeout)
 
 Drives the closeout phase: final reports, lessons-learned summary, IP final reporting, financial reconciliation, archive directory creation, audit-trail finalization.

@@ -3,6 +3,8 @@ name: project-jira-publisher
 description: "Publish project-state entities to Jira via the REST API — milestones, risks, decisions, objectives and KPIs become Jira issues. Idempotent: the first run creates an issue and writes the returned key back onto the entity (jira_key: PROJ-123); later runs update that issue, never duplicating. Non-secret config (base_url, project_key, issue types) lives in manifest.yaml surfaces.jira; the API token comes from the JIRA_API_TOKEN env var so it never touches the substrate. Use whenever the user says 'publish to Jira', 'push milestones to Jira', 'sync to Jira', 'create Jira issues from the project', 'export the project to Jira', or 'set up Jira'. Always preview with --dry-run first and confirm before the live push; nothing is sent without the user's go-ahead."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # project-jira-publisher
 
 Push the project's structured entities into Jira and keep them linked, so a Jira-using

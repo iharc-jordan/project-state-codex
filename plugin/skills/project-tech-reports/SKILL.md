@@ -1,7 +1,9 @@
 ---
 name: project-tech-reports
-description: "Generate the Tech Reports intelligence suite — 11 evidence-based markdown reports about THIS project, merging a live codebase scan with the project-state/ substrate: project overview, technical specification, business benefits, innovation themes, features & capabilities, extensibility, work zones, technical readiness, Worksona leadership-runbook alignment, Worksona first-principles alignment, and an executive summary. Generate all or a selected subset; each report is written to a VERSIONED path project-state/reports/tech/<report-id>/<stamp>.md (history kept, never overwritten) and the run appended to manifest.json. The keep-state-app Intel 'Tech Reports' page reads these (view / download / regenerate / history). Use whenever the user says 'tech reports', 'generate the tech suite', 'regenerate a tech report', 'document the codebase', 'technical intelligence reports', or when the Tech Reports page triggers a generation run. Single-project only — no cross-portfolio synthesis."
+description: "Generate the 11-report Tech Reports intelligence suite for one project by merging a live codebase scan with the project-state substrate. Write each report to a versioned project-state/reports/tech path, preserve history, and append the run to manifest.json. Use for tech reports, a technical intelligence suite, codebase documentation, or refreshing a selected report. Single-project only; never invent claims when a source cannot be verified."
 ---
+
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
 
 # Project Tech Reports
 

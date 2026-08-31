@@ -3,6 +3,8 @@ name: project-automator
 description: "Compile the project's reporting-matrix.yaml into automation/tasks.yaml — the canonical cadence registry that every scheduling host (the kanban in-app scheduler, the cron-curled /api/cron/tick, the appliance headless runner) fires from and the calendar UI edits. Reads every matrix entry, classifies it as cadence (time-fired) or event-driven (hook), normalizes to the task cadence shape (kind/day/hour/dom/month/start), spreads fire hours across the configured window, and writes tasks additively — never clobbering operator reschedules made in the calendar. Also applies named cadence presets (typical daily/weekly/funder/agile bundles) per project or per milestone. Modes: plan (preview), generate (write), update (re-diff, preserve overrides), status (registry health), preset list|apply. Does NOT register crons or call generators — the host fires, the orchestrator tick dispatches. Trigger: /project-automator"
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # project-automator
 
 ## Purpose

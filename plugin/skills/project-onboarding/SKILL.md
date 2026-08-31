@@ -3,6 +3,8 @@ name: project-onboarding
 description: "Guided onboarding experience for new project-state instances. Begins with an Inbox Orientation pre-check — if documents/inbox/ contains files, runs project-inbox triage and pre-fills context before the first question. Then runs nine chapters: project identity, document ingestion, pack selection, milestone capture, stakeholder mapping, examples, gap handling, substrate initialization, and orientation check. Pre-filled chapters become confirmation passes instead of blank-slate interviews. Writes references/examples/ as first-class substrate entities. Does NOT set goals — objectives + KPIs are owned by the dedicated Goals tab, not onboarding. Use when starting a new project or re-orienting an existing one. Trigger on: 'set up project-state', 'onboard this project', 'initialize my project', 'I am new to project-state', 'configure this project', 'start the setup'."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project Onboarding
 
 ## Purpose

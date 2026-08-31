@@ -3,6 +3,8 @@ name: project-milestone-manager
 description: "CRUD project milestones, update percent complete and technical progress narrative, flag at-risk or blocked milestones, and regenerate the tracking xlsx from the YAML source of truth. Use this skill whenever the user says 'update M03', 'milestone status', 'how's M05 going', 'mark M01 complete', 'what milestones are at risk', 'recompute overall percent complete', 'list milestones', 'add a new deliverable to M07', 'assign owner to M12', 'regenerate the milestones tracker', or any request to read or write milestone state. Also trigger when project-status-reporter needs milestone data for a weekly report or SC pack, when project-funder-reporting needs % complete + technical_progress for the quarterly claim, when project-phase-gate checks whether gate milestones are done, or when project-change-register needs to know which milestones a change affects. PIC requires technical_progress + percent_complete per milestone on every claim — this skill owns that surface."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project Milestone Manager
 
 ## Purpose

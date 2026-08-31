@@ -1,0 +1,36 @@
+{
+  "name": "project-state",
+  "version": "4.9.0+codex.c0b55ba",
+  "description": "Codex adaptation of Atomic 47 Labs Project State: local-first project operations, reporting, compliance, grants, SR&ED, and tender workflows.",
+  "author": {
+    "name": "Atomic 47 Labs",
+    "url": "https://atomic47.co"
+  },
+  "homepage": "https://github.com/Atomic-47-Labs/project-state-plugin-public",
+  "repository": "https://github.com/Atomic-47-Labs/project-state-plugin-public",
+  "license": "MIT",
+  "keywords": [
+    "project-management",
+    "reporting",
+    "compliance",
+    "grant-management",
+    "sred",
+    "tenders",
+    "project-state"
+  ],
+  "skills": "./plugin/skills/",
+  "interface": {
+    "displayName": "Project State",
+    "shortDescription": "Run Atomic47's local-first project operating system in Codex.",
+    "longDescription": "A Codex adaptation of Atomic 47 Labs Project State v4.9.0, with 43 skills and bundled packs, templates, and capability resources.",
+    "developerName": "Atomic 47 Labs",
+    "category": "Productivity",
+    "capabilities": [],
+    "websiteURL": "https://github.com/Atomic-47-Labs/project-state-plugin-public",
+    "defaultPrompt": [
+      "Set up Project State for this repository.",
+      "Show the current project state and priorities.",
+      "Draft this week's status report from project state."
+    ]
+  }
+}

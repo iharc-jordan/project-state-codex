@@ -3,6 +3,8 @@ name: project-sred-reviewer
 description: "Review and strengthen Canadian SR&ED T661 narratives for audit resistance. Reads from sred/ substrate (TU/EX/ADV records + evidence log) or accepts pasted T661 draft text. Produces: CRA-reviewer critique, cross-section traceability check, cost-framing assessment, risky language flags, safer rewrites for Sections E/F/G, CRA attack simulation with defenses, and a readiness verdict. Active when sred-canada pack is loaded. Use whenever the user says 'review the T661', 'SR&ED audit check', 'is our claim defensible', 'strengthen the narrative', 'CRA review simulation', 'pre-submission check', 'rewrite section E', or any request to critique or improve SR&ED submission content."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project SR&ED Reviewer
 
 ## Purpose

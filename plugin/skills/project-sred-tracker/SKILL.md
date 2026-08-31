@@ -3,6 +3,8 @@ name: project-sred-tracker
 description: "Continuous SR&ED work capture for Canadian T661 claims. Records technological uncertainties (TUs), experiments (EXs), technological advancements (ADVs), and contemporaneous evidence entries into sred/ substrate. Enforces TU→EX→ADV traceability. Runs gap analysis, weekly progress digests, quarterly completeness reviews, cost roll-ups, and the innovation-criteria interview. Active when the sred capability is enabled. Use whenever the user says 'record a technical uncertainty', 'log SR&ED work', 'add an experiment', 'capture an advancement', 'SR&ED evidence', 'what's our SR&ED status', 'weekly SR&ED update', 'SR&ED digest', 'quarterly SR&ED review', 'gap analysis', 'define innovation criteria', 'what counts as innovation here', 'is this SR&ED', 'evaluate this SR&ED opportunity', 'screen this for SR&ED', or any request to track or screen experimental development work for CRA."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project SR&ED Tracker
 
 ## Purpose

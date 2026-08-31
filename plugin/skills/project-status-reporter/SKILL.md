@@ -3,6 +3,8 @@ name: project-status-reporter
 description: "Generate status reports for a grant-funded project in multiple formats — weekly report (team / Slack-format), Steering Committee pack (docx, PIC Appendix A agenda), quarterly claim draft (xlsx, PIC MS & financial tracking form), ad-hoc status prose (for email), and one-page dashboard snapshot. Use whenever the user says 'weekly report', 'draft the weekly', 'SC pack', 'prep the pack for next SC meeting', 'quarterly claim draft', 'draft Q2 claim', 'status update please', 'dashboard snapshot', 'summarize the project', 'how is the project', 'what's our status', 'send a status to PIC', or any request to produce a report from project-state/. Reads through project-state and milestone-manager; hands off delivery to project-notifier and blog-publisher. Never sends anything — always stops at a draft for review."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project Status Reporter
 
 ## Purpose

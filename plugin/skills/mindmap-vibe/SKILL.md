@@ -8,6 +8,8 @@ description: >-
   idea, brainstorm map, or wants a Cursor-generated map loaded into the desktop app.
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # MindMap Vibe (Cursor → MindMap Studio)
 
 Generate structured mind maps from ideas inside Cursor and load them into **MindMap Studio** at `~/Desktop/simple-minds.html`.

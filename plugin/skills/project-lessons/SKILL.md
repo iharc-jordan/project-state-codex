@@ -3,6 +3,8 @@ name: project-lessons
 description: "Capture Lessons Learned continuously from project kickoff through close, then summarize them at closeout. Use whenever the user says 'capture a lesson', 'lesson learned', 'what we learned about', 'retro note', 'that was tricky, let's remember', 'pitfall we hit', 'something that worked well', 'tip for future projects', 'lessons so far', 'summarize lessons', 'retrospective', 'what would we do differently', 'lessons for the final report', or any request to record or review project retrospective content. Per PIC PM Guide best practice: 'Begin to collect Lessons Learned at the start of the project to make it easier to reflect and remember how the project went.' Lessons show up in SC meetings under Open Discussion and in final reports at closeout."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project Lessons
 
 ## Purpose

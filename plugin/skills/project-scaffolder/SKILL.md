@@ -3,6 +3,8 @@ name: project-scaffolder
 description: "One-shot initializer for a new project-state/ facility. Use this skill when starting a brand-new funded project — scaffolds the directory tree, manifest, phase manifests, logs, README/SCHEMA/CONCURRENCY/SKILLS docs — and when asked to 'set up a new project', 'create a new project-state', 'scaffold a project', 'initialize project-state', 'start a new funded project', 'bootstrap a grant project', 'new consortium project', 'create the state folder for [project]', 'init project-state in this folder'. Asks clarifying questions about the project, its funder, its consortium, and seeds a manifest that the team fills in. Follow-up work (milestone seeding from proposal, people seeding from MPA) is handed off to the other project-* skills."
 ---
 
+> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+
 # Project Scaffolder
 
 ## Purpose

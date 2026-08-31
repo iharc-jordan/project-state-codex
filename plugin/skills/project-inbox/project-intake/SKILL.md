@@ -3,6 +3,8 @@ name: project-intake
 description: "Doc-driven fast-path init: drop documents (proposal, MPA, SOW, milestone schedule, grant agreement) and pick a pack — the skill extracts what it can, fills manifest.yaml and reporting-matrix.yaml from pack defaults + doc extraction, shows one confirmation screen, writes everything, then calls project-automator generate so the schedule is immediately ready. No interview, no wizard steps. Trigger on: 'intake this project', 'set up from docs', 'configure from documents', '/project-intake', 'quick init', 'init from proposal'. Use instead of project-scaffolder/project-onboarding when documents are available and fast setup is preferred."
 ---
 
+> Codex adapter: Read [CODEX.md](../../../CODEX.md) before using this skill.
+
 # project-intake
 
 ## Purpose
