@@ -11,9 +11,11 @@ stakeholders, compliance evidence, reporting obligations, and report provenance
 in a versionable `project-state/` ledger. Routine reports are derived from that
 state instead of being recreated from chat history.
 
-The `codex-lean` branch is the public Codex variant and the repository's default
-branch. `main` and the `upstream-v4.9.0` tag preserve the unmodified Atomic47
-public baseline.
+`main` is the public Codex variant and the repository's only long-lived branch.
+The `upstream-v4.9.0` tag preserves the exact unmodified Atomic47 public
+baseline for comparison. The Codex branch intentionally omits the upstream
+Claude marketplace and plugin manifests; Claude users should use Atomic47's
+upstream repository.
 
 ## What the Codex adaptation changes
 
@@ -62,11 +64,10 @@ project ledger.
 
 ## Install in Codex
 
-Clone the default `codex-lean` branch into the personal Codex marketplace and
-install it:
+Clone the repository into the personal Codex marketplace and install it:
 
 ```powershell
-git clone --branch codex-lean https://github.com/iharc-jordan/project-state-codex.git "$env:USERPROFILE\plugins\project-state"
+git clone https://github.com/iharc-jordan/project-state-codex.git "$env:USERPROFILE\plugins\project-state"
 codex plugin add project-state@personal
 codex plugin list
 ```
@@ -83,7 +84,6 @@ The Codex manifest at `.codex-plugin/plugin.json` points to
 
 ```text
 .codex-plugin/plugin.json       # Codex plugin manifest
-.claude-plugin/marketplace.json # preserved upstream marketplace metadata
 plugin/CODEX.md                 # Codex ownership, routing, and safety policy
 plugin/skills/                  # 43 preserved skill entrypoints
 plugin/packs/                   # 8 compliance packs

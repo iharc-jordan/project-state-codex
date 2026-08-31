@@ -6,7 +6,7 @@
 //   node build-sred-dashboard.mjs <facility-dir> [options]
 //
 //   --out, -o <path>     output file (default: <facility>/reports/adhoc/sred-dashboard.html)
-//   --artifact           emit body-only HTML for the Claude Artifact publisher
+//   --artifact           emit body-only HTML for embedding surfaces
 //   --as-of <YYYY-MM-DD> compute deadline countdowns from this date (default: today)
 //   --json <path>        also write the derived data as JSON (for other consumers)
 //

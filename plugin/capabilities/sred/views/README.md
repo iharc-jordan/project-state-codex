@@ -21,7 +21,7 @@ Writes `<facility>/reports/adhoc/sred-dashboard.html` by default. Options:
 | Flag | Effect |
 |---|---|
 | `--out`, `-o <path>` | Write somewhere else |
-| `--artifact` | Emit body-only HTML for the Claude Artifact publisher (no `<html>`/`<body>` wrapper) |
+| `--artifact` | Emit body-only HTML for embedding surfaces (no `<html>`/`<body>` wrapper) |
 | `--as-of <YYYY-MM-DD>` | Compute countdowns from a date other than today |
 | `--json <path>` | Also write the derived data, for other consumers |
 

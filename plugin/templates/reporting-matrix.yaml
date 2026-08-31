@@ -8,7 +8,7 @@
 # entry to its named generator at the configured cadence.
 #
 # Seed initial entries by running:
-#     ask claude: "seed reporting matrix from packs"
+#     ask Codex to seed the reporting matrix from the active packs
 # which copies the reporting-matrix-defaults.yaml from each loaded pack.
 #
 # Then customize per project. Stakeholder IDs reference manifest.yaml.
@@ -78,7 +78,7 @@ entries:
 
   # ===== From the loaded packs =====
 
-  # Add entries here. Use `ask claude: "seed reporting matrix from packs"`
+  # Add entries here. Ask Codex to seed the reporting matrix from active packs
   # to auto-populate from each loaded pack's reporting-matrix-defaults.yaml.
 
 # ----------------------------------------------------------------------------

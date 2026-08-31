@@ -1,71 +1,34 @@
-# Project State (Claude Code plugin)
+# Project State payload for Codex
 
-A generic operational substrate for multi-stakeholder projects. It bundles **43
-skills** that turn routine reporting into a byproduct of normal work — milestones,
-objectives/KPIs, phase gates, document curation, status reports, funder/grant
-compliance, and local website/reporting surfaces. Behavior is configured by swappable
-**compliance packs**, not hardcoded logic.
+This directory contains the Project State runtime payload loaded by the Codex
+manifest at `../.codex-plugin/plugin.json`.
 
-## Install
+Project State is a local-first operational substrate for multi-stakeholder
+projects. Its 43 skills turn routine reporting into a byproduct of maintaining
+shared objectives, milestones, decisions, risks, phases, stakeholders,
+compliance evidence, and report provenance.
 
-```
-/plugin marketplace add Atomic-47-Labs/project-state-plugin
-/plugin install project-state@project-state-plugin
-```
+## Contents
 
-Then turn on auto-update — **auto-update is off by default for every marketplace that isn't an
-official Anthropic one**, so without this your install stays frozen at this version forever, with no
-prompt:
+- `skills/`: 43 Codex-discoverable skill entrypoints.
+- `packs/`: eight swappable compliance and operating packs.
+- `capabilities/`: SR&ED and tender-intelligence capability definitions.
+- `templates/`: the preserved scaffolder and reporting templates.
+- `CODEX.md`: the shared Codex ownership, routing, authorization, and
+  compatibility policy read by every skill.
 
-```
-/plugin  →  Marketplaces  →  project-state-plugin  →  Enable auto-update
-```
+## Runtime model
 
-To check what you have and update by hand:
+The checked-in `project-state/` or `grant-state/` directory is the shared source
+of truth for durable project facts. Reports are derived views. Personal
+preferences remain in Codex Memories, repository execution rules remain in
+`AGENTS.md`, temporary progress remains in the active Codex task or Goal, and
+individual engineering work items remain in the configured issue tracker.
 
-```
-claude plugin list
-claude plugin update project-state@project-state-plugin
-```
+All external sends, issue creation, deployment, and repository mutations require
+the authorization defined in `CODEX.md`. Unconfigured optional surfaces remain
+inactive.
 
-Then start a project:
-
-```
-/project-state:project-scaffolder
-```
-
-Skills are auto-discovered and namespaced under `project-state:` — e.g.
-`/project-state:project-milestone-manager`, `/project-state:project-orchestrator`,
-and `/project-state:project-status-reporter`. Claude also invokes them automatically by their
-descriptions when you say things like "record a decision" or "draft the weekly".
-
-## What's inside
-
-| Group | Skills |
-|-------|--------|
-| Foundation | `project-state` (memory layer), `project-scaffolder`, `project-onboarding`, `project-admin` |
-| Core ops | `project-phase-gate`, `project-document-curator`, `project-milestone-manager`, `project-goal-tracker`, `project-status-reporter`, `project-inbox` |
-| Surfaces & automation | `project-orchestrator`, `project-notifier`, `project-review-meeting`, `project-funder-reporting`, `project-change-register`, `project-blog-publisher`, `project-website-publisher`, `project-jira-publisher`, `project-doc-suite`, `project-tech-reports` |
-| Compliance (pack-driven) | `project-sred-tracker`, `project-sred-reviewer` |
-| Polish | `project-onboarder`, `project-ip-tracker`, `project-external-comms`, `project-lessons`, `project-archive`, `project-git`, `project-harvester`, `project-feedback` |
-| Grant | `grant-state`, `grant-scaffolder`, `grant-ingestor` |
-
-**Packs** (`packs/`): `pic-pcais`, `grant-canada`, `sred-canada`, `board-investor`,
-`client-services`, `agile-default`, `open-source-community`, `tender-pursuit`. Six skills are
-profile-driven — they read their behavior from the active pack's YAML profiles.
-
-**Templates** (`templates/`): scaffolder seeds — phase presets, phase manifests,
-the manifest/reporting-matrix templates, and the website starter. The kanban
-dashboard is bundled in the keep-state-app desktop app, not distributed here.
-
-## How it works
-
-State is the source of truth. Everything lives in a typed `project-state/`
-filesystem (YAML/JSON/NDJSON/markdown) created by the scaffolder. Reports are
-generated *from* state; when an artifact disagrees with state, regenerate the
-artifact. External sends (Gmail, claims, SC packs, public posts) always stop at a
-draft for human review.
-
-## License
-
-MIT — see [LICENSE](./LICENSE).
+Installation, branch policy, compatibility details, and the complete adaptation
+matrix are documented in the repository-level [README](../README.md) and
+[CODEX-ADAPTATION.md](../CODEX-ADAPTATION.md).

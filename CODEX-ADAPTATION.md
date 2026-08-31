@@ -9,12 +9,13 @@ for Codex while preserving the public Project State deliverable contract.
 - `upstream` is `https://github.com/Atomic-47-Labs/project-state-plugin-public.git`.
 - `origin` is the independent public adaptation repository
   `https://github.com/iharc-jordan/project-state-codex.git`.
-- `main` and `upstream-v4.9.0` remain exactly at the upstream baseline.
-- `codex-lean` is the public default branch and contains only the adaptation
-  commits.
+- `main` is the public default and only long-lived branch. It contains the
+  upstream baseline followed by the documented Codex adaptation commits.
+- `upstream-v4.9.0` remains exactly at the upstream baseline.
 - `codex-v4.9.0-lean.1` identifies the first validated adaptation revision.
 - `codex-v4.9.0-lean.2` identifies the public-sharing documentation revision;
   it changes no Project State runtime contract. Tags are immutable.
+- `codex-v4.9.0-lean.3` identifies the Codex-only, single-branch distribution.
 - Atomic47 attribution, upstream links, and the MIT license are retained.
 
 The repository began as an independent private mirror because GitHub does not
@@ -24,7 +25,8 @@ as an official Atomic47 fork or upstream release.
 
 ## Preserved public interface
 
-The adaptation preserves all 43 skill names and automatic discovery, the
+The adaptation preserves the Project State runtime interface: all 43 skill
+names and automatic discovery, the
 `project-state/` and `grant-state/` layouts, schemas, IDs, event vocabulary,
 logs, reports, templates, eight packs, two capabilities, and bundled assets.
 Reporting-matrix triggers, pack-required triggers, Git sharing, provenance, and
@@ -41,6 +43,9 @@ The compatibility changes are intentionally narrow:
 - `automation/tasks.yaml` is the sole current automation registry;
 - Claude/Coworker presentation instructions are replaced by normal Codex
   Markdown interaction without removing any data field or approval rule;
+- the Claude marketplace and plugin manifests are not shipped on `main`; the
+  exact upstream distribution remains available at `upstream-v4.9.0` and in
+  Atomic47's public repository;
 - the ten dangling `docs/*.md` references found in the public baseline are
   removed, inlined from existing public invariants, or marked unsupported when
   their only implementation was private.
@@ -90,7 +95,9 @@ add` and exposes all 43 skills in fresh prompt input. The bundled
 plugin-creator static helper currently hard-codes `./skills/`, so its remaining
 structural checks are run against a temporary canonical-root projection while
 the adaptation validator and installed-package probes validate the exact path.
-Every skill links back to `plugin/CODEX.md`.
+Every skill links back to `plugin/CODEX.md`. The public branch contains no
+`.claude-plugin` distribution metadata; the shared runtime payload is not
+duplicated or changed by that packaging removal.
 
 ## Information ownership and routing
 
@@ -140,8 +147,9 @@ events through `project-state`.
 | PS-CX-010 | Optional capability gates | `plugin/skills/**/SKILL.md` | Require an applicable pack, capability, configured surface, due matrix entry, or explicit request for optional skills. | Automatic discovery stays enabled; unconfigured work stays quiet. | All-skill quick validation and negative prerequisite routing probes. | Re-evaluate against internal pack defaults; retain conditional activation. |
 | PS-CX-011 | Codex interaction and prompt-debt cleanup | `plugin/skills/grant-scaffolder/SKILL.md`<br>`plugin/skills/project-scaffolder/SKILL.md`<br>`plugin/skills/project-onboarding/SKILL.md`<br>`plugin/skills/project-inbox/project-intake/SKILL.md`<br>`plugin/skills/sred-onboarding/SKILL.md`<br>`plugin/skills/mindmap-vibe/SKILL.md` | Remove Claude, Coworker, and HTML-artifact mechanics while preserving questions, gates, data fields, approvals, and output summaries. | Presentation becomes Codex-native Markdown; deliverables do not change. | Unsupported Claude-only instruction scan and focused skill validation. | Retain for Codex; internal UI-specific presentation belongs in its own adapter. |
 | PS-CX-012 | Missing private references and progressive disclosure | `plugin/capabilities/**`<br>`plugin/packs/**`<br>`plugin/templates/**`<br>`plugin/skills/project-document-curator/SKILL.md`<br>`plugin/skills/project-feedback/SKILL.md`<br>`plugin/skills/project-harvester/SKILL.md`<br>`plugin/skills/project-state/SKILL.md` | Remove ten dangling private-doc links, inline public invariants, and mark private-only protocols unsupported without inventing replacements. | Existing fields, pack rules, event terms, templates, and capability outputs remain. | Protected path-set equality, strict YAML and JSON parsing, missing-reference audit, contract-term checks. | For each internal document, classify as already solved, still required, incompatible, or superseded. |
-| PS-CX-013 | Current registry, suite alias, and package metadata | `.claude-plugin/marketplace.json`<br>`README.md`<br>`plugin/README.md`<br>`plugin/skills/project-automator/SKILL.md`<br>`plugin/skills/project-doc-suite-generator/SKILL.md`<br>`plugin/skills/project-doc-suite/SKILL.md`<br>`plugin/skills/project-orchestrator/SKILL.md`<br>`plugin/skills/project-status-reporter/SKILL.md`<br>`plugin/skills/project-funder-reporting/SKILL.md`<br>`plugin/templates/manifest-v2.yaml`<br>`plugin/templates/reporting-matrix.yaml` | Make `automation/tasks.yaml`, the unified suite, 43 skills, and eight packs authoritative; forward the deprecated generator once. | Retired baseline generation is not duplicated; its public entrypoint forwards to the established unified-suite owner. | Count, path, registry, alias, strict parse, and routing checks. | Use internal current registries and generators where authoritative; do not restore parallel legacy output. |
+| PS-CX-013 | Current registry, suite alias, and package metadata | `README.md`<br>`plugin/README.md`<br>`plugin/skills/project-automator/SKILL.md`<br>`plugin/skills/project-doc-suite-generator/SKILL.md`<br>`plugin/skills/project-doc-suite/SKILL.md`<br>`plugin/skills/project-orchestrator/SKILL.md`<br>`plugin/skills/project-status-reporter/SKILL.md`<br>`plugin/skills/project-funder-reporting/SKILL.md`<br>`plugin/templates/manifest-v2.yaml`<br>`plugin/templates/reporting-matrix.yaml` | Make `automation/tasks.yaml`, the unified suite, 43 skills, and eight packs authoritative; forward the deprecated generator once. | Retired baseline generation is not duplicated; its public entrypoint forwards to the established unified-suite owner. | Count, path, registry, alias, strict parse, and routing checks. | Use internal current registries and generators where authoritative; do not restore parallel legacy output. |
 | PS-CX-014 | Adaptation evidence | `CODEX-ADAPTATION.md`<br>`scripts/validate_codex_adaptation.py` | Record the compatibility reasoning and provide one read-only repeatable validation entrypoint. | Documentation and checks only. | Self-coverage check requires every changed file and commit to carry a justification ID and required rationale headings. | Carry this matrix into the internal migration and reclassify every row. |
+| PS-CX-015 | Codex-only single-branch distribution | `.claude-plugin/**`<br>`plugin/.claude-plugin/**`<br>`README.md`<br>`plugin/README.md`<br>`plugin/packs/pic-pcais/README.md`<br>`plugin/templates/reporting-matrix.yaml`<br>`plugin/capabilities/sred/views/README.md`<br>`plugin/capabilities/sred/views/build-sred-dashboard.mjs`<br>`plugin/skills/project-onepager/examples/**`<br>`scripts/validate_codex_adaptation.py` | Make `main` the single public Codex branch, remove Claude distribution manifests and active Claude-specific help, and retain the exact upstream baseline as a tag instead of a second branch. | Codex discovery and every Project State runtime contract remain; Claude installation routes to the upstream repository, while legacy data values and output flags stay readable. | Absence checks for both Claude manifests, active-instruction scan, strict YAML, JavaScript syntax, 43-skill validation, baseline ancestry, package validation, and remote branch audit. | Reintroduce a host-specific distribution layer only if the internal contract explicitly requires it; do not duplicate the runtime payload. |
 
 ## Validation evidence
 
@@ -152,9 +160,9 @@ $env:PYTHONUTF8 = '1'
 py -3 scripts/validate_codex_adaptation.py
 ```
 
-The validated release also passed the Codex-owned validators and independent
-fresh-process probes on the exact release commit before the immutable tag was
-created:
+The initial `codex-v4.9.0-lean.1` release passed the Codex-owned validators and
+independent fresh-process probes on the exact release commit before its
+immutable tag was created:
 
 - adaptation contract validator: passed with 43 skills, eight packs, two
   capabilities, four JSON files, 83 YAML files, six Python files, two
@@ -180,8 +188,17 @@ created:
   and all report generators inactive when their packs, capabilities, surfaces,
   connectors, state directories, and due matrix entries were absent.
 
-The contract validator checks the upstream baseline and local `main`, exact skill
-name set, adapter links, the direct nested plugin manifest, strict JSON/YAML,
+The `codex-v4.9.0-lean.3` Codex-only distribution additionally passed the
+adaptation validator with 43 skills, eight packs, two capabilities, two JSON
+files, 83 YAML files, six Python files, two JavaScript files, one archive, and
+48 local links checked. Both Claude distribution manifests were absent; strict
+YAML parsing, Python syntax compilation, `node --check`, active Claude-only
+instruction scanning, baseline ancestry, matrix/commit coverage, and
+`git diff --check` passed.
+
+The contract validator checks the exact upstream baseline tag and ancestry,
+exact skill name set, adapter links, the direct nested plugin manifest, absence
+of Claude distribution manifests, strict JSON/YAML,
 in-memory Python syntax, JavaScript syntax, website archive traversal safety,
 relative references, protected templates/packs/capabilities path sets, package
 counts, schema version 2, representative event terms, established report paths,
@@ -192,16 +209,17 @@ No validation step scaffolds or mutates a Project State project.
 
 ## Installation and release discipline
 
-The public `codex-lean` branch is installed by cloning it to
-`$HOME/plugins/project-state` (or `%USERPROFILE%\plugins\project-state` on
-Windows) and running `codex plugin add project-state@personal`. The repository
-itself is not duplicated into a second payload: its root Codex manifest points
-directly to `plugin/skills/`.
+The public `main` branch is installed by cloning it to `$HOME/plugins/project-state`
+(or `%USERPROFILE%\plugins\project-state` on Windows) and running
+`codex plugin add project-state@personal`. The repository itself is not
+duplicated into a second payload: its root Codex manifest points directly to
+`plugin/skills/`.
 
 Release invariants are:
 
-1. keep `main` and `upstream-v4.9.0` at the exact upstream baseline;
-2. put Codex adaptations only on `codex-lean` and make that the public default;
+1. keep `main` as the single public Codex branch and
+   `upstream-v4.9.0` as the immutable exact upstream baseline;
+2. keep the upstream baseline as an ancestor of every Codex release;
 3. require every changed file to map to a justification ID and every adaptation
    commit to record `Why`, `Compatibility`, and `Validation`;
 4. run the read-only contract validator and applicable Codex package probes on
@@ -218,7 +236,7 @@ commit or release tag.
 
 When Atomic47 grants internal access:
 
-1. preserve this validated public `codex-lean` branch and tag unchanged;
+1. preserve the validated public `main` history and immutable release tags;
 2. clone the internal source separately and inventory its schemas, private
    services, dashboards, hooks, packs, and workflow contracts before editing;
 3. classify every justification row as already solved internally, still required

@@ -61,6 +61,8 @@ ALLOWED_PROTECTED_CHANGES = {
     "plugin/capabilities/sred/routine.yaml",
     "plugin/capabilities/sred/schema/entities.yaml",
     "plugin/capabilities/sred/validator/validate-sred.md",
+    "plugin/capabilities/sred/views/README.md",
+    "plugin/capabilities/sred/views/build-sred-dashboard.mjs",
     "plugin/packs/agile-default/manifest.yaml",
     "plugin/packs/board-investor/manifest.yaml",
     "plugin/packs/board-investor/profiles/funder-reporting.yaml",
@@ -68,6 +70,7 @@ ALLOWED_PROTECTED_CHANGES = {
     "plugin/packs/grant-canada/manifest.yaml",
     "plugin/packs/open-source-community/manifest.yaml",
     "plugin/packs/pic-pcais/manifest.yaml",
+    "plugin/packs/pic-pcais/README.md",
     "plugin/packs/sred-canada/README.md",
     "plugin/packs/tender-pursuit/manifest.yaml",
     "plugin/templates/lesson-learned.md",
@@ -164,8 +167,14 @@ def frontmatter(text: str, source: str) -> dict:
 def validate_baseline(root: Path) -> None:
     baseline = git_text(root, "rev-parse", f"{BASELINE_REF}^{{commit}}").strip()
     assert baseline == BASELINE_COMMIT, (baseline, BASELINE_COMMIT)
-    main = git_text(root, "rev-parse", "main^{commit}").strip()
-    assert main == BASELINE_COMMIT, "local main must remain byte-equivalent to upstream v4.9.0"
+    ancestry = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", BASELINE_COMMIT, "HEAD"],
+        cwd=root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert ancestry.returncode == 0, "Codex history must descend from upstream v4.9.0"
 
 
 def validate_skills(root: Path) -> None:
@@ -207,6 +216,20 @@ def validate_manifest(root: Path) -> None:
     root_skills = root / "skills"
     assert not root_skills.exists() and not root_skills.is_symlink(), (
         "root skills must not duplicate or link the upstream payload"
+    )
+    root_claude_files = [
+        path for path in (root / ".claude-plugin").rglob("*") if path.is_file()
+    ]
+    plugin_claude_files = [
+        path
+        for path in (root / "plugin" / ".claude-plugin").rglob("*")
+        if path.is_file()
+    ]
+    assert not root_claude_files, (
+        "the Codex-only branch must not ship a Claude marketplace manifest"
+    )
+    assert not plugin_claude_files, (
+        "the Codex-only branch must not ship a Claude plugin manifest"
     )
 
 
@@ -408,6 +431,13 @@ def validate_forbidden_content(root: Path) -> None:
         "solicitations-appelsdoffres@canadabuys-achatscanada.canada.ca",
     }
     allowed_domains = {"example.com", "example.org", "yourco.com", "co.com"}
+    codex_instruction_paths = {
+        "plugin/README.md",
+        "plugin/packs/pic-pcais/README.md",
+        "plugin/templates/reporting-matrix.yaml",
+        "plugin/capabilities/sred/views/README.md",
+        "plugin/capabilities/sred/views/build-sred-dashboard.mjs",
+    }
     failures: list[str] = []
     for rel in sorted(tracked_paths(root)):
         if rel == "CODEX-ADAPTATION.md" or rel.startswith("scripts/"):
@@ -419,7 +449,9 @@ def validate_forbidden_content(root: Path) -> None:
         for label, pattern in private_patterns.items():
             if pattern.search(text):
                 failures.append(f"{label}: {rel}")
-        if rel.startswith("plugin/skills/") and rel.endswith((".md", ".py")):
+        if (
+            rel.startswith("plugin/skills/") and rel.endswith((".md", ".py"))
+        ) or rel in codex_instruction_paths:
             if claude_patterns.search(text):
                 failures.append(f"unsupported Claude-only instruction: {rel}")
         for email in email_re.findall(text):
@@ -444,7 +476,7 @@ def validate_justification_coverage(root: Path) -> None:
         assert patterns, f"no affected-file patterns for {identifier}"
         rows[identifier] = patterns
 
-    expected_ids = {f"PS-CX-{number:03d}" for number in range(1, 15)}
+    expected_ids = {f"PS-CX-{number:03d}" for number in range(1, 16)}
     assert set(rows) == expected_ids, (set(rows), expected_ids)
 
     changed = set(git_text(root, "diff", "--name-only", f"{BASELINE_REF}..HEAD").splitlines())
