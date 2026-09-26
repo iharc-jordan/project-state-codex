@@ -58,6 +58,25 @@ profile-driven — they read their behavior from the active pack's YAML profiles
 the manifest/reporting-matrix templates, and the website starter. The kanban
 dashboard is bundled in the keep-state-app desktop app, not distributed here.
 
+## The local project-state server (v5)
+
+The plugin starts an MCP server, `project-state`, over the `project-state/` folder of the project you are
+in. Skills read and write through it when it serves the project, and every change is:
+- checked against the project's kind registry;
+- refused if the file changed on disk meanwhile;
+- signed and logged.
+
+It has the same tools and views as the cloud server, so an artifact or a skill works the same on a local
+project and a cloud one.
+
+- **Needs Node 20.10 or later** on your PATH. Without it the server does not start, and the skills work on
+  the files directly, as in v4.
+- **Check it:** run `/mcp` in Claude Code, and `project-state` should be connected. Ask *"which project
+  does the project-state server see?"* for the folder it found and whose name it signs changes with.
+- **Who changes are signed as:** `PROJECT_STATE_ACTOR`, else your `git config user.email`, else your
+  operating-system account. Set `PROJECT_STATE_ACTOR` in your environment to choose.
+- **Which folder:** `PROJECT_STATE_DIR`, else the nearest `project-state/` above where you started Claude.
+
 ## How it works
 
 State is the source of truth. Everything lives in a typed `project-state/`

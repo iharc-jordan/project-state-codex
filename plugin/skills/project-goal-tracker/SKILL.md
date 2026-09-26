@@ -4,6 +4,7 @@ description: "Set and track objectives and KPIs — 'set a goal', 'add a KPI', '
 map:
   tier: P1
   stage: keep
+  requires: [memory]
   reads: [objectives, milestones, manifest]
   writes: [objectives]
 ---

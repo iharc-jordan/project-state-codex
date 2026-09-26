@@ -4,6 +4,8 @@ description: "Write a status report — 'weekly report', 'status update', 'draft
 map:
   tier: P1
   stage: generate
+  requires: [memory]
+  binding: mcp-ready
   reads: [milestones, risks, decisions, objectives, changes, log]
   writes: [reports]
   calls: [project-milestone-manager, project-notifier, project-blog-publisher]
@@ -26,16 +28,29 @@ Turn the structured state under `project-state/` into readable reports in the fo
 
 ## Report catalog
 
-| Report                       | Format        | Cadence            | Audience                | File location                          |
-| ---------------------------- | ------------- | ------------------ | ----------------------- | -------------------------------------- |
-| Weekly report                | .md + Slack   | Weekly (Mon)       | Project team            | `reports/weekly/YYYY-Www.md`           |
-| Monthly technical brief      | .md + Gmail   | Monthly (last Fri) | Consortium members      | `reports/adhoc/YYYY-MM-brief.md`       |
-| SC pack                      | .docx         | Quarterly          | Steering Committee + PIC| `reports/sc-meetings/<id>-pack.docx`   |
-| SC agenda                    | .docx         | Quarterly          | SC pre-meeting          | `reports/sc-meetings/<id>-agenda.docx` |
-| Quarterly claim (MS & financial tracking form) | .xlsx | Apr/Jul/Oct/Jan 20 | PIC Project Manager     | `reports/pic-submissions/YYYY-QN-ms-financial.xlsx` |
-| Ad-hoc status                | .md / email   | On demand          | Varies                  | `reports/adhoc/YYYY-MM-DD-<slug>.md`   |
-| Dashboard snapshot           | 1-page .md    | On demand          | Exec glance             | `reports/adhoc/snapshot-YYYY-MM-DD.md` |
-| Final report (per member)    | .docx         | Project close      | PIC                     | `reports/pic-submissions/final-<org>.docx` |
+**Which home.** If a project-state MCP is connected (the Project State connector, or the local one the
+plugin ships; its tools include `project_list`, `get_entity` and `entity_patch`), call `project_list` first. If it
+lists this project, with `home: server` or `home: local` alike (the local server writes the folder for you;
+`local` is not a cue to edit files), every read and write goes through those tools, the activity-log entry included: after
+an `entity_put` / `entity_patch` / `entity_delete`, append the skill's event with `log_append` (the screen
+actions, such as `milestone_update`, log their own). Work on the files directly only when no MCP serves the
+project.
+
+Reports are entities named by **kind and id**, never by path: the memory layer (`project-state`) places
+them. On disk its kinds reference says where each kind lives; over the Project State connector, pass kind
+and id to `entity_put` and the server places it. Binary reports (`.docx`, `.xlsx`) need the project's
+files (the file binding, or the server runner); over the connector, write the Markdown version and say so.
+
+| Report                       | Format        | Cadence            | Audience                | Kind · id                               |
+| ---------------------------- | ------------- | ------------------ | ----------------------- | --------------------------------------- |
+| Weekly report                | .md + Slack   | Weekly (Mon)       | Project team            | `weekly-report` · `YYYY-Www`            |
+| Monthly technical brief      | .md + Gmail   | Monthly (last Fri) | Consortium members      | `adhoc-report` · `YYYY-MM-brief`        |
+| SC pack                      | .docx         | Quarterly          | Steering Committee + PIC| `sc-pack` · `<id>-pack`                 |
+| SC agenda                    | .docx         | Quarterly          | SC pre-meeting          | `sc-pack` · `<id>-agenda`               |
+| Quarterly claim (MS & financial tracking form) | .xlsx | Apr/Jul/Oct/Jan 20 | PIC Project Manager     | `claim-form` · `YYYY-QN-ms-financial` |
+| Ad-hoc status                | .md / email   | On demand          | Varies                  | `adhoc-report` · `YYYY-MM-DD-<slug>`    |
+| Dashboard snapshot           | 1-page .md    | On demand          | Exec glance             | `adhoc-report` · `snapshot-YYYY-MM-DD`  |
+| Final report (per member)    | .docx         | Project close      | PIC                     | `funder-report` · `final-<org>`         |
 
 ## Trigger phrases
 
@@ -64,11 +79,11 @@ Specifics below customize this skeleton.
 **Inputs:**
 - State summary from `project-state` (counters, health)
 - Milestones from `project-milestone-manager` (in_progress + at_risk)
-- Activity log tail since the last weekly (`since = state.json:pointers.last_weekly_report`)
+- Activity log tail since the last weekly (since the state record's `pointers.last_weekly_report`)
 - Gate status of current phase from `project-phase-gate`
-- Upcoming deadlines (from `manifest.yaml:reporting_calendar` + milestone planned_ends)
+- Upcoming deadlines (from the manifest's `reporting_calendar` + milestone planned_ends)
 
-**Output template (`reports/weekly/YYYY-Www.md`):**
+**Output template (a `weekly-report`, id `YYYY-Www`):**
 
 ```markdown
 # Weekly report — YYYY-Www — [Project Short Name]
@@ -96,7 +111,7 @@ Specifics below customize this skeleton.
 _Next claim due: <date> · Next SC meeting: <date> · Days to project end: <n>_
 ```
 
-Hand off to `project-notifier` for Slack delivery. Update `state.json:pointers.last_weekly_report` + `counters.weekly_reports`.
+Hand off to `project-notifier` for Slack delivery. Update the state record's `pointers.last_weekly_report` and `counters.weekly_reports`.
 
 ## Steering Committee pack
 
@@ -122,9 +137,9 @@ Per PIC PM Guide: "Each project member must complete a MS and financial tracking
 - For each milestone active in the period: `percent_complete` + `technical_progress` at period end.
 - Per-member claim packages (expenses, invoices, categorization) — supplied by Finance Rep out of band; this skill assembles around them.
 
-**Output:** `reports/pic-submissions/YYYY-QN-ms-financial.xlsx` — a filled copy of the PIC-provided form. This is the deliverable sent to the PIC Project Manager by the 20th.
+**Output:** a `claim-form`, id `YYYY-QN-ms-financial` — a filled copy of the PIC-provided form. This is the deliverable sent to the PIC Project Manager by the 20th.
 
-Also produce a `reports/claims/YYYY-QN.yaml` record per the schema (under `project-state` locking).
+Also produce a `quarterly-claim` entity, id `YYYY-QN`, per the schema (through `project-state`).
 
 Hand off to `project-funder-reporting` for the detailed PIC-form assembly; this skill produces the narrative wrapper.
 
@@ -135,24 +150,23 @@ The user says "status update for X" — produce a paragraph or two tailored to t
 - Consortium Member internal → technical + honest
 - Board / exec → outcomes + risks + asks
 
-Save to `reports/adhoc/YYYY-MM-DD-<slug>.md`. Offer to hand off to `project-notifier` for Gmail draft.
+Save as an `adhoc-report`, id `YYYY-MM-DD-<slug>`. Offer to hand off to `project-notifier` for Gmail draft.
 
 ## Dashboard snapshot
 
-One page. Designed for a glance. Sections: phase + gate, health, milestones table, upcoming deadlines, top 3 risks, last 5 activity events. Saved to `reports/adhoc/snapshot-YYYY-MM-DD.md`.
+One page. Designed for a glance. Sections: phase + gate, health, milestones table, upcoming deadlines, top 3 risks, last 5 activity events. Saved as an `adhoc-report`, id `snapshot-YYYY-MM-DD`.
 
 ## Outbox emission (queue the draft for review)
 
-After writing any report to `reports/`, **also drop an outbox card** so the draft
+After writing any report, **also drop an outbox card** so the draft
 surfaces in the `/queue` UI for human review. This is what makes reporting a UI-first,
 review-not-author flow: the report generates on its own, lands in the queue, and the
 person reviews/approves/actions it — the system never sends.
 
-A card is a file pair in `project-state/outbox/queue/`:
+A card is a pair with one id in the outbox's queue lane: an `outbox-draft` and an `outbox-card`:
 
 1. **The artifact** — `<id>.md`. Reuse the report markdown you just produced (for
-   docx/xlsx reports, write a short markdown cover note that links to the file under
-   `reports/`). `<id>` is `YYYY-MM-DD-<slug>` (e.g. `2026-05-22-weekly-status`).
+   docx/xlsx reports, write a short markdown cover note that links to the report). `<id>` is `YYYY-MM-DD-<slug>` (e.g. `2026-05-22-weekly-status`).
 2. **The card** — `<id>.meta.yaml`, matching the contract in `docs/OUTBOX.md`:
 
 ```yaml
@@ -190,7 +204,7 @@ write external surfaces here.
 
 ## Integration
 
-- **project-state** — reads everything; writes `reports/` entries, drops outbox cards into `outbox/queue/`, and bumps counters via state.
+- **project-state** — reads everything; writes report entities, drops outbox cards into the queue lane, and bumps counters in the state record.
 - **project-milestone-manager** — primary milestone data source.
 - **project-phase-gate** — current phase + gate pending items.
 - **project-change-register** — pending / recent changes for SC pack and weekly.

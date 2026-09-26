@@ -4,6 +4,7 @@ description: "Capture a lesson learned, or summarise lessons at close — 'captu
 map:
   tier: P3
   stage: keep
+  requires: [memory]
   reads: [lessons]
   writes: [lessons]
   produces: [lessons-summary]

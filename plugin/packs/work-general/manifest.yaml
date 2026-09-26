@@ -2,7 +2,7 @@ pack:
   id: "work-general"
   name: "General Project"
   version: "0.1.0"
-  compatible_core: ">=4.0,<5.0"
+  compatible_core: ">=4.0,<6.0"
   description: |
     Work type for any project that is not better described by a more specific type: an office
     move, a policy rollout, a vendor selection, a process improvement, a report. A legitimate

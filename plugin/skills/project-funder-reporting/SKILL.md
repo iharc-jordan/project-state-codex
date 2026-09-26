@@ -4,6 +4,7 @@ description: "Draft reports for whoever the project answers to — funder claims
 map:
   tier: P2
   stage: generate
+  requires: [memory]
   reads: [manifest, milestones, changes, people]
   writes: [reports]
   calls: [project-milestone-manager, project-notifier]

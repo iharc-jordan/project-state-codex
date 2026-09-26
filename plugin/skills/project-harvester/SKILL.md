@@ -4,6 +4,7 @@ description: "Harvest project signals from Slack, Gmail, Google Docs, Jira, Conf
 map:
   tier: P3
   stage: ingest
+  requires: [memory, shell, connector:slack, connector:gmail, connector:gdocs, connector:scsiwyg, connector:jira, connector:confluence, connector:linear, connector:github]
   inputs: [slack, gmail, gdocs, scsiwyg, jira, confluence, linear, github]
   reads: [manifest, state]
   writes: [documents, state, log]

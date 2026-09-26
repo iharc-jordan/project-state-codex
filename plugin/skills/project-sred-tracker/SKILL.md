@@ -4,6 +4,7 @@ description: "Capture SR&ED work as it happens — 'log an uncertainty', 'record
 map:
   tier: capability
   stage: keep
+  requires: [memory]
   reads: [sred, log]
   writes: [sred]
   produces: [t661-narrative]

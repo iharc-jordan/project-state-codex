@@ -4,6 +4,8 @@ description: "Create or update milestones — 'update M03', 'M02 is 60% done', '
 map:
   tier: P1
   stage: keep
+  requires: [memory]
+  binding: mcp-ready
   reads: [milestones]
   writes: [milestones, reports, log]
 ---
@@ -45,9 +47,23 @@ Every other field (planned/actual dates, deliverables, owner, budget category, s
 
 ## Operations
 
+**Which home.** If a project-state MCP is connected (the Project State connector, or the local one the
+plugin ships; its tools include `project_list`, `get_entity` and `entity_patch`), call `project_list` first. If it
+lists this project, with `home: server` or `home: local` alike (the local server writes the folder for you;
+`local` is not a cue to edit files), every read and write goes through those tools, the activity-log entry included: after
+an `entity_put` / `entity_patch` / `entity_delete`, append the skill's event with `log_append` (the screen
+actions, such as `milestone_update`, log their own). Work on the files directly only when no MCP serves the
+project.
+
+Every read and write goes through the memory layer (`project-state`), which names entities by **kind
+and id**, never by path: a milestone is kind `milestone` with an id like `M03-matrix-editor`. On disk,
+`project-state`'s kinds reference says where each kind lives; over the Project State connector, pass the
+kind and id (or use `milestone_update` for status and percent complete) and the server places it. The
+same steps work in both homes.
+
 ### `list_milestones(filter?)`
 
-Read every file under `milestones/`. Return an array sorted by id. Optional filters:
+Read every milestone entity (kind `milestone`; over the connector, `list_entities` or `view_board`). Return an array sorted by id. Optional filters:
 - `status: planned | in_progress | at_risk | complete | blocked` — `blocked` renders in the **At Risk** column in the kanban
 - `owner_short: "OrgA" | "OrgB"`
 - `proposal_phase: "Phase 1 – ..."` (loose match)
@@ -115,7 +131,7 @@ Return:
 - Count by proposal phase
 - "On-track?" — green if all `in_progress` milestones are on or ahead of schedule; yellow if any behind; red if any blocked
 
-Store the result under `state.json:health` via `project-state`, which logs `health.assessed`.
+Store the result as the `health` field of the state record (kind `state`) via `project-state`, which logs `health.assessed`.
 
 #### `overall_percent` is all-time, and now says so
 
@@ -132,7 +148,7 @@ Two changes, both additive:
   exact meaning — the existing consumers of the rollup read the same field and get the same value.
   What changes is that the field now states what it measures. This is disclosure, not a fix, and spec
   §5.3 says so plainly.
-- **When `state.json:lifecycle` is `continuous`, also write `health.increment`,** scoped to
+- **When the state record's `lifecycle` is `continuous`, also write `health.increment`,** scoped to
   `current_increment`: `{id, percent, milestones_total, by_status}`. Membership is
   `milestone.increment == current_increment`, else the increment manifest's `milestones` list. This is
   the number that answers *are we done with what we are doing now.*
@@ -185,7 +201,9 @@ python3 <project-scaffolder>/scripts/seed_pack.py reanchor --state project-state
 python3 <project-scaffolder>/scripts/seed_pack.py reanchor --state project-state --actor <operator email>
 ```
 
-Show the dry run and get a yes before the real run. It moves only milestones that carry `seed_due`
+This runs a script over a working copy, so it is available where the project's files are (the file binding,
+or the server runner); over the connector in claude.ai, list the milestones that would move and change them
+one by one with `milestone_update` / `entity_patch` instead. Show the dry run and get a yes before the real run. It moves only milestones that carry `seed_due`
 (adopted from a pack seed) **and** whose `planned_end` still equals what that expression gave against
 the dates recorded in `seed_basis`. A milestone someone re-dated by hand, a completed one, and any
 milestone that was never seeded are left exactly as they are and listed as *kept*, so the operator can
@@ -219,7 +237,7 @@ A move of three months or more is still a material change — hand it to `projec
 **User:** "Mark M01 as 60% complete — we got the first year of historical data loaded and the baseline cycle time and yield validated. Still waiting on the two energy-consumption datasets."
 
 **Skill:**
-1. Read `milestones/M01-cdi-data-readiness.yaml`.
+1. Read the milestone `M01-cdi-data-readiness`.
 2. Update:
    - `percent_complete: 60`
    - `technical_progress: "Year 1 historical data loaded and integrated. Baseline cycle time and yield KPIs validated and approved. Remaining: Year 2/Year 3 energy consumption datasets expected by 2026-04-25."`

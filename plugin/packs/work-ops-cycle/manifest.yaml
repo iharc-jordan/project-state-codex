@@ -2,7 +2,7 @@ pack:
   id: "work-ops-cycle"
   name: "Operating Cycle"
   version: "0.1.0"
-  compatible_core: ">=4.0,<5.0"
+  compatible_core: ">=4.0,<6.0"
   description: |
     Work type for recurring operational work that never finishes but whose periods do: a month-end
     or quarter-end close, a budget cycle, a compliance calendar, a recurring reporting process.

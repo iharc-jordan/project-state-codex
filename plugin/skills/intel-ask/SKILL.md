@@ -4,6 +4,7 @@ description: "Answer a competitive question from the intel evidence base, with c
 map:
   tier: capability
   stage: generate
+  requires: [memory]
   inputs: [operator]
   reads: [intel, manifest]
   writes: [intel, log]

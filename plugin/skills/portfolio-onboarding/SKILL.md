@@ -4,6 +4,7 @@ description: "Set up portfolio oversight on an org-level project — 'set up the
 map:
   tier: capability
   stage: ingest
+  requires: [memory, local-fs]
   inputs: [operator, files, projects]
   reads: [manifest]
   writes: [manifest, portfolio, log]

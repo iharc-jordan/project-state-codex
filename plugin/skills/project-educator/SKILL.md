@@ -28,6 +28,7 @@ slash_command:
 map:
   tier: P2
   stage: keep
+  requires: [memory]
   reads: [manifest, milestones, risks, decisions, objectives, changes, log, education]
   writes: [education]
   produces: [teaching-briefing]

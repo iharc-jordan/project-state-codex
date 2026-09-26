@@ -4,6 +4,7 @@ description: "Start a new grant application workspace (grant-state/) — 'start 
 map:
   tier: grant
   stage: ingest
+  requires: [memory, local-fs]
   inputs: [operator]
   writes: [grant-state]
   calls: [project-scaffolder]

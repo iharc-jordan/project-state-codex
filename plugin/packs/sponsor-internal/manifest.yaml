@@ -2,7 +2,7 @@ pack:
   id: "sponsor-internal"
   name: "Internal Sponsor"
   version: "0.1.0"
-  compatible_core: ">=4.0,<5.0"
+  compatible_core: ">=4.0,<6.0"
   description: |
     Pack for the most common accountability in general project management: a manager, executive
     or steering group inside your own organisation who commissioned the work and needs to know how

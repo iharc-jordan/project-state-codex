@@ -4,6 +4,8 @@ description: "Answer 'what should we do today / this week / next' for a project 
 map:
   tier: P2
   stage: control
+  requires: [memory]
+  binding: mcp-ready
   inputs: [gcal]
   reads: [reporting-matrix, manifest, state, log]
   dispatches: [project-harvester, project-inbox, project-status-reporter, project-funder-reporting, project-review-meeting,
@@ -19,6 +21,19 @@ map:
 > docs/SKILL-SPEC.md, *Description budget*). The complete version, kept here:
 >
 > Use for 'what should we do today / this week / next' on any project with a project-state/ directory — the prioritised briefing. Use it INSTEAD of reading the project-state files yourself: it applies the suite's priority order (urgent deadlines, then gate blockers, then due reports, then at-risk milestones, then routine) against the reporting matrix, phase gates and the calendar, names the skill for each item, and waits for approval. Triggers: 'what should I do today', 'what should we do this week', 'what's pending', 'what needs attention', 'morning briefing', 'any deadlines coming up', 'run the project', 'run the daily routine', 'run the weekly routine', 'kickoff the day', 'what's the orchestrator saying', or any request for the project to tell itself what to do next. The conductor of the project-* suite: it routes to other project-* skills and hands decisions back; it does not do the work itself.
+
+**Which home.** If a project-state MCP is connected (the Project State connector, or the local one the
+plugin ships; its tools include `project_list`, `get_entity` and `entity_patch`), call `project_list` first. If it
+lists this project, with `home: server` or `home: local` alike (the local server writes the folder for you;
+`local` is not a cue to edit files), every read and write goes through those tools, the activity-log entry included: after
+an `entity_put` / `entity_patch` / `entity_delete`, append the skill's event with `log_append` (the screen
+actions, such as `milestone_update`, log their own). Work on the files directly only when no MCP serves the
+project.
+
+Every read and write goes through the memory layer (`project-state`), which names things by **kind and
+id**, never by path. On disk its kinds reference says where each kind lives; over the Project State
+connector, pass kind and id to the memory tools (or use the `view_*` tools and screen actions) and the
+server resolves them. The same steps work in both homes.
 
 ## Purpose
 
@@ -64,11 +79,16 @@ On invocation:
    - Days to annual questionnaire (if set).
 3. **Check at-risk milestones.** Via `project-milestone-manager`. Any with `status in {at_risk, blocked}` or behind-schedule rules get flagged.
 4. **Check gate.** Via `project-phase-gate`. If the current phase has unblocked items (e.g., MPA landed → planning.mpa_signed autoclose), surface the transition option.
-5. **Check inbox.** If `documents/inbox/` holds files not in `documents/index.yaml`, flag
+5. **Check inbox.** If the inbox (kind `inbox-document`) holds documents not in the document index (kind `document-index`), flag
    "Triage the inbox — N unindexed doc(s)" → `project-inbox`. Routine, unless a document changes a
    higher item (see step 8).
 6. **Compose enabled capabilities' routines.** See "Capability routines" below.
-7. **Prioritize.** Order: URGENT deadlines → gate-blocking items → pending reports → at-risk milestones → routine work → opportunities. Capability items rank by their declared `severity` alongside core items — they are not a separate section and never get their own digest.
+7. **Prioritize.** Order: URGENT deadlines → gate-blocking items → pending reports → at-risk milestones → routine work → opportunities.
+   **An urgent deadline is one someone outside the team holds you to:** a reporting-matrix entry marked
+   `fixed: true`, or addressed to a funder or customer stakeholder group, that is inside its lead time or
+   overdue. Every other report that is due, even one due today (an internal weekly email), is a pending
+   report and ranks below gate-blocking items. A missed internal date on a milestone or decision is not
+   an urgent deadline either: it makes that milestone at-risk, or gate-blocking when the phase gate names it. Capability items rank by their declared `severity` alongside core items — they are not a separate section and never get their own digest.
 8. **Return a ranked list** with, for each item: the reason, the skill that handles it, and what the user needs to do.
    **Any recommended sequence follows the ranking.** Never close with "I'd do 3, 1, 4, 2" — a
    deadline due today and a gate-blocking milestone do not wait behind routine work. If a lower item
@@ -131,7 +151,7 @@ The operator reads one prioritized list, not a core list plus per-capability app
 
 **Scheduling is not here.** Capability *scheduling* lives in the reporting matrix, seeded from the
 capability's bundled pack at enable and compiled by `project-automator` into
-`automation/tasks.yaml` — the `tick` routine below dispatches it like any other entry, and the
+the automation schedule (kind `automation-tasks`) — the `tick` routine below dispatches it like any other entry, and the
 generic `deadline` cadence already handles per-capability escalation tiers via
 `state/<capability>.json:escalation_tiers_fired`. `routine.yaml` answers the *conversational*
 question ("what does this capability want looked at right now"), which the tick does not.
@@ -144,27 +164,31 @@ The orchestrator understands named routines:
 
 The single routine that makes reporting *automatic*. It is deterministic: read the
 cadence registry, compute what is due today, dispatch the generators. Each generator
-self-queues its draft into `outbox/queue/` (see each skill's "Outbox emission"),
+self-queues its draft into the outbox queue lane — an `outbox-card` + `outbox-draft` pair (see each skill's "Outbox emission"),
 so a tick's whole job is **decide what's due and call the right generator** — it
 authors nothing and sends nothing.
 
 **Algorithm:**
 
-1. Read `project-state/automation/tasks.yaml` (`tasks[]`) — the **canonical cadence
+1. Read the automation schedule (kind `automation-tasks`, its `tasks[]`) — the **canonical cadence
    registry** (`project-automator` compiles it from the matrix; the kanban calendar
    writes operator reschedules into it, so it always carries the live schedule).
-   Resolve each task's target: `kind: matrix` → the matching `reporting-matrix.yaml`
+   Resolve each task's target: `kind: matrix` → the matching entry of the reporting matrix (kind `reporting-matrix`)
    entry (generator, profile, surface; the matrix `enabled` flag is authoritative for
    matrix tasks); `kind: action` → the named skill action; `kind: adhoc` → the task's
    own stored prompt. Skip disabled tasks and `status: proposed` tasks (unaccepted
-   ghost holds never fire). **Fallback:** only if `automation/tasks.yaml` does not
-   exist, read `reporting-matrix.yaml` entries directly (skipping `enabled: false`)
+   ghost holds never fire). **Fallback:** only if the automation schedule does not
+   exist, read the reporting matrix entries directly (skipping `enabled: false`)
    as in v2.0.
 2. For each remaining task, evaluate its `cadence` against today's date and the relevant
-   `state.json:pointers` (e.g. `last_weekly_report`):
+   the state record's `pointers` (kind `state`; e.g. `last_weekly_report`):
    - `weekly` (`day: <dow>`) → due if today is that weekday **and** no run is
      recorded since the start of this week.
-   - `monthly` → due on the configured day / last working day, once per month.
+   - `monthly` → due on the configured day / last working day, once per month; with
+     `lead_time_days`, due from that many days before it. **Before its window opens it is
+     not due: leave it out of the briefing entirely**, even when a tool lists its next date
+     (`due_between` and `view_matrix` return `date` and `prepare_from`; compare `prepare_from`
+     with today).
    - `quarterly` / deadline-bound (`Apr/Jul/Oct/Jan`) → due when today falls inside
      the entry's `lead_time` window before the deadline (default 14 days).
    - `sprint-aligned` → due on the sprint boundary from the active sprint calendar.
@@ -179,7 +203,7 @@ authors nothing and sends nothing.
      completion event from the named skill with a verdict in `pass_on`. Chains evaluate
      within a single tick pass; unsatisfied chains show in the digest as "waiting on <entry>".
    - `event-driven` / `on-publish` → **never** time-due; these fire from activity-log
-     triggers (`phase-transition`, `milestone-completion`, `documents/published/`),
+     triggers (`phase-transition`, `milestone-completion`, a published document (kind `published-document`)),
      not from the tick. Skip them here.
 3. Build the **due-list**: `[ {entry-id, generator, profile?, reason} ]`.
 4. For each due entry, invoke its `generator` (passing `profile` if present). The
@@ -198,7 +222,7 @@ re-running a tick on the same day must not double-queue (the per-period pointer 
 use it to preview what a scheduled run would do.
 
 ### `daily` (optional — only if the team wants a daily check)
-1. **Run `project-harvester`** — pull fresh intel from Slack/Gmail/GDocs/scsiwyg into `documents/inbox/`. Run before anything else so the inbox is populated before curator recommendations are made.
+1. **Run `project-harvester`** — pull fresh intel from Slack/Gmail/GDocs/scsiwyg into the inbox (kind `inbox-document`). Run before anything else so the inbox is populated before curator recommendations are made.
 2. **Run `project-document-curator`** — classify any new inbox docs; link to milestones/decisions where appropriate.
 3. Tail activity log since yesterday
 4. Check `at_risk` and `blocked` milestones
@@ -218,8 +242,8 @@ When the user signals end of day, end of session, or "wrapping up":
 2. Hand off to `project-notifier` to post to Slack after the user reviews
 3. Check SC prep window (meeting in <14 days?) → start SC pack prep
 4. Check claim window (claim in <14 days?) → start claim prep
-5. Recompute `state.json:health`
-6. Update `state.json:pointers.last_weekly_report`
+5. Recompute the state record's `health` (kind `state`)
+6. Update the state record's `pointers.last_weekly_report`
 
 ### `monthly` (last working day of month)
 - Monthly technical brief to consortium (`project-status-reporter` monthly mode)
@@ -239,7 +263,7 @@ When the user signals end of day, end of session, or "wrapping up":
 
 ### `baseline` (on phase transition, milestone completion, or on demand)
 - Call `project-doc-suite-generator` to produce the baseline report bundle
-- Output: `project-state/reports/baseline/Baseline-Reports-YYYY-MM-DD/` with styled `.docx` + `.xlsx`
+- Output: a baseline report bundle (kind `baseline-report`, id `Baseline-Reports-YYYY-MM-DD`) with styled `.docx` + `.xlsx`
 - Copy to website `public/downloads/baseline/` for static serving
 - Log `report.generated` event to activity log
 
@@ -254,20 +278,20 @@ The orchestrator does not run itself. It is invoked:
 - By the `schedule` skill (a scheduled task calls `project-orchestrator daily` each morning)
 - By a cron firing **`project-orchestrator tick`** on the registry's natural cadence
   (e.g. early each weekday). The cron is a thin trigger; all scheduling *logic* lives
-  in the `tick` routine reading `automation/tasks.yaml` (falling back to
-  `reporting-matrix.yaml` when no registry exists), so the schedule is testable
+  in the `tick` routine reading the automation schedule (falling back to
+  the reporting matrix when no registry exists), so the schedule is testable
   and inspectable in the substrate rather than buried in cron config. The kanban
   **Calendar view** (`/calendar`) renders the same registry with computed next-due and
   last-run so a human can see what the next tick will do.
 
-`project-state/manifest.yaml` does not specify schedules; those are managed via the `schedule` skill and should be configured separately.
+the manifest does not specify schedules; those are managed via the `schedule` skill and should be configured separately.
 
 **Registering the cron from the UI.** The kanban **Schedule view** (`/schedule`) now
 manages the recurring trigger directly: an Automation panel registers / pauses /
 removes a single marked block in the user's crontab that runs `project-orchestrator
 tick` on a chosen cadence (weekday-mornings preset, etc.). The cron command runs
 `claude -p` headless with `--permission-mode bypassPermissions --max-budget-usd 2`,
-logging to `logs/cron-tick.log`. The human clicks **Register** — the app does not
+logging to the app's cron-tick log. The human clicks **Register** — the app does not
 register it silently. The Schedule view's "Last tick" reflects real runs once active.
 
 ## Voice
@@ -302,6 +326,6 @@ ranked item — never a separate section.
 
 ## Integration
 
-Calls every other skill in the suite, including `project-doc-suite-generator` for baseline report bundles. Does not read or write state directly — goes through `project-state`. Its output is often consumed by the user verbally, but it may also write an orchestrator-run snapshot to `reports/adhoc/orchestrator-YYYY-MM-DD.md` for audit.
+Calls every other skill in the suite, including `project-doc-suite-generator` for baseline report bundles. Does not read or write state directly — goes through `project-state`. Its output is often consumed by the user verbally, but it may also write an orchestrator-run snapshot to an `adhoc-report`, id `orchestrator-YYYY-MM-DD` for audit.
 
 - **project-git** — suggested at end of daily routine and end-of-session; the orchestrator surfaces the checkpoint prompt but never calls `git commit` automatically.

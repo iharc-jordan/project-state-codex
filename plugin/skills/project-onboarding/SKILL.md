@@ -4,6 +4,7 @@ description: "Set up or re-orient a project — 'set up project-state', 'onboard
 map:
   tier: P0
   stage: ingest
+  requires: [memory]
   inputs: [operator]
   reads: [documents]
   writes: [manifest, people, milestones, reporting-matrix]

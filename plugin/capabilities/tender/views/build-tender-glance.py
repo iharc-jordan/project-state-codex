@@ -240,8 +240,25 @@ def main(argv=None) -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(page, encoding="utf-8")
     summary = dict(facility=str(fac), as_of=str(today), tenders=len(tenders), open=len(open_t), closing_7d=len(soon), queue=len(queue), connectors=len(connectors), healthy=healthy, out=str(out))
+    # detail for other consumers (e.g. the state MCP): the same derived lists the page draws
+    def _lane(t):
+        st = status(t)
+        return next((lab for lab, sts in LANES if st in sts), None)
+    def _row(t):
+        d = closing(t); m = t.get("matching") or {}; pr = t.get("procurement") or {}; q = t.get("qualification") or {}; b = t.get("buyer") or {}
+        return {"id": t.get("id"), "title": t.get("title"), "buyer": b.get("name"), "type": pr.get("type"), "value": pr.get("estimated_value"), "currency": pr.get("currency"),
+                "closing_at": d.isoformat() if d else None, "days_to_close": (d - today).days if d else None, "status": status(t), "lane": _lane(t),
+                "relevance_score": m.get("relevance_score"), "qualification": q.get("status"), "disqualifiers": len(q.get("possible_disqualifiers") or []),
+                "owner": (t.get("workflow") or {}).get("owner"), "next_action": (t.get("workflow") or {}).get("next_action")}
+    summary.update(
+        project=name, window_days=window, mailbox_label=cap.get("mailbox_label"),
+        lanes=[lab for lab, _ in LANES], pipeline=[_row(t) for t in open_t], queue_rows=[_row(t) for t in queue[:8]],
+        connectors_detail=[{"id": k, "health": c.get("health"), "paused": bool(c.get("paused")), "last_success": str(c.get("last_success") or "") or None, "new_records_last_run": c.get("new_records_last_run"), "consecutive_failures": c.get("consecutive_failures"), "cursor": c.get("cursor")} for k, c in sorted(connectors.items())],
+        events_14d=dict(ev_counts), recent_events=[{k: v for k, v in e.items() if not k.startswith("_")} for e in recent],
+        lifecycle=dict(by_status), profiles_enabled=sum(1 for p in profiles if p.get("enabled", True)), profiles=[{"id": p.get("id"), "name": p.get("name"), "enabled": p.get("enabled", True)} for p in profiles],
+    )
     if a.json:
-        Path(a.json).write_text(json.dumps(summary, indent=2))
+        Path(a.json).write_text(json.dumps(summary, indent=2, default=str))
     print(f"tender-glance → {out}\n  as of {today} · {len(tenders)} tenders ({len(open_t)} open) · {len(soon)} closing ≤7 d · {len(queue)} awaiting decision · connectors {healthy}/{len(connectors)} healthy")
     return 0
 
