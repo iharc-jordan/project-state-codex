@@ -48046,8 +48046,8 @@ AFTER: update state.json harvest_cursors.calendar to the current ISO timestamp; 
 };
 var system_map_generated_default = {
   schema_version: 1,
-  generated_at: "2026-09-26T20:59:41Z",
-  plugin_version: "4.11.0",
+  generated_at: "2026-09-26T21:13:44Z",
+  plugin_version: "5.0.0",
   columns: [
     {
       id: "sources",
