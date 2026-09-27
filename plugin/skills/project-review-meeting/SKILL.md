@@ -4,7 +4,6 @@ description: "Run the recurring review meeting — steering committee, QBR, boar
 map:
   tier: P2
   stage: generate
-  requires: [memory]
   reads: [milestones, risks, decisions, changes, people]
   writes: [decisions, reports]
   calls: [project-notifier]

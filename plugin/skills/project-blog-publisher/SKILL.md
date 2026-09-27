@@ -4,7 +4,6 @@ description: "Draft blog posts from project progress for the scsiwyg blog — 'w
 map:
   tier: P2
   stage: generate
-  requires: [memory]
   reads: [milestones, reports]
   calls: [project-notifier, project-website-publisher, project-external-comms]
   produces: [blog-post]

@@ -4,7 +4,6 @@ description: "Read or write a grant application's state (grant-state/) — secti
 map:
   tier: grant
   stage: keep
-  requires: [memory]
   reads: [grant-state]
   writes: [grant-state]
   role: memory-layer

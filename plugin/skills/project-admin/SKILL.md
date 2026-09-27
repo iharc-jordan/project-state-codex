@@ -4,7 +4,6 @@ description: "Create, pull or list project-state projects in the local-first + G
 map:
   tier: P3
   stage: keep
-  requires: [memory, python, shell, git, local-fs]
   reads: [manifest]
   calls: [project-scaffolder]
   delivers: [github-hub]

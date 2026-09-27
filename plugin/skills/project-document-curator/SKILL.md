@@ -4,7 +4,6 @@ description: "File, classify and index project documents — 'file this document
 map:
   tier: P1
   stage: ingest
-  requires: [memory]
   inputs: [files]
   reads: [documents, references]
   writes: [documents, references, log]

@@ -4,7 +4,6 @@ description: "Generate the technical report suite about this codebase and projec
 map:
   tier: P2
   stage: generate
-  requires: [memory, local-fs]
   inputs: [codebase]
   reads: [manifest, milestones]
   writes: [reports]

@@ -4,8 +4,6 @@ description: "Triage the project inbox — 'triage the inbox', 'what's in the in
 map:
   tier: P1
   stage: ingest
-  requires: [memory]
-  binding: mcp-ready
   inputs: [files]
   reads: [documents, references]
   writes: [documents, references, log]
@@ -20,22 +18,9 @@ map:
 >
 > Use to triage a project's inbox — 'triage the inbox', 'triage the project inbox', 'what's in the inbox', 'audit the inbox', 'sort these documents', 'what did we just receive', 'flag this doc', 'smart inbox' — instead of reading the dropped files yourself. Scans project-state/documents/inbox/, classifies each file (doc type, use designation, relevance to this project's milestones and risks, action flags, extraction summary), writes documents/index.yaml, logs inbox.triage.document per file, copies imprint-flagged documents to references/imprint/, and writes references/inbox-orientation.yaml as onboarding pre-context. Also suggested at the start of project-onboarding when documents are present, and by project-orchestrator when the inbox has unindexed files.
 
-**Which home.** If a project-state MCP is connected (the Project State connector, or the local one the
-plugin ships; its tools include `project_list`, `get_entity` and `entity_patch`), call `project_list` first. If it
-lists this project, with `home: server` or `home: local` alike (the local server writes the folder for you;
-`local` is not a cue to edit files), every read and write goes through those tools, the activity-log entry included: after
-an `entity_put` / `entity_patch` / `entity_delete`, append the skill's event with `log_append` (the screen
-actions, such as `milestone_update`, log their own). Work on the files directly only when no MCP serves the
-project.
-
-Every read and write goes through the memory layer (`project-state`), which names things by **kind and
-id**, never by path. On disk its kinds reference says where each kind lives; over the Project State
-connector, pass kind and id to the memory tools (or use the `view_*` tools and screen actions) and the
-server resolves them. The same steps work in both homes.
-
 ## Purpose
 
-Turn the inbox (kind `inbox-document`), a passive holding area, into an intelligent staging ground. Instead of waiting for `project-document-curator` to manually classify each file, this skill reads every unprocessed document, extracts meaning, assigns a use designation, and builds a structured orientation summary that the onboarding skill can use to pre-populate context before the user answers a single question.
+Turn the passive `documents/inbox/` holding area into an intelligent staging ground. Instead of waiting for `project-document-curator` to manually classify each file, this skill reads every unprocessed document, extracts meaning, assigns a use designation, and builds a structured orientation summary that the onboarding skill can use to pre-populate context before the user answers a single question.
 
 The core payoff: drop files, run `/project-inbox`, then run `/project-onboarding` — and onboarding becomes a confirmation pass instead of a blank-slate interview.
 
@@ -45,7 +30,7 @@ The core payoff: drop files, run `/project-inbox`, then run `/project-onboarding
 
 ### `triage` (default)
 
-Run the full classification pass on all documents with `triage_state: unprocessed` in the document index (kind `document-index`), plus any files in the inbox (kind `inbox-document`) not yet indexed.
+Run the full classification pass on all documents with `triage_state: unprocessed` in `documents/index.yaml`, plus any files in `documents/inbox/` not yet indexed.
 
 **For each document:**
 
@@ -83,7 +68,7 @@ Run the full classification pass on all documents with `triage_state: unprocesse
 
    **Triage confidence**: `high` | `medium` | `low` based on document readability and classification certainty.
 
-3. **Write enriched metadata** to the document index. For documents already indexed: extend in
+3. **Write enriched metadata** to `documents/index.yaml`. For documents already indexed: extend in
    place, preserving all existing fields — but REPLACE any key you are writing rather than adding a
    second copy of it. "Preserving all existing fields" previously read as append-only and produced a
    duplicate `classified_by` on 34 entries, which a normal YAML loader silently discards (FB-006).
@@ -118,7 +103,7 @@ Run the full classification pass on all documents with `triage_state: unprocesse
      ```
    - Map `action_flags` to `relevant_chapters`: `seed-manifest` → [2], `seed-milestones` → [5], `seed-people` → [4], `seed-budget` → [2], `seed-risks` → [7]
 
-5. **Log** to the activity log (kind `activity-log`):
+5. **Log** to `logs/activity.ndjson`:
    ```json
    {"event": "inbox.triage.document", "doc_id": "...", "designation": "imprint", "relevance_score": 88, "timestamp": "..."}
    ```
@@ -133,7 +118,7 @@ Run the full classification pass on all documents with `triage_state: unprocesse
      "updated_at": "2026-06-18T21:00:00Z"
    }
    ```
-   Key by the document's **inbox id — its file name** (not doc_id). Add an entry for every inbox file you triaged in this pass; leave already-present entries untouched. This file is the source of truth for "already triaged" and is written by every triage run, in either app (Cowork or the keep-state-app's triage job), so the two stay consistent.
+   Key by the document's **filename as it sits in `documents/inbox/`** (basename, not doc_id). Add an entry for every inbox file you triaged in this pass; leave already-present entries untouched. This file is the source of truth for "already triaged" and is written by every triage run, in either app (Cowork or the keep-state-app's triage job), so the two stay consistent.
 
 After processing all documents, run `orient` automatically to regenerate `references/inbox-orientation.yaml`.
 
@@ -161,7 +146,7 @@ Show triage state summary without making changes.
 Report:
 - Count by `triage_state`: processed / unprocessed / dismissed
 - Count by `use_designation`: imprint / for-use / example / output / unknown
-- Unindexed files (in the inbox but not in the document index)
+- Unindexed files (in `documents/inbox/` but not in `documents/index.yaml`)
 - Whether `references/inbox-orientation.yaml` exists and its last generated timestamp
 - Quick recommendation: "Run `project-inbox triage` to process N unprocessed documents"
 
@@ -172,7 +157,7 @@ Report:
 Manually override a document's `use_designation`. Valid designations: `imprint`, `for-use`, `example`, `output`, `unknown`.
 
 Steps:
-1. Find the entry in the document index by `id`.
+1. Find the entry in `documents/index.yaml` by `id`.
 2. Update `use_designation` to the provided value.
 3. If changing to `imprint` and not already in `references/imprint/`: copy file and update `references/imprint/index.yaml`.
 4. If changing away from `imprint` and in `references/imprint/`: note (do not delete the copy — leave it with a `manually_demoted: true` flag).
@@ -254,13 +239,13 @@ Log `inbox.orientation.generated` to activity log.
 Mark a document as dismissed without full classification.
 
 Steps:
-1. Set `triage_state: dismissed` in the document index.
+1. Set `triage_state: dismissed` in `documents/index.yaml`.
 2. If the document is in `references/imprint/`, warn: "This document has already been copied to references/imprint/ — clearing it won't remove that copy. Use `flag <id> unknown` if you want to demote it."
 3. Log `inbox.document.dismissed` to activity log.
 
 ---
 
-## Document index schema extension
+## documents/index.yaml schema extension
 
 The following fields are added to existing document index entries by this skill. All are optional and backward-compatible — existing entries without them are treated as `triage_state: unprocessed`.
 
@@ -308,7 +293,7 @@ project-state/references/imprint/
 
 ## Integration with project-document-curator
 
-When `project-document-curator` encounters a document that already has `triage_state: processed` in the document index, it should:
+When `project-document-curator` encounters a document that already has `triage_state: processed` in `documents/index.yaml`, it should:
 - Use the smart inbox `use_designation` and `extraction_summary` as the starting classification hypothesis
 - Present it to the user as a confirmation ("Smart inbox pre-classified this as `proposal` / `imprint` — confirm?") rather than running the 5-question process
 - Preserve all smart inbox metadata fields when writing the updated entry
@@ -325,22 +310,22 @@ When `project-document-curator` encounters a document that already has `triage_s
 - "smart inbox"
 - "index my documents"
 - "what documents do we have?" (if documents/inbox/ is non-empty)
-- Automatically suggested by `project-onboarding` when the inbox contains unprocessed files
+- Automatically suggested by `project-onboarding` when `documents/inbox/` contains unprocessed files
 
 ## Reads
 
-- the inbox — every document in it (unprocessed)
-- the document index — existing index (extend in place)
+- `documents/inbox/` — all files (unprocessed)
+- `documents/index.yaml` — existing index (extend in place)
 - `references/imprint/index.yaml` — for orient sub-action
 
 ## Writes
 
-- the document index — adds/extends entries with triage metadata
+- `documents/index.yaml` — adds/extends entries with triage metadata
 - `references/imprint/<doc-id>-<slug>.<ext>` — copies of imprint documents
 - `references/imprint/index.yaml` — imprint document registry
 - `references/inbox-orientation.yaml` — structured orientation summary
 - `references/inbox-triaged.json` — explicit triaged-filename ledger (so the keep-state-app inbox count is mtime-independent and consistent across apps)
-- the activity log — triage events (append-only)
+- `logs/activity.ndjson` — triage events (append-only)
 
 ## Called by
 

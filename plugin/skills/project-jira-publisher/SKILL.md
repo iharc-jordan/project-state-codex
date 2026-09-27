@@ -4,7 +4,6 @@ description: "Publish milestones, risks, decisions, objectives and KPIs to Jira 
 map:
   tier: P2
   stage: generate
-  requires: [memory, python, connector:jira]
   reads: [milestones, risks, decisions, objectives]
   writes: [milestones, risks, decisions, objectives]
   delivers: [jira]

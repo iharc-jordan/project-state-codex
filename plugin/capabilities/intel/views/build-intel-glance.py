@@ -70,7 +70,6 @@ def load_dir(d: Path):
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("facility"); ap.add_argument("--out"); ap.add_argument("--as-of")
-    ap.add_argument("--json", help="also write the derived data as JSON (for other consumers, e.g. the state MCP)")
     a = ap.parse_args(argv)
     fac = Path(a.facility).resolve()
     today = dt.date.fromisoformat(a.as_of) if a.as_of else dt.datetime.utcnow().date()
@@ -109,30 +108,6 @@ def main(argv=None) -> int:
     answered = {t: sum(1 for q in q_list(t) if q.get("answered") or q.get("answered_by")) for t in ("p0", "p1", "p2", "p3")}
     total = {t: len(q_list(t)) for t in ("p0", "p1", "p2", "p3")}
     p0_open = total["p0"] - answered["p0"]
-
-    if a.json:
-        def _d(x):
-            d = to_date(x); return d.isoformat() if d else None
-        lanes = {"prospecting": ["prospecting"], "proposed": ["proposed"], "active": ["active"], "stalled": ["stalled"], "closed": ["completed", "closed"]}
-        ent_name = {e.get("id"): e.get("name") for e in ents}
-        data = {
-            "generator": "capabilities/intel/views/build-intel-glance.py", "as_of": today.isoformat(), "project": name,
-            "focus": focus, "staleness_threshold_days": stale_days,
-            "counts": {"entities": len(active), "signals_30d": len(recent), "high_value_30d": by_value.get("high", 0), "p0_unanswered": p0_open, "stale": len(stale), "signals_total": len(sigs), "mandates": len(mands)},
-            "entities": [{"id": e.get("id"), "name": e.get("name"), "type": e.get("type") or "other", "priority": e.get("priority"), "status": e.get("status"),
-                          "signals": len(sig_by_ent.get(e.get("id"), [])), "last_signal": (last_signal(e.get("id")).isoformat() if last_signal(e.get("id")) else None), "stale": e in stale}
-                         for e in sorted(active, key=lambda e: (str(e.get("priority") or "P9"), e.get("name") or ""))],
-            "signals_30d": [{"id": x.get("id"), "date": _d(x.get("date")), "value": x.get("intelligence_value"), "type": x.get("signal_type"), "summary": x.get("summary"),
-                             "entities": [{"id": i, "name": ent_name.get(i)} for i in (x.get("entities_referenced") or [])]}
-                            for x in sorted(recent, key=lambda x: str(x.get("date")), reverse=True)],
-            "agenda": [{"tier": t.upper(), "answered": answered[t], "total": total[t],
-                        "first_open": next((q.get("q") or q.get("question") for q in q_list(t) if not (q.get("answered") or q.get("answered_by"))), None)} for t in ("p0", "p1", "p2", "p3")],
-            "mandates": {lane: [{"id": m.get("id"), "entity": ent_name.get(m.get("entity_id")) or m.get("entity_id"), "type": m.get("type"), "summary": m.get("summary")}
-                                for m in mands if str(m.get("status")) in sts] for lane, sts in lanes.items()},
-            "last_longlist": state.get("last_longlist"), "last_sweep": state.get("last_sweep"),
-        }
-        Path(a.json).parent.mkdir(parents=True, exist_ok=True)
-        Path(a.json).write_text(json.dumps(data, indent=2, default=str))
 
     # ── 1. the map: entities by type ─────────────────────────────────────────
     types = sorted({str(e.get("type") or "other") for e in active}) or ["—"]

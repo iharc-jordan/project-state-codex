@@ -4,7 +4,6 @@ description: "Answer questions across a portfolio of projects from its compiled 
 map:
   tier: capability
   stage: generate
-  requires: [memory]
   reads: [portfolio, people, manifest]
   writes: [portfolio, state, log]
   calls: [project-state]

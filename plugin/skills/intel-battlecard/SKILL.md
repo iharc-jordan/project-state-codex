@@ -4,7 +4,6 @@ description: "Build or refresh a competitor battlecard — 'battlecard for X', '
 map:
   tier: capability
   stage: generate
-  requires: [memory, python]
   inputs: [operator]
   reads: [intel, manifest]
   writes: [intel, log]

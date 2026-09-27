@@ -4,7 +4,6 @@ description: "Log and classify a project change — 'log a change', 'we need to 
 map:
   tier: P2
   stage: keep
-  requires: [memory]
   reads: [changes, milestones]
   writes: [changes]
   calls: [project-milestone-manager]

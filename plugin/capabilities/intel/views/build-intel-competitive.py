@@ -95,7 +95,6 @@ def scalar(v):
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("facility"); ap.add_argument("--out"); ap.add_argument("--as-of")
-    ap.add_argument("--json", help="also write the derived data as JSON (for other consumers, e.g. the state MCP)")
     args = ap.parse_args(argv)
     fac = Path(args.facility).resolve()
     today = dt.date.fromisoformat(args.as_of) if args.as_of else dt.datetime.utcnow().date()
@@ -250,23 +249,6 @@ def main(argv=None) -> int:
     n_cur = len([c for c in current if c["_subject"] in subjects]); n_fresh = sum(1 for c in current if c["_subject"] in subjects and c["_fresh"] == "fresh")
     n_stale_mat = sum(1 for c in current if c["_subject"] in subjects and c.get("material") and c["_fresh"] == "stale")
     counts = [(n_cur, "current claims"), (n_fresh, "fresh"), (n_stale_mat, "material & stale"), (n_conf, "open conflicts"), (len(unk), "P0 unknowns"), (sum(1 for c in cards if c[3]), "battlecards behind")]
-    if args.json:
-        nm = lambda sid: (ents.get(sid) or {}).get("name") or sid
-        data = {
-            "generator": "capabilities/intel/views/build-intel-competitive.py", "as_of": today.isoformat(), "project": name,
-            "self": ({"id": self_id, "name": nm(self_id), "claims": sum(1 for c in current if c["_subject"] == self_id)} if self_id in ents else None),
-            "counts": {k.replace(" & ", "_and_").replace(" ", "_"): v for v, k in counts},
-            "coverage": [{"id": sid, "name": nm(sid), "self": sid == self_id, "priority": (ents.get(sid) or {}).get("priority"), "fresh": n["fresh"], "aging": n["aging"], "stale": n["stale"], "total": tot} for sid, n, tot in rows],
-            "categories": cats_used,
-            "conflicts": [{"subject": nm(sub), "category": cat, "pairs": [[{"id": x["id"], "status": x.get("epistemic_status"), "date": str(x.get("source_date") or x.get("retrieved_at") or ""), "statement": x.get("statement")} for x in pr] for pr in pairs]} for (sub, cat), pairs in sorted(open_conf.items())],
-            "grid": [{"subject": nm(sid), "cells": [{"category": cat, "conflicts": len(open_conf.get((sid, cat), [])), "claims": sum(1 for c in current if c["_subject"] == sid and str(c.get("category")) == cat)} for cat in cats_used]} for sid in subjects],
-            "unknowns": [{"id": c["id"], "subject": nm(c["_subject"]), "category": c.get("category"), "statement": c.get("statement"), "age_days": age(c), "past_half_life": age(c) > half.get(str(c.get("category")), 180)} for c in unk],
-            "battlecards": [{"file": f, "subject": nm(sid), "generated": (g.isoformat() if g else None), "behind": b, "forked": fk, "stale_used": su, "unsourced": us, "audience": au} for f, sid, g, b, fk, su, us, au in cards],
-            "changes": [{"detected_at": str(x.get("detected_at")), "subject": nm(x.get("subject")), "type": x.get("change_type"), "significance": x.get("significance"), "before": x.get("before") or [], "after": x.get("after") or [], "action": x.get("recommended_action")} for x in sorted(recent, key=lambda x: str(x.get("detected_at")), reverse=True)],
-            "noise_suppressed": noise_n, "claims_total": len(claims), "superseded": len(superseded),
-        }
-        Path(args.json).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.json).write_text(json.dumps(data, indent=2, default=str))
     counts_html = '<div class="counts">' + "".join(f'<div class="c"><b>{v}</b><span>{k}</span></div>' for v, k in counts) + "</div>"
     self_note = (f'Self entity <b>{esc(ents[self_id].get("name"))}</b> ({esc(self_id)}) with {sum(1 for c in current if c["_subject"] == self_id)} claim(s).' if self_id in ents else '<b>No self entity declared</b> — nothing about us is provable; battlecards cannot pass the three-part test. Run intel-onboarding competitive.')
     page = PAGE.format(title=esc(name), now=esc(now_s), self_note=self_note, coverage=coverage_svg, legend=legend, counts=counts_html, contested=contested_svg, conf_rows=conf_rows or "", n_conf=n_conf,

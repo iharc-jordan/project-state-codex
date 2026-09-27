@@ -2,7 +2,7 @@ pack:
   id: "work-org-change"
   name: "Organisational Change"
   version: "0.1.0"
-  compatible_core: ">=4.0,<6.0"
+  compatible_core: ">=4.0,<5.0"
   description: |
     Work type for change that lands on people: a reorganisation, a new process or system rollout,
     a policy change, a hiring or onboarding wave. Stage-gate ladder read as case for change → plan and

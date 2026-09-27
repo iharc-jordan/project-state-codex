@@ -4,7 +4,6 @@ description: "Turn an idea into a mindmap and open it in MindMap Studio — 'min
 map:
   tier: P3
   stage: keep
-  requires: [memory, python, shell, local-fs]
   reads: [manifest, milestones]
   produces: [mindmap]
 ---

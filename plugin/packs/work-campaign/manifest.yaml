@@ -2,7 +2,7 @@ pack:
   id: "work-campaign"
   name: "Campaign or Launch"
   version: "0.1.0"
-  compatible_core: ">=4.0,<6.0"
+  compatible_core: ">=4.0,<5.0"
   description: |
     Work type for a marketing campaign, a product or feature launch, or a fundraising drive:
     work planned backwards from a launch date, then measured while it is in market. Gives the

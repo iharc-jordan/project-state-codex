@@ -4,7 +4,6 @@ description: "Set up SR&ED (Canadian R&D tax credit) tracking on a project — '
 map:
   tier: capability
   stage: ingest
-  requires: [memory]
   inputs: [operator]
   writes: [manifest, sred]
   calls: [project-state, project-sred-tracker]

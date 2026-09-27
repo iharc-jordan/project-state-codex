@@ -4,7 +4,6 @@ description: "Operate the nightly/morning routines that serve every project on t
 map:
   tier: P2
   stage: control
-  requires: [memory, python, local-fs]
   reads: [manifest, automation-tasks, log]
   calls: [project-harvester, project-orchestrator]
   delivers: [files, chat]

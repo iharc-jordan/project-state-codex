@@ -2,7 +2,7 @@ pack:
   id: "work-event"
   name: "Event"
   version: "0.1.0"
-  compatible_core: ">=4.0,<6.0"
+  compatible_core: ">=4.0,<5.0"
   description: |
     Work type for a conference, summit, offsite, gala, trade-show presence or launch party: work
     planned backwards from a fixed event date. Gives the project the countdown ladder anchored on

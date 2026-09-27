@@ -4,7 +4,6 @@ description: "Build and deploy the project website — 'build the project site',
 map:
   tier: P2
   stage: generate
-  requires: [memory, shell, local-fs, connector:scsiwyg]
   inputs: [scsiwyg]
   reads: [manifest, milestones, risks, decisions, people, documents, reports]
   writes: [manifest, log]

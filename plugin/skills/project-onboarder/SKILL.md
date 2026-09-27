@@ -4,7 +4,6 @@ description: "Brief a new teammate on the project — 'onboard Sam', 'new teamma
 map:
   tier: P3
   stage: keep
-  requires: [memory]
   reads: [manifest, people, milestones, decisions]
   writes: [people]
   produces: [onboarding-brief]

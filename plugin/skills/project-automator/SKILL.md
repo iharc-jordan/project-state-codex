@@ -4,7 +4,6 @@ description: "Compile the reporting matrix into the automation schedule (automat
 map:
   tier: P2
   stage: control
-  requires: [memory]
   reads: [reporting-matrix]
   writes: [automation-tasks]
 ---

@@ -4,7 +4,6 @@ description: "Set up the intel (competitive intelligence) capability on a projec
 map:
   tier: capability
   stage: ingest
-  requires: [memory, python]
   inputs: [operator]
   writes: [manifest, intel]
   calls: [project-state]

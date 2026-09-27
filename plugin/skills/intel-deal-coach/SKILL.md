@@ -4,7 +4,6 @@ description: "Coach a live deal against competitors — 'we're up against X on t
 map:
   tier: capability
   stage: generate
-  requires: [memory]
   inputs: [operator, files]
   reads: [intel, tenders, documents, manifest]
   writes: [intel, log]

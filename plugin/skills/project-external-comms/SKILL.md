@@ -4,7 +4,6 @@ description: "Review outgoing publications, talks, press releases or posts befor
 map:
   tier: P3
   stage: generate
-  requires: [memory]
   reads: [documents]
   writes: [documents, log]
   produces: [comms-review]

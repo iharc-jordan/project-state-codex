@@ -4,7 +4,6 @@ description: "Score and qualify a tender against our capability profiles — 'sh
 map:
   tier: capability
   stage: keep
-  requires: [memory]
   reads: [tenders, manifest]
   writes: [tenders]
   produces: [bid-record]

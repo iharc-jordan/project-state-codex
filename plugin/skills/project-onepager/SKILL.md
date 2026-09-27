@@ -4,7 +4,6 @@ description: "Write an audience-framed document from project state — 'one-page
 map:
   tier: P2
   stage: generate
-  requires: [memory]
   reads: [manifest, milestones, objectives, risks, decisions]
   writes: [reports]
   produces: [onepager]

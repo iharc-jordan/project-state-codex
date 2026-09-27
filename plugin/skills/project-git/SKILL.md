@@ -4,7 +4,6 @@ description: "Checkpoint, push or sync a project-state substrate with git — 'c
 map:
   tier: P3
   stage: keep
-  requires: [memory, shell, git, local-fs]
   reads: [log, manifest]
   produces: [state-checkpoint]
 ---

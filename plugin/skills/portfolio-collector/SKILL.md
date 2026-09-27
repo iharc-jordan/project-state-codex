@@ -4,7 +4,6 @@ description: "Collect a portfolio's member projects into dated snapshots and a c
 map:
   tier: capability
   stage: ingest
-  requires: [memory, python, local-fs]
   inputs: [projects]
   reads: [manifest, portfolio]
   writes: [portfolio, state, log]

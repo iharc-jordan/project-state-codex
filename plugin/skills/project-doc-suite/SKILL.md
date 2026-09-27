@@ -4,7 +4,6 @@ description: "Generate the project documentation suite (governance docs plus sof
 map:
   tier: P2
   stage: generate
-  requires: [memory, python, local-fs]
   inputs: [codebase]
   reads: [manifest, milestones, risks, phases, reporting-matrix]
   writes: [reports]
