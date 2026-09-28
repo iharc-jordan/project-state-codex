@@ -2,7 +2,6 @@
 name: project-doc-suite-generator
 description: "DEPRECATED — use project-doc-suite. Legacy governance Office-file generator kept for existing matrix entries."
 map: {deprecated: true, superseded_by: project-doc-suite}
-map: {deprecated: true, superseded_by: project-doc-suite}
 ---
 
 # Project Doc Suite Generator
