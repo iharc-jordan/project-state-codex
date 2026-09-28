@@ -4,6 +4,7 @@ description: "Process grant documents dropped in grant-state/documents/inbox/ â€
 map:
   tier: grant
   stage: ingest
+  requires: [memory, connector:gmail, connector:slack]
   inputs: [gmail, slack, files]
   reads: [grant-state]
   writes: [grant-state]

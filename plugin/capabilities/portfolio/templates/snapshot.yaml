@@ -5,6 +5,10 @@ kind: portfolio-snapshot
 member_id: ""                     # portfolio-member id
 captured_at: ""                   # ISO8601
 source_rev: null                  # member git HEAD, or substrate-rev, or null when untracked
+read_via: files                   # files | local-mcp | cloud — how the collector read the member (member_source.py)
+read_copy: home                   # home | mirror | moved-copy — which copy (the two-copy rule); when not home:
+# copy_as_of: …                   #   when that copy last changed (a mirror: when it was last published)
+# home_unreachable: missing       #   why the home copy did not answer
 reachable: true
 # unreachable:                    # present only when reachable is false
 #   reason: missing | permission | malformed | remote

@@ -8,6 +8,7 @@ events:
   - portfolio.member.retired
   - portfolio.snapshot.captured        # payload: member, source_rev, reachable
   - portfolio.member.unreachable       # payload: member, reason (missing | permission | malformed | remote)
+  - portfolio.member.read-from-copy    # payload: member, copy (mirror | moved-copy), home_unreachable — the two-copy rule
   - portfolio.index.compiled           # payload: kinds, rows, members
   - portfolio.understanding.generated  # payload: member, path
   - portfolio.registry.compiled        # payload: members, active, proposed

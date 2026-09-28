@@ -4,6 +4,7 @@ description: "Send a project artifact to the right surface — 'post this to Sla
 map:
   tier: P2
   stage: generate
+  requires: [memory, connector:slack, connector:gmail, connector:gcal]
   reads: [reports]
   writes: [log]
   produces: [team-update]

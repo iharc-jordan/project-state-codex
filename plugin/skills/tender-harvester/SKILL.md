@@ -4,6 +4,7 @@ description: "Harvest public-sector tenders (CanadaBuys, MERX, SaskTenders, bids
 map:
   tier: capability
   stage: ingest
+  requires: [memory, python, connector:web, connector:gmail]
   inputs: [web, gmail]
   reads: [manifest]
   writes: [tenders, state]

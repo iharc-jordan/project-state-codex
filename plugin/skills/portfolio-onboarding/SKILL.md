@@ -4,6 +4,7 @@ description: "Set up portfolio oversight on an org-level project — 'set up the
 map:
   tier: capability
   stage: ingest
+  requires: [memory, local-fs]
   inputs: [operator, files, projects]
   reads: [manifest]
   writes: [manifest, portfolio, log]
@@ -48,6 +49,20 @@ writes the block, scaffolds `portfolio/{members,snapshots,index,understanding,de
 findings,answers,reports}`, seeds `state/portfolio.json`, seeds and arms the weekly collect
 through `project-automator`, logs `capability.enabled`.
 
+## Step 3b — Activate the paid verbs (when this install checks)
+
+Enabling portfolio is Core and free: member rows, the read-only view across projects, dated
+snapshots. The index, understanding pages, at-a-glance, weekly note, cited answers, findings and
+promote are paid (a Practitioner who picked portfolio, or Firm and above; decision
+`2026-09-27-capability-entitlements`). Ask the local server `entitlement_status {capability:
+"portfolio"}`. `enforced: false` → nothing to do. `entitled: false` → offer to activate: with the
+person's go, call `capability_activate {org, capability: "portfolio"}` through the Project State
+connector (it counts their seat; on a Practitioner plan with nothing picked yet, an org admin's
+activation picks portfolio), then pass the returned `entitlement` unchanged to the local server's
+`entitlement_save`. That is the only call about the plan this install ever makes; from then on it
+is checked offline until the file expires (the paid period plus 30 days). No plan, or they decline:
+carry on as Core and say which outputs they will not get. Never edit or copy an entitlement file.
+
 ## Step 4 — Seed the registry (three sources, merged, always confirmed)
 
 1. **Discovery.** Every `<dir>/project-state/manifest.yaml` under `workspace_root`, except this
@@ -58,7 +73,11 @@ through `project-automator`, logs `capability.enabled`.
    column → field mapping and the columns that cannot be mapped. Each row → a `proposed`
    member with `source_row` provenance; a row matching a discovered directory merges into it
    (discovered facts win; the conflict is shown).
-3. **Kanban registry** `<workspace_root>/registry.json` when present.
+3. **Workspace registry** (the kanban's `registry.json`; also what the local project-state
+   server lists in `project_list` once portfolio is enabled): each project inside
+   `workspace_root` → a member with `location: {type: registry, ref: "org/project"}`, which
+   keeps resolving when its folder moves. A registry project matching a discovered directory
+   merges into it, and the registry location wins.
 
 Existing rows (a hand-rolled registry, a previous run) are shown side by side and never
 overwritten silently. On confirmation, write through `project-state`

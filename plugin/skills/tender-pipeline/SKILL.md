@@ -4,6 +4,7 @@ description: "Move tenders through the pursuit pipeline — 'show the tender pip
 map:
   tier: capability
   stage: keep
+  requires: [memory, python]
   reads: [tenders]
   writes: [tenders, log]
   produces: [bid-record]

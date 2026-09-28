@@ -4,6 +4,7 @@ description: "Answer questions across a portfolio of projects from its compiled 
 map:
   tier: capability
   stage: generate
+  requires: [memory]
   reads: [portfolio, people, manifest]
   writes: [portfolio, state, log]
   calls: [project-state]
@@ -36,6 +37,15 @@ Observes and asks; never re-plans.
 and `portfolio/index/` as compiled at the last collect. If the index is older than the newest
 snapshot, say so and offer to run the collector first. Members never collected are named as
 such in every answer, never silently omitted.
+
+## Paid verbs
+
+`query`, `synthesize`, `findings` and `promote` are the portfolio's paid verbs (decision
+`2026-09-27-capability-entitlements`). Before one, ask `entitlement_status` — the local server's
+`{capability: "portfolio"}`, or for a cloud portfolio the connector's `{org}` — and when it is not
+unlocked, say so plainly: what the plan unlocks, and that `/portfolio-onboarding` activates it. Do
+not answer the question from the index or member files some other way; that is the verb. The
+server refuses `portfolio_promote` on its own without a plan.
 
 ## query
 
@@ -82,6 +92,19 @@ lifecycle fields only.
 4. Acceptance is the member's: an entity recorded with `source: portfolio:<id>` puts the
    `became` edge on the finding at the next collect. Never promote unattended; never re-drop a
    finding already promoted to the same member.
+
+**Under the mcp binding** (the local project-state MCP, or the Project State connector in the
+cloud, serves the portfolio project), steps 1–3 are one call, made only after the person has approved this drop to this member:
+`portfolio_promote {project, finding, member, as, proposal, approved: true}`, with `proposal` the
+"What is proposed" section (the proposed entity in the member's vocabulary, as a question). The
+server renders the template, writes the one inbox file (never over an existing one), marks the
+finding `promoted` with a `proposal-dropped` became edge, and logs `portfolio.finding.promoted`;
+if the portfolio side fails, the dropped file is taken back. Locally, members are the registry
+projects the server serves within `workspace_root`; in the cloud, `location.type: server` members
+the person can see — editor on the portfolio and at least viewer on the member, since the drop is
+the only thing a viewer may write. A member whose home is elsewhere (a cloud mirror of a local
+project, or a folder that moved to the cloud) is refused: drop from the server that holds its home.
+Do not write the member's inbox file yourself around it.
 
 ## Discipline
 

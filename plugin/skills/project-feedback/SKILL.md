@@ -4,6 +4,7 @@ description: "Report a bug or request against project-state itself — 'file fee
 map:
   tier: P3
   stage: keep
+  requires: [memory]
   reads: [feedback]
   writes: [feedback]
 ---

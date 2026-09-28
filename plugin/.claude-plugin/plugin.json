@@ -1,7 +1,7 @@
 {
   "name": "project-state",
   "displayName": "Project State",
-  "version": "5.0.1",
+  "version": "5.1.0",
   "description": "Turn any multi-stakeholder project into a system where routine reporting is a byproduct of normal work. 55 skills for milestones, objectives/KPIs, phase gates, document curation, status reports, defect/feedback registration to GitHub issues, funder/grant compliance, and a local kanban \u2014 driven by 10 swappable compliance packs (PIC, grant-Canada, board/investor, client-services, agile, open-source, plus one bundled with each capability) and 4 capability plugins (Canadian SR&ED with guided onboarding and T661 audit review; Tender \u2014 public-sector tender discovery, qualification and pursuit; Intel \u2014 a standing desk for the entities and signals around a project, with the competitive layer: claims, battlecards, deal briefs (OCI v0.1, L1); Portfolio \u2014 one Project that understands, queries and synthesizes a set of member projects).",
   "author": {
     "name": "Atomic 47 Labs",

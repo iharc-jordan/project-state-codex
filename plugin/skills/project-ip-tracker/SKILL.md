@@ -4,6 +4,7 @@ description: "Track intellectual property from a project — 'log an invention',
 map:
   tier: P3
   stage: keep
+  requires: [memory]
   reads: [ip]
   writes: [ip]
   produces: [ip-disclosure]

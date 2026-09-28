@@ -4,6 +4,7 @@ description: "Write the recurring competitive brief for an audience (exec, sales
 map:
   tier: capability
   stage: generate
+  requires: [memory]
   inputs: [operator]
   reads: [intel, manifest]
   writes: [intel, log]

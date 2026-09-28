@@ -4,6 +4,7 @@ description: "Pull intel from documents dropped in project-state/documents/inbox
 map:
   tier: capability
   stage: ingest
+  requires: [memory, python]
   reads: [documents, manifest]
   writes: [intel, log]
 ---

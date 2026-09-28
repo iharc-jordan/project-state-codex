@@ -4,6 +4,7 @@ description: "Research competitors and the market on the web — 'research X', '
 map:
   tier: capability
   stage: ingest
+  requires: [memory, python, connector:web]
   inputs: [web]
   reads: [manifest, intel]
   writes: [intel, log]

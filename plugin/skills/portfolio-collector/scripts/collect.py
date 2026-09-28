@@ -10,7 +10,7 @@ inside a member project. Spec: docs/PORTFOLIO-CAPABILITY-SPEC.md §6.2.
 
 USAGE
     collect.py [--portfolio DIR] [all | MEMBER-ID] [--dry-run] [--force] [--week]
-               [--as-of YYYY-MM-DD] [--actor NAME] [--json]
+               [--as-of YYYY-MM-DD] [--actor NAME] [--json] [--transport auto|mcp|files]
 
     --portfolio   the portfolio's project-state/ directory (default: walk up from cwd)
     all           every member with status active | paused | closing   (default)
@@ -20,6 +20,15 @@ USAGE
     --week        also write portfolio/reports/week-<date>.md (the scheduled run passes this)
     --as-of       compute "today" from this date (fixtures, evals); default: today UTC
     --json        print the run summary as JSON instead of a table
+    --transport   how members are read (member_source.py). auto (default): through the local
+                  project-state server when it serves the member, else the files; a location.type:
+                  server member through the cloud server. mcp: through a server or not at all.
+                  files: the files only (server members are then unreachable, reason remote).
+
+Members are located by portfolio/members/<id>.yaml location.type: local (a path under workspace_root),
+registry (a workspace-registry "org/project", resolved to its folder; the reach still applies), server
+(an "org/project" in the cloud, read with $PS_MCP_URL and a bearer token), hub or appliance (a local
+clone recorded on the row). Every snapshot records how it was read in read_via.
 
 Requires PyYAML (already required by the other guards). Stdlib otherwise.
 """
@@ -41,6 +50,10 @@ try:
 except ImportError:  # pragma: no cover
     print("collect.py: PyYAML is required (pip install pyyaml)", file=sys.stderr)
     sys.exit(2)
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from member_source import (FileSource, McpClient, McpError, McpSource, cloud_endpoint,  # noqa: E402
+                           cloud_folders, entitlement_status, local_server_cmd, parse_yaml, registry_cloud_rows, registry_folder, registry_rows)
 
 ACTOR_DEFAULT = "portfolio-collector"
 ACTIVE_STATUSES = {"active", "paused", "closing"}
@@ -128,7 +141,11 @@ class Run:
         cap = ((manifest.get("capabilities") or {}).get("portfolio")) or {}
         if not cap or cap.get("enabled") is False:
             die("portfolio capability is not enabled in this project's manifest")
-        for key in ("workspace_root", "subject"):
+        # the cloud server's own collect reads its members from folders it materialized; a portfolio that lives
+        # in the cloud has no disk to reach, so workspace_root may be absent there (and nothing on disk is read)
+        folders = cloud_folders()
+        self.server_side, self.cloud_folders = folders is not None, folders or {}
+        for key in (("subject",) if self.server_side else ("workspace_root", "subject")):
             v = cap.get(key)
             # the app now writes these through manifest_set (scalar); a one-element list is still
             # accepted for manifests written by the older list-only config_add action
@@ -139,8 +156,14 @@ class Run:
                 die(f"capabilities.portfolio.{key} is REQUIRED — enable refuses without it; nothing collected")
         self.cap = cap
         self.portfolio_name = ((manifest.get("project") or {}).get("name")) or self.ps.parent.name
-        wr = Path(str(cap["workspace_root"]))
-        self.workspace_root = (wr if wr.is_absolute() else (self.ps / wr)).resolve()
+        wr = cap.get("workspace_root")
+        if self.server_side or not wr or str(wr).strip() == "REQUIRED":
+            # inside the cloud server there is no disk to reach, whatever the manifest says: a workspace_root
+            # resolved from the server's working copy would land in its own cache
+            self.workspace_root = Path("/nonexistent-workspace-root")
+        else:
+            wr = Path(str(wr))
+            self.workspace_root = (wr if wr.is_absolute() else (self.ps / wr)).resolve()
         idx = cap.get("index") or {}
         self.activity_window = int(idx.get("activity_window_days", 30))
         self.deadline_window = int(idx.get("deadline_window_days", 90))
@@ -158,6 +181,73 @@ class Run:
         self.events: list[dict] = []
         self.summary: list[dict] = []
         self.writes: list[str] = []
+        self._local = self._cloud = None      # MCP clients, started on first use
+        self._local_refs: dict[str, str] = {}  # member folder → the local server's "org/project"
+        self.cloud_error: str | None = None
+
+    # the local project-state server, serving this portfolio (and so the registry within its reach)
+    def local(self) -> McpClient | None:
+        if self._local is None and self.args.transport != "files":
+            cmd = local_server_cmd(Path(__file__))
+            if cmd:
+                try:
+                    self._local = McpClient(cmd=[*cmd, "--root", str(self.ps)], env={**os.environ, "PROJECT_STATE_NO_OS_ACTOR": "1"})
+                    for row in self._local.call("project_list", {}).get("projects", []):
+                        if row.get("folder") and row.get("access") == "viewer":
+                            self._local_refs[str(Path(row["folder"]).resolve())] = row["project"]
+                except (McpError, OSError) as e:
+                    print(f"warn: the local project-state server did not start: {e}", file=sys.stderr)
+                    self._local = False
+            else:
+                self._local = False
+        return self._local or None
+
+    def cloud(self) -> McpClient | None:
+        if self._cloud is None:
+            url, tok = cloud_endpoint()
+            self._cloud = False
+            if url and tok:
+                try:
+                    self._cloud = McpClient(url=url, token=tok)
+                except McpError as e:
+                    self.cloud_error = str(e)
+            else:
+                self.cloud_error = "no cloud server configured ($PS_MCP_URL and a token)"
+        return self._cloud or None
+
+    # ref → the cloud's own word on where that project's home is (server, or local for a Published mirror),
+    # else the registry's last reading of it
+    def cloud_home(self, ref: str) -> str | None:
+        if not hasattr(self, "_cloud_homes"):
+            self._cloud_homes = {str(r.get("ref")): r.get("home") for r in registry_cloud_rows()}
+            if self.args.transport != "files" and self.cloud():
+                try:
+                    self._cloud_homes.update({r["project"]: r.get("home") for r in self._cloud.call("project_list", {}).get("projects", [])})
+                except McpError:
+                    pass
+        return self._cloud_homes.get(ref)
+
+    def cloud_source(self, ref: str):
+        if ref in self.cloud_folders:  # the cloud server's own collect: a copy it materialized for this caller
+            return FileSource(self.cloud_folders[ref], via="cloud"), None
+        if self.server_side or self.args.transport == "files" or not self.cloud():
+            return None, "remote"
+        return McpSource(self._cloud, ref, "cloud"), None
+
+    # a member folder on this disk → how to read it (auto: through the local server when it serves it)
+    def source_for(self, p: Path):
+        if self.args.transport != "files" and self.local():
+            ref = self._local_refs.get(str(p.resolve()))
+            if ref:
+                return McpSource(self._local, ref, "local-mcp"), None
+        if self.args.transport == "mcp":
+            return None, "remote"  # the server does not serve it and files were ruled out
+        return FileSource(p), None
+
+    def close(self):
+        for c in (self._local, self._cloud):
+            if c:
+                c.close()
 
     # writes go through here so --dry-run can refuse them all in one place
     def write(self, rel: str, content: str):
@@ -204,76 +294,122 @@ def load_members(run: Run) -> list[dict]:
     return rows
 
 
-def resolve_location(run: Run, m: dict) -> tuple[Path | None, str | None]:
+def member_path(run: Run, m: dict) -> tuple[Path | None, str | None]:
+    """A local or registry row → the member's project-state/ on this disk, inside workspace_root."""
     loc = m.get("location") or {}
     t = loc.get("type") or "none"
-    if t == "none":
-        return None, "missing"
     if t == "local":
         raw = loc.get("path")
         if not raw:
             return None, "missing"
         p = Path(str(raw))
         p = (p if p.is_absolute() else (run.ps / p)).resolve()
-        try:
-            p.relative_to(run.workspace_root)
-        except ValueError:
-            return None, "permission"
-        if not (p / "manifest.yaml").exists():
+    elif t == "registry":
+        p = registry_folder(str(loc.get("ref") or ""))
+        if p is None:
             return None, "missing"
-        return p, None
+    else:
+        return None, "missing"
+    reason = in_reach(run, p)
+    return (None, reason) if reason else (p, None)
+
+
+def in_reach(run: Run, p: Path) -> str | None:
+    try:
+        p.relative_to(run.workspace_root)
+    except ValueError:
+        return "permission"
+    return None if (p / "manifest.yaml").exists() else "missing"
+
+
+def disk_substrate(repo) -> Path | None:
+    for d in ("project-state", ".project-state"):
+        if repo and (Path(repo) / d / "manifest.yaml").exists():
+            return (Path(repo) / d).resolve()
+    return None
+
+
+def intended_repo(run: Run, m: dict) -> str | None:
+    """Where a local or registry row says the member's repo is, whether or not it is there now."""
+    loc = m.get("location") or {}
+    if loc.get("type") == "local" and loc.get("path"):
+        p = Path(str(loc["path"]))
+        return str((p if p.is_absolute() else (run.ps / p)).resolve().parent)
+    if loc.get("type") == "registry":
+        org, _, project = str(loc.get("ref") or "").partition("/")
+        row = next((r for r in registry_rows() if str(r.get("org")) == org and str(r.get("project")) == project), None)
+        return str(Path(row["path"]).resolve()) if row and row.get("path") else None
+    return None
+
+
+def moved_to(p: Path) -> str | None:
+    h = (yload(p / "manifest.yaml") or {}).get("home") or {}
+    return f"{h.get('org')}/{h.get('project')}" if isinstance(h, dict) and h.get("kind") == "server" else None
+
+
+def copies(run: Run, m: dict) -> list[tuple[str, object, str | None]]:
+    """The member's copies, home first: [(home | mirror | moved-copy, source or None, reason when None)].
+
+    Decision 2026-09-27-mixed-local-and-cloud-homes, item 3: a project with a copy in each home is one
+    member. Its home copy is read when it answers; otherwise the other copy, and the snapshot says so.
+    """
+    loc = m.get("location") or {}
+    t = loc.get("type") or "none"
+    if t == "none":
+        return [("home", None, "missing")]
+    if t in ("local", "registry"):
+        p, reason = member_path(run, m)
+        moved = moved_to(p) if p else None
+        if moved:  # this folder is the read-only copy of a project that moved to the cloud
+            return [("home", *run.cloud_source(moved)), ("moved-copy", *run.source_for(p))]
+        out = [("home", *(run.source_for(p) if p else (None, reason)))]
+        repo = intended_repo(run, m)
+        mirror = loc.get("mirror") or next((str(r.get("ref")) for r in registry_cloud_rows()
+                                            if repo and r.get("copy_on_disk") and str(Path(str(r["copy_on_disk"])).resolve()) == repo
+                                            and r.get("home") != "server"), None)
+        if mirror:
+            out.append(("mirror", *run.cloud_source(mirror)))
+        return out
+    if t == "server":
+        ref = str(loc.get("ref") or "")
+        if not ref:
+            return [("home", None, "missing")]
+        row = next((r for r in registry_cloud_rows() if str(r.get("ref")) == ref), {})
+        disk = disk_substrate(row.get("copy_on_disk"))
+        disk_src = (None, in_reach(run, disk)) if disk and in_reach(run, disk) else (run.source_for(disk) if disk else None)
+        if run.cloud_home(ref) == "local":  # the cloud holds a Published mirror; the home is a folder
+            return ([("home", *disk_src)] if disk_src else []) + [("mirror", *run.cloud_source(ref))]
+        return [("home", *run.cloud_source(ref))] + ([("moved-copy", *disk_src)] if disk_src else [])
     if t in ("hub", "appliance"):
         # V1: only a local clone recorded on the row is readable; never clone, never call out.
         raw = loc.get("path")
         if raw and (Path(str(raw)).expanduser() / "manifest.yaml").exists():
-            return Path(str(raw)).expanduser().resolve(), None
-        return None, "remote"
-    return None, "missing"
-
-
-def source_rev(member_ps: Path) -> str | None:
-    """A revision that changes when the files the snapshot reads change.
-
-    A clean git checkout is identified by its HEAD. Anything else — a dirty tree, a substrate that
-    is not its own repo, a fixture inside another repo — gets a content hash over the read set, so
-    the unchanged short-circuit never hides an edit behind a stale HEAD.
-    """
-    h = hashlib.sha1()
-    for rel in ("manifest.yaml", "state.json", "reporting-matrix.yaml", "logs/activity.ndjson",
-                "documents/index.yaml"):
-        h.update(read_text(member_ps / rel).encode())
-    for d in ("milestones", "risks", "decisions", "people", "harvest/cursors"):
-        for p in sorted((member_ps / d).glob("*.yaml")):
-            h.update(p.name.encode()); h.update(read_text(p).encode())
-    sha = "sha:" + h.hexdigest()[:10]
-    try:
-        out = subprocess.run(["git", "-C", str(member_ps), "rev-parse", "--short", "HEAD"],
-                             capture_output=True, text=True, timeout=10)
-        if out.returncode == 0 and out.stdout.strip():
-            dirty = subprocess.run(["git", "-C", str(member_ps), "status", "--porcelain", "--", "."],
-                                   capture_output=True, text=True, timeout=10).stdout.strip()
-            return out.stdout.strip() if not dirty else f"{out.stdout.strip()}+{sha}"
-    except Exception:
-        pass
-    return sha
+            return [("home", FileSource(Path(str(raw)).expanduser().resolve()), None)]
+        return [("home", None, "remote")]
+    return [("home", None, "missing")]
 
 
 def read_dir(member_ps: Path, d: str) -> list[tuple[str, dict]]:
+    """The portfolio's own files (findings, dependencies)."""
+    return read_member_dir(FileSource(member_ps), d)
+
+
+def read_member_dir(src, d: str) -> list[tuple[str, dict]]:
     out = []
-    for p in sorted((member_ps / d).glob("*.yaml")):
+    for rel in src.listdir(d):
         try:
-            data = yload(p)
+            data = parse_yaml(src.text(rel), rel)
         except RuntimeError:
             continue
         if isinstance(data, dict):
-            data.setdefault("id", p.stem)
-            out.append((f"{d}/{p.name}", data))
+            data.setdefault("id", Path(rel).stem)
+            out.append((rel, data))
     return out
 
 
-def read_activity(member_ps: Path, since: dt.datetime) -> list[dict]:
+def read_activity(src, since: dt.datetime) -> list[dict]:
     lines = []
-    for raw in read_text(member_ps / "logs" / "activity.ndjson").splitlines():
+    for raw in src.activity_text(iso(since)).splitlines():
         raw = raw.strip()
         if not raw:
             continue
@@ -288,28 +424,28 @@ def read_activity(member_ps: Path, since: dt.datetime) -> list[dict]:
     return lines
 
 
-def read_member(run: Run, m: dict, member_ps: Path) -> dict:
+def read_member(run: Run, m: dict, src) -> dict:
     """Everything the snapshot needs, read as-is. Absent stays absent."""
-    manifest = yload(member_ps / "manifest.yaml") or {}
+    manifest = parse_yaml(src.text("manifest.yaml"), "manifest.yaml") or {}
     try:
-        state = json.loads(read_text(member_ps / "state.json") or "{}")
+        state = json.loads(src.text("state.json") or "{}")
     except json.JSONDecodeError:
         state = {}
     proj = manifest.get("project") or {}
-    milestones = read_dir(member_ps, "milestones")
-    risks = read_dir(member_ps, "risks")
-    decisions = read_dir(member_ps, "decisions")
-    people = read_dir(member_ps, "people")
-    cursors = read_dir(member_ps, "harvest/cursors")
-    docs_index = yload(member_ps / "documents" / "index.yaml") or {}
+    milestones = read_member_dir(src, "milestones")
+    risks = read_member_dir(src, "risks")
+    decisions = read_member_dir(src, "decisions")
+    people = read_member_dir(src, "people")
+    cursors = read_member_dir(src, "harvest/cursors")
+    docs_index = parse_yaml(src.text("documents/index.yaml"), "documents/index.yaml") or {}
     docs = docs_index.get("docs") or docs_index.get("entries") or []
     since = run.now - dt.timedelta(days=run.activity_window)
-    activity = read_activity(member_ps, since)
+    activity = read_activity(src, since)
     caps = manifest.get("capabilities") or {}
     return dict(manifest=manifest, state=state, project=proj, milestones=milestones, risks=risks,
                 decisions=decisions, people=people, cursors=cursors, docs=docs, activity=activity,
                 capabilities=[k for k, v in caps.items() if isinstance(v, dict) and v.get("enabled") is not False],
-                packs=proj.get("packs_loaded") or [])
+                packs=proj.get("packs_loaded") or [], via=src.via)
 
 
 # ── snapshot ─────────────────────────────────────────────────────────────────
@@ -412,6 +548,9 @@ def build_snapshot(run: Run, m: dict, rev: str | None, r: dict) -> dict:
         "member_id": m["id"],
         "captured_at": iso(run.now),
         "source_rev": rev,
+        "read_via": r["via"],
+        "read_copy": r["copy"],
+        **({"copy_as_of": r["copy_as_of"], "home_unreachable": r["home_unreachable"]} if r["copy"] != "home" else {}),
         "reachable": True,
         "project": {
             "name": r["project"].get("name"), "kind": r["project"].get("kind"),
@@ -598,6 +737,10 @@ def understanding_page(run: Run, m: dict, s: dict, prev: dict | None, deps: list
              + (f", {ms['overdue']} overdue" if ms["overdue"] else "")
              + (f". Next due: {nxt['id']} on {nxt['planned_end']} ({nxt['status']})." if nxt and nxt["planned_end"] else ".")
              + " `state.json`, `milestones/`\n")
+    if s.get("read_copy") and s["read_copy"] != "home":
+        what = "its Published mirror in the cloud" if s["read_copy"] == "mirror" else "the copy left on disk when it moved to the cloud"
+        L.append(f"**Read from a copy.** The home copy did not answer ({s.get('home_unreachable') or 'unreachable'}); this page reads {what}, "
+                 f"as of {n(s.get('copy_as_of'))}. Anything newer at home is not here.\n")
     who = []
     for pp in s["people"]:
         load = f"{len(pp['in_flight_milestones'])} in flight" if pp["in_flight_milestones"] else "nothing in flight"
@@ -711,8 +854,18 @@ def main(argv=None) -> int:
     ap.add_argument("--as-of")
     ap.add_argument("--actor", default=ACTOR_DEFAULT)
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--transport", choices=["auto", "mcp", "files"], default="auto")
+    ap.add_argument("--core", action="store_true", help="Core only: member rows, snapshots, the registry (the paid outputs are skipped)")
     args = ap.parse_args(argv)
     run = Run(args)
+    # the paid outputs (decision 2026-09-27-capability-entitlements): the cloud server decides for its own collect
+    # (--core); a local install decides offline, and is not checked while it trusts no key
+    ent = {"enforced": False, "entitled": True} if run.server_side else entitlement_status("portfolio", Path(__file__), str(run.today))
+    core = args.core or not ent["entitled"]
+    PAID = ["index", "understanding pages", "at-a-glance", "weekly note", "finding lineage"]
+    if core:
+        run.log("portfolio.collect.core", "Core collect: " + ", ".join(PAID) + " skipped",
+                dict(skipped=PAID, reason="--core" if args.core else ent.get("reason")))
 
     members = load_members(run)
     if not members and str(run.cap.get("discovery", "auto")) != "auto":
@@ -731,7 +884,9 @@ def main(argv=None) -> int:
     # snapshots per member, oldest → newest (for "what changed" and the unchanged short-circuit)
     def snapshots(mid: str) -> list[dict]:
         d = run.ps / "portfolio" / "snapshots" / mid
-        files = sorted(d.glob("*.yaml")) if d.exists() else []
+        # by day, then the day's first file before its -HHMM re-collects ("-" sorts before ".", so plain name order
+        # put 2026-09-22-0530.yaml before 2026-09-22.yaml and made the older one "latest")
+        files = sorted(d.glob("*.yaml"), key=lambda f: (f.stem[:10], len(f.stem), f.stem)) if d.exists() else []
         return [s for s in (yload(f) for f in files) if s]
 
     def previous_snapshot(mid: str) -> dict | None:
@@ -741,13 +896,30 @@ def main(argv=None) -> int:
     for m in targets:
         mid = m["id"]
         cursor = run.state["cursors"].setdefault(mid, {})
-        member_ps, reason = resolve_location(run, m)
-        if member_ps is None:
+        # the home copy first; another copy only when the home does not answer (item 3, the two-copy rule)
+        src = rev = copy = None
+        home_reason = home_detail = None
+        for label, cand, why in copies(run, m):
+            if cand is None:
+                detail = run.cloud_error if why == "remote" else None
+            else:
+                try:
+                    rev = cand.rev(); src, copy = cand, label
+                    break
+                except McpError as e:
+                    why, detail = "remote", str(e)
+            if label == "home" and home_reason is None:
+                home_reason, home_detail = why, detail
+        if src is None:
+            reason = home_reason or "missing"
             cursor.update(reachable=False, reason=reason, checked_at=iso(run.now))
-            run.log("portfolio.member.unreachable", f"{mid}: {reason}", dict(member=mid, reason=reason))
+            run.log("portfolio.member.unreachable", f"{mid}: {reason}", dict(member=mid, reason=reason, **({"detail": home_detail} if home_detail else {})))
             run.summary.append(dict(member=mid, result="unreachable", reason=reason))
             continue
-        rev = source_rev(member_ps)
+        copy_note = {} if copy == "home" else dict(copy=copy, copy_as_of=src.as_of(), home_unreachable=home_reason or "unreachable")
+        if copy != "home":
+            run.log("portfolio.member.read-from-copy", f"{mid}: {copy} ({home_reason})",
+                    dict(member=mid, copy=copy, home_unreachable=home_reason, **({"detail": home_detail} if home_detail else {})))
         prev = previous_snapshot(mid)
         if prev and prev.get("source_rev") == rev and not args.force:
             # unchanged: reuse the latest snapshot for index/registry, write no new file, and compare
@@ -756,13 +928,14 @@ def main(argv=None) -> int:
             latest[mid] = prev; prevs[mid] = hist[-2] if len(hist) > 1 else {"_unchanged_since": prev["captured_at"]}
             cursor.update(reachable=True, last_source_rev=rev, checked_at=iso(run.now))
             try:
-                raw[mid] = read_member(run, m, member_ps)
+                raw[mid] = read_member(run, m, src)
             except RuntimeError as e:
                 run.summary.append(dict(member=mid, result="malformed", reason=str(e))); continue
-            run.summary.append(dict(member=mid, result="unchanged", rev=rev))
+            run.summary.append(dict(member=mid, result="unchanged", rev=rev, via=src.via, **copy_note))
             continue
         try:
-            r = read_member(run, m, member_ps)
+            r = read_member(run, m, src)
+            r.update(copy=copy, copy_as_of=copy_note.get("copy_as_of"), home_unreachable=copy_note.get("home_unreachable"))
         except RuntimeError as e:
             cursor.update(reachable=False, reason="malformed", checked_at=iso(run.now))
             run.log("portfolio.member.unreachable", f"{mid}: malformed", dict(member=mid, reason="malformed", detail=str(e)))
@@ -778,7 +951,7 @@ def main(argv=None) -> int:
         cursor.pop("reason", None)
         run.log("portfolio.snapshot.captured", f"{mid} @ {rev}", dict(member=mid, source_rev=rev, reachable=True))
         latest[mid] = snap; prevs[mid] = prev; raw[mid] = r
-        run.summary.append(dict(member=mid, result="snapshot", rev=rev, path=rel))
+        run.summary.append(dict(member=mid, result="snapshot", rev=rev, via=src.via, path=rel, **copy_note))
 
     # members not targeted this run still appear in the index/registry from their latest snapshot
     for m in members:
@@ -787,65 +960,98 @@ def main(argv=None) -> int:
             if prev:
                 latest[m["id"]] = prev
 
-    # after the loop, in order
-    index = compile_index(run, members, latest, raw)
+    # after the loop, in order (Core: the registry and checks only; nothing already written is removed)
+    index = {"counts": {}} if core else compile_index(run, members, latest, raw)
     checks = []
     for m in members:
         checks += checks_for(run, m, latest.get(m["id"]), run.state["cursors"].get(m["id"]) or {})
     compile_registry(run, members, latest, checks)
 
     deps = [d for _, d in read_dir(run.ps, "portfolio/dependencies")]
-    for m in members:
+    for m in ([] if core else members):
         s = latest.get(m["id"])
         if s and m.get("status") in ACTIVE_STATUSES:
             run.write(f"portfolio/understanding/{m['id']}.md", understanding_page(run, m, s, prevs.get(m["id"]), deps, index))
             run.log("portfolio.understanding.generated", m["id"], dict(member=m["id"], path=f"portfolio/understanding/{m['id']}.md"))
 
-    # "at a glance" — the report the app renders in place (surfaces.yaml → reports). Every collect.
+    # "at a glance" — the report the app renders in place (surfaces.yaml → reports). Every paid collect.
     try:
+        if core:
+            raise StopIteration
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         from render_glance import render as render_glance
         page = render_glance(run, members, latest, prevs, checks, index)
         run.write("portfolio/reports/at-a-glance.html", page)
         run.write(f"portfolio/reports/at-a-glance-{run.today}.html", page)
         run.log("portfolio.report.generated", "portfolio/reports/at-a-glance.html", dict(kind="at-a-glance", path="portfolio/reports/at-a-glance.html"))
+    except StopIteration:
+        pass
     except Exception as e:  # the report is derived; a render failure must not fail the collect
         print(f"warn: at-a-glance render failed: {e}", file=sys.stderr)
 
     findings = [f for _, f in read_dir(run.ps, "portfolio/findings")]
-    if args.week:
+    if args.week and not core:
         rel = f"portfolio/reports/week-{run.today}.md"
         run.write(rel, week_note(run, members, latest, prevs, checks, index, findings))
         run.log("portfolio.report.generated", rel, dict(kind="week", path=rel))
 
-    # discovery
+    # discovery: the workspace registry's projects within reach first (as registry rows, which keep resolving
+    # when a folder moves), then its cloud projects (as server rows; one with a copy on this disk is left to
+    # that copy), then any */project-state/ under workspace_root the registry does not list
     proposed_new = []
-    if str(run.cap.get("discovery", "auto")) == "auto" and run.workspace_root.exists():
-        known = set()
+    if str(run.cap.get("discovery", "auto")) == "auto":
+        known, ids = set(), {m["id"] for m in members}
+        refs = {str((m.get("location") or {}).get("ref")) for m in members if (m.get("location") or {}).get("ref")}
         for m in members:
-            p, _ = resolve_location(run, m)
+            p, _ = member_path(run, m)
             if p:
                 known.add(p.resolve())
-        for cand in sorted(run.workspace_root.iterdir()):
+
+        def propose(mid: str, ps: Path | None, location: dict, where: str, name: str | None = None):
+            name = name or (((yload(ps / "manifest.yaml") or {}).get("project") or {}).get("name") if ps else None) or mid
+            row = dict(id=mid, kind="portfolio-member", name=name, member_kind="other", status="proposed", priority="P3",
+                       owner=None, location=location, relationship="", tags=[], source_row="discovery", added=str(run.today),
+                       retired=None, notes=f"discovered {run.today} {where}; activate to collect",
+                       created=iso(run.now), created_by=args.actor, last_modified=iso(run.now), last_modified_by=args.actor)
+            run.write(f"portfolio/members/{mid}.yaml", ydump(row))
+            run.log("portfolio.member.added", f"{mid} proposed by discovery", dict(member=mid, status="proposed", source="discovery"))
+            proposed_new.append(mid); ids.add(mid)
+            if ps:
+                known.add(ps.resolve())
+            if location.get("ref"):
+                refs.add(location["ref"])
+
+        for row in registry_rows():
+            if row.get("archived") or row.get("stateType") not in (None, "project-state") or not row.get("project"):
+                continue
+            ref = f"{row.get('org')}/{row.get('project')}"
+            ps = registry_folder(ref)
+            mid = slug(str(row["project"]))
+            if not ps or ps.resolve() == run.ps.resolve() or ps.resolve() in known or mid in ids:
+                continue
+            try:
+                ps.relative_to(run.workspace_root)
+            except ValueError:
+                continue  # outside the portfolio's reach
+            propose(mid, ps, dict(type="registry", ref=ref), "in the workspace registry")
+        for row in registry_cloud_rows():
+            ref = str(row.get("ref") or "")
+            if not ref or row.get("archived") or row.get("copy_on_disk") or ref in refs:
+                continue
+            mid = slug(ref.rsplit("/", 1)[-1])
+            if mid in ids:
+                continue
+            propose(mid, None, dict(type="server", ref=ref), "in the workspace registry's cloud list", name=row.get("name"))
+        for cand in (sorted(run.workspace_root.iterdir()) if run.workspace_root.is_dir() else []):
             ps = cand / "project-state"
             if not (ps / "manifest.yaml").exists():
                 continue
-            if ps.resolve() == run.ps.resolve() or ps.resolve() in known:
+            if ps.resolve() == run.ps.resolve() or ps.resolve() in known or cand.name in ids:
                 continue
-            if cand.name in {m["id"] for m in members}:
-                continue
-            name = ((yload(ps / "manifest.yaml") or {}).get("project") or {}).get("name") or cand.name
-            row = dict(id=cand.name, kind="portfolio-member", name=name, member_kind="other", status="proposed", priority="P3",
-                       owner=None, location=dict(type="local", path=os.path.relpath(ps, run.ps), remote=None),
-                       relationship="", tags=[], source_row="discovery", added=str(run.today), retired=None,
-                       notes=f"discovered {run.today} under workspace_root; activate to collect",
-                       created=iso(run.now), created_by=args.actor, last_modified=iso(run.now), last_modified_by=args.actor)
-            run.write(f"portfolio/members/{cand.name}.yaml", ydump(row))
-            run.log("portfolio.member.added", f"{cand.name} proposed by discovery", dict(member=cand.name, status="proposed", source="discovery"))
-            proposed_new.append(cand.name)
+            propose(cand.name, ps, dict(type="local", path=os.path.relpath(ps, run.ps), remote=None), "under workspace_root")
 
     # lineage: findings cited by member entities
-    for e in became_edges:
+    for e in ([] if core else became_edges):
         fp = run.ps / "portfolio" / "findings" / f"{e['finding']}.yaml"
         f = yload(fp)
         if not f:
@@ -865,14 +1071,16 @@ def main(argv=None) -> int:
             for line in run.events:
                 f.write(json.dumps(line, ensure_ascii=False) + "\n")
 
-    out = dict(portfolio=str(run.ps), as_of=str(run.today), dry_run=args.dry_run, members=run.summary,
+    run.close()
+    out = dict(portfolio=str(run.ps), as_of=str(run.today), dry_run=args.dry_run, core=core, **({"skipped": PAID} if core else {}), members=run.summary,
                checks=checks, index=index["counts"], discovered=proposed_new, writes=len(run.writes), events=len(run.events))
     if args.json:
         print(json.dumps(out, indent=2, default=str))
     else:
         print(f"portfolio-collector — {run.portfolio_name} — as of {run.today}{' (dry run)' if args.dry_run else ''}")
         for s in run.summary:
-            print(f"  {s['member']:<24} {s['result']:<11} {s.get('rev') or s.get('reason') or ''}")
+            print(f"  {s['member']:<24} {s['result']:<11} {s.get('rev') or s.get('reason') or ''}" + (f"  via {s['via']}" if s.get("via") else "")
+                  + (f"  from the {s['copy']} (home: {s['home_unreachable']}; copy as of {s.get('copy_as_of')})" if s.get("copy") else ""))
         print("  index: " + ", ".join(f"{v} {k}" for k, v in index["counts"].items()))
         for c in checks:
             print(f"  check {c['id']:<30} {c['member']}" + (f" {c.get('surface')}" if c.get("surface") else "") + (f" {c.get('days')} d" if c.get("days") is not None else ""))

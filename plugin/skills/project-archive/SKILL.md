@@ -4,6 +4,7 @@ description: "Close out and archive a project — 'close the project', 'archive 
 map:
   tier: P3
   stage: generate
+  requires: [memory]
   reads: [milestones, decisions, lessons, log]
   writes: [reports, manifest]
   calls: [project-lessons, project-funder-reporting]

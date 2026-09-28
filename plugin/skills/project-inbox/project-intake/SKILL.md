@@ -1,6 +1,14 @@
 ---
 name: project-intake
 description: "Set up a project fast from its documents — 'set up from these docs', 'intake this project', 'init from the proposal/SOW'. Infers the work type and packs, fills manifest and matrix, one confirmation."
+map:
+  tier: P0
+  stage: ingest
+  requires: [memory, local-fs]
+  inputs: [files, operator]
+  reads: [documents]
+  writes: [manifest, reporting-matrix, automation-tasks, log]
+  calls: [project-automator]
 ---
 
 # project-intake

@@ -8,8 +8,11 @@ status: proposed                  # proposed | active | paused | closing | close
 priority: P2                      # the portfolio's ranking, not the member's
 owner: ""                         # person id in the PORTFOLIO's people/
 location:
-  type: none                      # local | hub | appliance | none (proposed members have none)
-  path: null                      # relative to this project-state/, or absolute
+  type: none                      # local | registry | server | hub | appliance | none (proposed members have none)
+  path: null                      # local: relative to this project-state/, or absolute
+  ref: null                       # registry: the workspace registry's "org/project"; server: the cloud project's
+  mirror: null                    # optional: the cloud "org/project" of a Published mirror, read when home does not answer
+                                  # (found from the registry's cloud list when not set)
   remote: null                    # git remote when type is hub
 relationship: ""                  # why this project is in this portfolio, 1-2 sentences
 tags: []

@@ -10,7 +10,7 @@
     {
       "name": "project-state",
       "source": "./plugin",
-      "version": "5.0.1",
+      "version": "5.1.0",
       "description": "Turn any multi-stakeholder project into a system where routine reporting is a byproduct of normal work. 55 skills + 20 packs (ten kinds of work, from campaigns and events to software, plus who-you-report-to packs) + 4 capability plugins (Canadian SR&ED, Tender, Intel, Portfolio).",
       "author": {
         "name": "Atomic 47 Labs",

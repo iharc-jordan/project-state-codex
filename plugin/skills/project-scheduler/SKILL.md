@@ -4,6 +4,7 @@ description: "Change when things happen — 'move the weekly report to Fridays',
 map:
   tier: P2
   stage: control
+  requires: [memory]
   reads: [reporting-matrix, automation-tasks, state, milestones]
   writes: [automation-tasks]
 ---

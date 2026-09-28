@@ -4,6 +4,7 @@ description: "Create a new project-state/ facility — 'set up a new project', '
 map:
   tier: P0
   stage: ingest
+  requires: [memory, python, local-fs]
   inputs: [operator]
   writes: [manifest, phases, reporting-matrix, milestones, risks, log]
 ---

@@ -4,6 +4,7 @@ description: "Check or move the project's phase — 'what phase are we in', 'can
 map:
   tier: P1
   stage: keep
+  requires: [memory]
   reads: [phases, state, milestones]
   writes: [phases, state]
   calls: [project-milestone-manager]

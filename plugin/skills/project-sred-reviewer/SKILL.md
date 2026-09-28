@@ -4,6 +4,7 @@ description: "Review and strengthen a Canadian SR&ED T661 narrative for audit re
 map:
   tier: capability
   stage: keep
+  requires: [memory]
   reads: [sred]
   produces: [t661-narrative]
 ---

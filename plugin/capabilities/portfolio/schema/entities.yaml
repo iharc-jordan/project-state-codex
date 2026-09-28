@@ -38,7 +38,7 @@ kinds:
       member_kind: [delivery, pursuit, pilot, internal, research, community, other]
       status: [proposed, active, paused, closing, closed, retired]
       priority: [P0, P1, P2, P3]
-      location.type: [local, hub, appliance, none]
+      location.type: [local, registry, server, hub, appliance, none]   # registry / server carry location.ref: "org/project"
     invariants:
       - "status in [active, paused, closing] requires location.type != none"
       - "status == retired requires retired: <date>"

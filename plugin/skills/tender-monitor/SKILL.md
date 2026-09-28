@@ -4,6 +4,7 @@ description: "Watch followed tenders for changes — 'any amendments on the tend
 map:
   tier: capability
   stage: ingest
+  requires: [memory, connector:web, connector:gmail]
   inputs: [web, gmail]
   reads: [tenders]
   writes: [tenders, log]
