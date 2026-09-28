@@ -57001,14 +57001,21 @@ import path30 from "node:path";
 import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
 var HERE = path30.dirname(fileURLToPath(import.meta.url));
-var VENDOR = process.env.PROJECT_STATE_CAPABILITIES_DIR || path30.join(HERE, "..", "vendor");
+function builder(rel) {
+  const dirs = [process.env.PROJECT_STATE_CAPABILITIES_DIR, path30.join(HERE, "..", "capabilities"), path30.join(HERE, "..", "vendor"), path30.join(HERE, "..", "..", "..", "capabilities")].filter(Boolean);
+  for (const d of dirs) {
+    const f = path30.join(d, rel);
+    if (fs26.existsSync(f)) return f;
+  }
+  throw new Error(`the ${rel.split("/")[0]} view builder was not found (${rel}; looked in ${dirs.join(", ")})`);
+}
 var CACHE = /* @__PURE__ */ new Map();
 var TTL_MS = 10 * 60 * 1e3;
 var RUNNERS = {
-  sred: { prefixes: ["manifest.yaml", "state/", "sred/", "milestones/"], cmd: (dir, asOf, out) => ["node", [path30.join(VENDOR, "sred/views/build-sred-dashboard.mjs"), dir, "--as-of", asOf, "--out", path30.join(out, "x.html"), "--json", path30.join(out, "data.json")]] },
-  intel: { prefixes: ["manifest.yaml", "state/", "intel/"], cmd: (dir, asOf, out) => ["python3", [path30.join(VENDOR, "intel/views/build-intel-glance.py"), dir, "--as-of", asOf, "--out", path30.join(out, "x.html"), "--json", path30.join(out, "data.json")]] },
-  "intel-competitive": { prefixes: ["manifest.yaml", "state/", "intel/"], cmd: (dir, asOf, out) => ["python3", [path30.join(VENDOR, "intel/views/build-intel-competitive.py"), dir, "--as-of", asOf, "--out", path30.join(out, "x.html"), "--json", path30.join(out, "data.json")]] },
-  tender: { prefixes: ["manifest.yaml", "state/", "tenders/"], cmd: (dir, asOf, out) => ["python3", [path30.join(VENDOR, "tender/views/build-tender-glance.py"), dir, "--as-of", asOf, "--out", path30.join(out, "x.html"), "--json", path30.join(out, "data.json")]] }
+  sred: { prefixes: ["manifest.yaml", "state/", "sred/", "milestones/"], cmd: (dir, asOf, out) => ["node", [builder("sred/views/build-sred-dashboard.mjs"), dir, "--as-of", asOf, "--out", path30.join(out, "x.html"), "--json", path30.join(out, "data.json")]] },
+  intel: { prefixes: ["manifest.yaml", "state/", "intel/"], cmd: (dir, asOf, out) => ["python3", [builder("intel/views/build-intel-glance.py"), dir, "--as-of", asOf, "--out", path30.join(out, "x.html"), "--json", path30.join(out, "data.json")]] },
+  "intel-competitive": { prefixes: ["manifest.yaml", "state/", "intel/"], cmd: (dir, asOf, out) => ["python3", [builder("intel/views/build-intel-competitive.py"), dir, "--as-of", asOf, "--out", path30.join(out, "x.html"), "--json", path30.join(out, "data.json")]] },
+  tender: { prefixes: ["manifest.yaml", "state/", "tenders/"], cmd: (dir, asOf, out) => ["python3", [builder("tender/views/build-tender-glance.py"), dir, "--as-of", asOf, "--out", path30.join(out, "x.html"), "--json", path30.join(out, "data.json")]] }
 };
 async function materialize(db, project2, prefixes, dir) {
   const re = new RegExp("^(" + prefixes.map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")");
