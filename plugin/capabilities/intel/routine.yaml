@@ -8,7 +8,7 @@
 # Spec: docs/CAPABILITY-PLUGINS.md §5, docs/INTEL-CAPABILITY-SPEC.md §8.
 schema_version: 1
 capability: intel
-version: "1.1.0"
+version: "1.2.0"
 
 state:
   runtime: "state/intel.json"
@@ -111,5 +111,41 @@ checks:
     action: "Put the correction in the claim set (new claim, supersession, confidence downgrade), then regenerate."
     handler: intel-battlecard
 
+  # ── Monitor and win-loss (1.2, docs/INTEL-CI-SPEC.md §14) ────────────────────────
+  - id: "intel.change-material"
+    when: "any intel-change with significance material detected in the last 7 days whose affected teams have not been briefed (no intel-brief or deal brief generated since it)"
+    severity: soon
+    message: "{n} material change(s) on {entities} this week — {types}."
+    action: "Read intel/monitor/runs/{date}.md; regenerate the battlecards it names; brief the affected deals (/intel-deal-coach) — the monthly brief is too late for a material change."
+    handler: intel-battlecard
+
+  - id: "intel.monitor-overdue"
+    when: "any active source in intel/watch.yaml not read in twice its cadence (monitor.plan overdue), or the watch list exists and monitor.last_run is older than 14 days"
+    severity: soon
+    message: "{n} watched source(s) overdue — last monitor run {last_run}."
+    action: "Run /intel-monitor run (the weekly matrix entry does this unattended); a source that keeps failing is moved or retired, never worked around."
+    handler: intel-monitor
+
+  - id: "intel.unwatched-competitor"
+    when: "competitive.competitors (or entities of type competitor) non-empty AND an in-scope competitor has no active source in intel/watch.yaml"
+    severity: ondeck
+    message: "{n} in-scope competitor(s) with nothing watching them — {entities}."
+    action: "Run /intel-monitor watch to propose sources from the ones their claims already cite."
+    handler: intel-monitor
+
+  - id: "intel.winloss-unrecorded"
+    when: "the tender capability is enabled AND a tender reached awarded or unsuccessful with no intel-winloss record whose deal_ref is its id"
+    severity: soon
+    message: "{n} closed tender(s) with no win-loss record — {ids}."
+    action: "Run /intel-winloss record {id} while the seller remembers why; the buyer's reason comes later."
+    handler: intel-winloss
+
+  - id: "intel.winloss-no-buyer"
+    when: "any win-loss record with outcome loss, buyer_evidenced_reason empty, closed more than 30 days ago"
+    severity: ondeck
+    message: "{n} loss(es) resting on the seller's word only — {ids}."
+    action: "Book the debrief; add it with /intel-winloss evidence {id}. Until then the reason is 'reported by the seller', not a finding."
+    handler: intel-winloss
+
 quiet_when: "no check fires"
-quiet_message: "Intel is current — {n} entities / {n} signals / {n} claims ({n} fresh), agenda clear, nothing stale, no open conflicts, battlecards current. A quiet desk means the map is good."
+quiet_message: "Intel is current — {n} entities / {n} signals / {n} claims ({n} fresh), agenda clear, nothing stale, no open conflicts, battlecards current, the watch list read {last_run}, every closed deal recorded. A quiet desk means the map is good."

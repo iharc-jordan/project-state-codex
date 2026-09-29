@@ -1674,10 +1674,10 @@ PS.views.wiki = {
 }
 
 // ── views/caps.js
-const CAP_VIEW = { sred: 'cap-sred', intel: 'cap-intel', tender: 'cap-tender', portfolio: 'cap-portfolio' }
+const CAP_VIEW = { sred: 'cap-sred', intel: 'cap-intel', tender: 'cap-tender', portfolio: 'cap-portfolio', research: 'cap-research' }
 
 PS.views.capabilities = {
-  tab: 'Capabilities', title: 'Capabilities', icon: 'puzzle', desc: 'SR&ED, intel, tenders and portfolio on this project', tools: ['view_capabilities'],
+  tab: 'Capabilities', title: 'Capabilities', icon: 'puzzle', desc: 'SR&ED, intel, tenders, portfolio and research on this project', tools: ['view_capabilities'],
   mount(el, { project, watch }) {
     const { h, fmt } = PS
     const wrap = h('div', { class: 'page' }); el.append(wrap)
@@ -1803,6 +1803,16 @@ PS.views['cap-intel'] = {
         sec('What do we not know about the competitors that matter most?', 'unknowns on P0 competitors, oldest first', d.unknowns.length ? h('ul', { class: 'rows' }, d.unknowns.map((u) => h('li', { class: 'row' }, h('span', { class: 'when' }, `${u.age_days} d`), h('span', { class: 'what' }, h('div', { class: 'title' }, u.statement), h('div', { class: 'sub' }, `${u.subject} · ${u.category}`)), u.past_half_life ? PS.chip('past half-life: re-search', 'warn') : PS.chip('open')))) : PS.empty('No open unknowns on P0 competitors.')),
         sec('Are the battlecards current with the evidence?', null, d.battlecards.length ? h('ul', { class: 'rows' }, d.battlecards.map((b) => h('li', { class: 'row' }, h('span', { class: 'when' }, fmt.short(b.generated)), h('span', { class: 'what' }, h('div', { class: 'title' }, `${b.subject} · ${b.audience || ''}`), h('div', { class: 'sub' }, `stale claims used ${b.stale_used} · unsourced lines ${b.unsourced}`)), h('span', { class: 'chips' }, b.behind ? PS.chip(`behind by ${b.behind} material claim(s)`, 'warn') : PS.chip('current', 'good'), b.forked ? PS.chip('edited after generation') : null)))) : PS.empty('No battlecards yet.')),
         sec('What changed in the last 30 days?', `${d.noise_suppressed} noise events suppressed · ${d.claims_total} claims on file, ${d.superseded} superseded`, d.changes.length ? h('ul', { class: 'rows' }, d.changes.map((c) => h('li', { class: 'row' }, h('span', { class: 'when' }, fmt.short(c.detected_at)), h('span', { class: 'what' }, h('div', { class: 'title' }, `${c.subject} · ${fmt.label(c.type)}`), h('div', { class: 'sub' }, `${c.before.join(', ') || '—'} → ${c.after.join(', ') || '—'}${c.action ? ` · ${c.action}` : ''}`)), PS.chip(c.significance, c.significance === 'material' ? 'crit' : 'accent')))) : PS.empty('No material or notable changes in 30 days.')),
+        // intel 1.2: the monitor's watch list and what closed deals teach (docs/INTEL-CI-SPEC.md §14)
+        sec('Is the watch list being read?', d.monitor ? `last run ${d.monitor.last_run ? fmt.date(d.monitor.last_run) : 'never'} · ${d.monitor.due.length} due` : null, d.monitor ? h('div', {},
+          h('ul', { class: 'rows' }, [...d.monitor.due.map((r) => ({ ...r, st: r.overdue ? 'overdue' : 'due' })), ...d.monitor.read.map((r) => ({ ...r, st: 'read' }))].map((r) => h('li', { class: 'row' }, h('span', { class: 'when' }, r.last_checked ? fmt.short(r.last_checked) : 'never'), h('span', { class: 'what' }, h('div', { class: 'title' }, `${r.name} · ${r.id}`), h('div', { class: 'sub' }, `${r.via} · settles ${r.categories.join(', ')}${r.last_status ? ` · last ${r.last_status}` : ''}`)), PS.chip(r.st, r.st === 'overdue' ? 'crit' : r.st === 'due' ? 'warn' : 'good')))),
+          [...d.monitor.unwatched.map((u) => `${u.name}: no active source`), ...d.monitor.thin.map((t) => `${t.name}: nothing reads ${t.uncovered.join(', ')}`)].length ? h('div', { class: 'faint', style: 'padding:8px 18px 12px;font-size:12px' }, 'Not watched: ', [...d.monitor.unwatched.map((u) => `${u.name}: no active source`), ...d.monitor.thin.map((t) => `${t.name}: nothing reads ${t.uncovered.join(', ')}`)].join('; ')) : null)
+          : PS.empty('No watch list yet. Run intel-monitor watch to propose sources from the ones the claims already cite.')),
+        sec('What are closed deals teaching us?', d.winloss ? `${d.winloss.sample.records} closed deal(s) · below ${d.winloss.min_sample} a pattern is anecdote` : null, d.winloss ? h('div', {},
+          h('div', { class: 'stats', style: 'padding:12px 18px 0' }, PS.tile(`${d.winloss.sample.wins}–${d.winloss.sample.losses}`, 'won – lost'), PS.tile(d.winloss.sample.with_buyer_evidence, 'with buyer evidence'), PS.tile(d.winloss.divergence.rate == null ? '—' : `${Math.round(100 * d.winloss.divergence.rate)}%`, 'seller ≠ buyer', d.winloss.divergence.diverged ? 'warn' : ''), PS.tile(d.winloss.no_buyer_evidence.length, 'awaiting a debrief', d.winloss.no_buyer_evidence.length ? 'warn' : '')),
+          h('ul', { class: 'rows' }, d.winloss.patterns.map((p) => h('li', { class: 'row' }, h('span', { class: 'when' }, `${p.k} of ${p.n}`), h('span', { class: 'what' }, h('div', { class: 'title' }, `${p.segment} · ${p.outcome} · ${p.reason}`), h('div', { class: 'sub' }, `against ${p.competitor_name} · ${p.records.join(', ')}${p.seller_only ? ` · ${p.seller_only} on the seller's word only` : ''}`)), p.anecdote ? PS.chip('anecdote', 'warn') : PS.chip(`n=${p.n}`)))),
+          d.winloss.reversals.map((r) => h('div', { class: 'callout warn', style: 'margin:8px 18px' }, r.text)))
+          : PS.empty('No win-loss records yet. Record one after each close with intel-winloss record.')),
       ]
     }
     function load() {
@@ -1873,6 +1883,444 @@ PS.views['cap-portfolio'] = {
     })
   },
 }
+
+// ── views/research.js
+// ── Research ─────────────────────────────────────────────────────────────────
+// The research capability in the Console (docs/RESEARCH-CAPABILITY-SPEC.md §10): four linked views over one model —
+// view_capability research returns capabilities/research/views/_research.py model(), the same derivation the
+// At a glance, Timeline and Evidence reports draw, so the Console and the reports never disagree.
+//   At a glance  the questions, what is waiting on a person, the headline numbers
+//   Dashboard    evidence health per mandate: the gate gauge, the tier mix, provisional and untriangulated counts,
+//                challenges, productive vs barren steps; the activity spine; the tier × status matrix
+//   Timeline     every mandate's life on one lane, interactive: filter mandates, choose the window, hover any mark,
+//                click a finding or challenge to open its record; past today, when each question's evidence goes stale
+//   Evidence     the findings register, filterable by tier, status, freshness and mandate, searchable, sorted by the
+//                day each finding goes stale
+//   Library      the results: each mandate's study and the articles compiled across mandates, on shelves with a health
+//                bar each; open one to read it in place, every citation checked against today's evidence (superseded,
+//                challenged, stale, provisional flagged in the text and in the ledger beside it)
+PS.views['cap-research'] = {
+  tab: 'Research', title: 'Research', icon: 'book', desc: 'Questions, graded evidence, challenges and what changed', tools: ['view_capability', 'get_entity'],
+  mount(el, { project, watch }) {
+    const { h, fmt } = PS
+    if (!document.getElementById('rs-style')) document.head.append(h('style', { id: 'rs-style' }, RS_CSS))
+    const wrap = h('div', { class: 'page rs' }), body = h('div', { class: 'page rs-body' })
+    el.append(wrap)
+    let mode = PS.store.get('rs.mode') || 'glance', data = null
+    const state = { doc: null, shelf: 'all', hidden: new Set(), window: PS.store.get('rs.window') || 'all', horizon: true, filters: { tier: null, status: null, freshness: null, mandate: null }, q: '' }
+    const sec = (title, sub, content) => { const s = PS.section(title, sub ? h('span', { class: 'sub' }, sub) : null); s.body.replaceChildren(content); return s.el }
+    const openF = (id) => PS.openEntity(`research/findings/${id}.yaml`, id)
+    const openC = (id) => PS.openEntity(`research/challenges/${id}.yaml`, id)
+    const openM = (id) => PS.openEntity(`research/mandates/${id}.yaml`, id)
+    const tabs = [['glance', 'At a glance'], ['library', 'Library'], ['dashboard', 'Dashboard'], ['timeline', 'Timeline'], ['evidence', 'Evidence']]
+
+    function render() {
+      if (!data) return
+      const d = data
+      const views = { glance, dashboard, timeline, evidence, library }
+      body.replaceChildren(...[].concat(views[mode](d)).filter(Boolean), tip)
+      requestAnimationFrame(() => body.querySelectorAll('[data-grow]').forEach((x) => { x.style.width = x.dataset.grow }))
+    }
+    function frame() {
+      wrap.replaceChildren(
+        PS.head({ section: 'Research', title: h('span', {}, 'Research ', h('em', {}, { glance: 'at a glance', dashboard: 'dashboard', timeline: 'over time', evidence: 'evidence', library: 'library' }[mode])),
+          lede: { glance: 'What we are asking, how far along each question is, and what is waiting on a person.', dashboard: 'Would this survive a reviewer? Evidence health per mandate, against its own gate.',
+            timeline: 'Every mandate\'s life, the evidence it gathered and when that evidence goes stale. Hover for detail; click to open a record.', evidence: 'Every finding, graded on tier, confidence, epistemic status and independence. Findings are never edited: a correction supersedes.',
+            library: 'What the research has concluded: each mandate\'s study and the articles compiled across mandates, every citation read against the evidence as it stands today.' }[mode] }),
+        h('div', { class: 'seg' }, tabs.map(([k, l]) => h('button', { 'aria-pressed': String(mode === k), onclick: () => { mode = k; state.doc = null; PS.store.set('rs.mode', k); frame(); render() } }, l))), body)
+    }
+    frame()
+    watch(body, 'view_capability', { project, capability: 'research' }, (res) => { data = res.data; render() })
+
+    // ── helpers ─────────────────────────────────────────────────────────────
+    // research's own palette (declared on .rs in RS_CSS): the Console's accent is one warm hue, and a timeline needs
+    // tiers, phases, changes and challenges told apart at a glance, in light and dark themes alike
+    const TIER = { primary: 'var(--rs-t1)', secondary: 'var(--rs-t2)', tertiary: 'var(--rs-t3)', speculative: 'var(--rs-t4)' }
+    const QST = { answered: 'good', aging: 'warn', stale: 'crit', reopened: 'crit', open: '', dropped: '' }
+    const PHASE = { draft: 'var(--mid-2)', locked: 'var(--rs-lock)', 'in-progress': 'var(--terra)', standing: 'var(--rs-change)', complete: 'var(--rs-t1)', 'closed-negative': 'var(--rs-t1)', killed: 'var(--rose)' }
+    const FAM = { mandate: 'var(--mid-2)', step: 'var(--rs-step)', barren: 'var(--amber)', finding: 'var(--rs-t1)', red: 'var(--rose)', change: 'var(--rs-change)', ship: 'var(--terra)', gate: 'var(--ink)' }
+    const sv = (tag, attrs = {}, ...kids) => { const n = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const [k, v] of Object.entries(attrs)) if (v != null) n.setAttribute(k, v); for (const k of kids.flat()) if (k != null) n.append(k.nodeType ? k : document.createTextNode(String(k))); return n }
+    const days = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000)
+    const addDays = (d, n) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10) }
+    const tierBar = (tiers, total, w = 120) => h('span', { class: 'rs-tb', style: `width:${w}px` }, ['primary', 'secondary', 'tertiary', 'speculative'].map((t) => tiers?.[t] ? h('i', { style: `background:${TIER[t]};width:0`, 'data-grow': `${(100 * tiers[t]) / Math.max(1, total)}%`, title: `${tiers[t]} ${t}` }) : null))
+    const tip = h('div', { class: 'rs-tip', role: 'tooltip' })
+    const hover = (node, html) => { node.addEventListener('mouseenter', (e) => { tip.innerHTML = html; tip.style.opacity = 1; move(e) }); node.addEventListener('mousemove', move); node.addEventListener('mouseleave', () => { tip.style.opacity = 0 }) }
+    function move(e) { const r = body.getBoundingClientRect(); tip.style.left = `${Math.min(e.clientX - r.left + 14, r.width - 300)}px`; tip.style.top = `${e.clientY - r.top + 14}px` }
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+
+    // ── At a glance ─────────────────────────────────────────────────────────
+    function glance(d) {
+      const c = d.counts
+      const sevCls = { urgent: 'crit', soon: 'warn', ondeck: '' }
+      return [
+        d.fixture ? h('div', { class: 'callout warn' }, h('b', {}, 'Sample data. '), 'Every fact on this page is invented; it shows the shape of what you get.') : null,
+        h('div', { class: 'stats' }, PS.tile(c.mandates_active, 'active mandates'), PS.tile(h('span', {}, c.answered, h('small', {}, `/${c.questions}`)), 'questions answered', c.answered === c.questions ? 'good' : ''),
+          PS.tile(c.established, 'established findings', 'good'), PS.tile(c.provisional, 'provisional', c.provisional ? 'warn' : ''),
+          PS.tile(h('span', {}, c.open_challenges, c.blocking ? h('small', {}, ` · ${c.blocking} blocking`) : null), 'open challenges', c.blocking ? 'crit' : ''),
+          PS.tile(c.waiting, 'waiting on you', c.waiting ? 'crit' : 'good')),
+        sec('What is waiting on a person?', d.walk.last_run ? `last walk ${d.walk.last_run}` : 'no walk yet', d.waiting.length ? h('ul', { class: 'rows' }, d.waiting.map((w) =>
+          h('li', { class: 'row rs-need' }, h('span', { class: `rs-dot ${sevCls[w.severity] || ''}` }), h('span', { class: 'what' }, h('div', { class: 'title' }, w.what), h('div', { class: 'sub' }, w.why || '')),
+            h('span', { class: 'chips' }, w.mandate ? PS.idChip(w.mandate) : null, PS.chip(w.handler, 'accent'))))) : PS.empty('Nothing is waiting on a person. Research is current.')),
+        sec('What are we asking, and how far along is each question?', 'answered means an established finding answers it; stale follows the half-life of that evidence',
+          h('div', { class: 'rs-mandates' }, d.mandates.map((m) => h('article', { class: 'rs-m' },
+            h('header', {}, h('span', { class: `chip rs-ph`, style: `--c:${PHASE[m.status] || 'var(--mid)'}` }, m.status + (m.cadence ? ` · ${m.cadence}` : '')), h('button', { class: 'rs-link mono', onclick: () => openM(m.id) }, m.id),
+              h('b', {}, m.headline), h('span', { class: 'chip' }, m.type), m.status === 'draft' ? PS.chip(`iteration ${m.iteration}`, 'warn') : null),
+            h('div', { class: 'rs-qs' }, m.questions.map((q) => h('div', { class: 'rs-q' }, h('span', { class: 'mono faint' }, q.id), h('span', {}, q.text, q.moved ? h('span', { class: 'rs-moved' }, ' moved this week') : null),
+              PS.chip(q.state, QST[q.state] || ''), tierBar(q.tiers, Object.values(q.tiers || {}).reduce((a, b) => a + b, 0), 70)))),
+            m.null_result ? h('div', { class: 'rs-neg' }, h('b', {}, 'Established absence. '), m.null_result) : null)))),
+      ]
+    }
+
+    // ── Dashboard ───────────────────────────────────────────────────────────
+    function gauge(g) {
+      const r = 34, C = 2 * Math.PI * r * 0.75, share = g.share ?? 0, thr = g.threshold ?? 0.5
+      const ok = g.verdict === 'pass'
+      const arc = (frac) => `${C * frac} ${2 * Math.PI * r}`
+      const tAng = (-225 + 270 * thr) * Math.PI / 180
+      const s = sv('svg', { viewBox: '0 0 90 80', class: 'rs-gauge', role: 'img', 'aria-label': `primary share ${Math.round(100 * share)}% against a ${Math.round(100 * thr)}% gate` },
+        sv('circle', { cx: 45, cy: 44, r, fill: 'none', stroke: 'var(--raised-2)', 'stroke-width': 8, 'stroke-dasharray': arc(1), transform: 'rotate(135 45 44)', 'stroke-linecap': 'round' }),
+        sv('circle', { class: 'rs-arc', cx: 45, cy: 44, r, fill: 'none', stroke: g.share == null ? 'var(--mid-2)' : ok ? 'var(--green)' : 'var(--amber)', 'stroke-width': 8, 'stroke-dasharray': arc(0), 'data-dash': arc(share), transform: 'rotate(135 45 44)', 'stroke-linecap': 'round' }),
+        sv('line', { x1: 45 + (r - 7) * Math.cos(tAng), y1: 44 + (r - 7) * Math.sin(tAng), x2: 45 + (r + 7) * Math.cos(tAng), y2: 44 + (r + 7) * Math.sin(tAng), stroke: 'var(--ink)', 'stroke-width': 2 }),
+        sv('text', { x: 45, y: 48, 'text-anchor': 'middle', class: 'rs-gv' }, g.share == null ? '—' : `${Math.round(100 * share)}%`),
+        sv('text', { x: 45, y: 74, 'text-anchor': 'middle', class: 'rs-gl' }, `gate ${Math.round(100 * thr)}%`))
+      requestAnimationFrame(() => { const a = s.querySelector('.rs-arc'); a.setAttribute('stroke-dasharray', a.dataset.dash) })
+      return s
+    }
+    function spine(d) {
+      const end = d.as_of, start = addDays(end, -59)
+      const byDay = {}
+      for (const e of d.spine) if (e.date >= start) (byDay[e.date] ||= {})[e.family] = e.n
+      const max = Math.max(1, ...Object.values(byDay).map((o) => Object.values(o).reduce((a, b) => a + b, 0)))
+      const W = 600, H = 120, bw = W / 60
+      const s = sv('svg', { viewBox: `0 0 ${W} ${H + 18}`, class: 'rs-spine', role: 'img', 'aria-label': 'Research activity, last 60 days' })
+      for (let i = 0; i < 60; i++) {
+        const day = addDays(start, i), o = byDay[day] || {}
+        let y = H
+        for (const f of d.families.map((x) => x.id)) {
+          const n = o[f] || 0
+          if (!n) continue
+          const hh = (H - 6) * n / max
+          const r = sv('rect', { x: i * bw + 1, y: y - hh, width: bw - 2, height: hh, fill: FAM[f], rx: 1, class: 'rs-grow', style: `animation-delay:${i * 8}ms` })
+          hover(r, `<b>${day}</b><br>${n} × ${esc(d.families.find((x) => x.id === f).label)}`)
+          s.append(r)
+          y -= hh
+        }
+        if (i % 7 === 0) s.append(sv('text', { x: i * bw, y: H + 14, class: 'rs-ax' }, fmt.short(day)))
+      }
+      return h('div', {}, s, h('div', { class: 'rs-legend' }, d.families.map((f) => h('span', {}, h('i', { style: `background:${FAM[f.id]}` }), f.label))))
+    }
+    function matrix(d) {
+      const tiers = ['primary', 'secondary', 'tertiary', 'speculative'], sts = ['established', 'provisional', 'withdrawn']
+      const live = d.findings.filter((f) => f.live || f.status === 'withdrawn')
+      const n = (t, s) => live.filter((f) => f.tier === t && f.status === s).length
+      const max = Math.max(1, ...tiers.flatMap((t) => sts.map((s) => n(t, s))))
+      return h('div', { class: 'rs-mx' }, h('span', {}), sts.map((s) => h('span', { class: 'rs-mxh' }, s)),
+        tiers.map((t) => [h('span', { class: 'rs-mxh', style: 'text-align:right' }, t), sts.map((s) => {
+          const v = n(t, s)
+          return h('button', { class: 'rs-cell', style: `--a:${v / max};--c:${TIER[t]}`, title: `${v} ${t} · ${s} — open in the evidence register`, onclick: () => { state.filters = { tier: t, status: s, freshness: null, mandate: null }; mode = 'evidence'; frame(); render() } }, v || '')
+        })]).flat())
+    }
+    function dashboard(d) {
+      const ch = d.challenges
+      const bySev = (m) => ['blocking', 'material', 'minor'].map((s) => ch.filter((c) => c.mandate === m && c.status === 'open' && c.severity === s).length)
+      return [
+        h('div', { class: 'rs-cards' }, d.mandates.filter((m) => m.status !== 'draft').map((m) => {
+          const [b, ma, mi] = bySev(m.id)
+          const prod = m.steps - m.barren
+          return h('article', { class: `rs-card${m.blocking.length ? ' blocked' : ''}` },
+            h('header', {}, h('span', { class: 'chip rs-ph', style: `--c:${PHASE[m.status]}` }, m.status), h('button', { class: 'rs-link mono', onclick: () => openM(m.id) }, m.id)),
+            h('div', { class: 'rs-hl' }, m.headline),
+            h('div', { class: 'rs-row' }, gauge(m.gate), h('div', { class: 'rs-kv' },
+              h('div', {}, h('b', {}, m.established), ' established'), h('div', {}, h('b', {}, m.provisional), ' provisional'),
+              h('div', {}, h('b', {}, m.not_triangulated), ' not triangulated'), h('div', {}, h('b', {}, `${prod}/${m.steps}`), ' steps found something'))),
+            h('div', {}, h('div', { class: 'rs-cap' }, 'established evidence by tier'), tierBar(m.tiers, m.established, 260)),
+            h('div', { class: 'chips' }, Object.entries(m.epistemic).map(([k, v]) => PS.chip(`${v} ${k}`, k === 'verified' ? 'good' : k === 'unknown' ? '' : k === 'inferred' || k === 'hypothesis' ? 'warn' : ''))),
+            h('div', { class: 'chips' }, b ? PS.chip(`${b} blocking`, 'crit') : null, ma ? PS.chip(`${ma} material`, 'warn') : null, mi ? PS.chip(`${mi} minor`) : null, !(b + ma + mi) ? PS.chip('no open challenge', 'good') : null,
+              m.gate.verdict === 'pass' && !m.blocking.length ? PS.chip('may ship', 'good') : PS.chip(m.blocking.length ? 'blocked' : m.gate.verdict, 'warn')))
+        })),
+        h('div', { class: 'grid-2' },
+          sec('What has the research been doing?', 'last 60 days, one bar per day, stacked by kind', spine(d)),
+          sec('Where is the evidence strong?', 'findings by source tier and status — click a cell to open those findings', matrix(d))),
+        sec('Challenges', `${ch.filter((c) => c.status === 'open').length} open — only a person rules`, h('div', { class: 'rs-lanes' }, ['open', 'accepted', 'rejected', 'resolved'].map((st) => h('div', { class: 'rs-lane' },
+          h('div', { class: 'eyebrow' }, `${st} · ${ch.filter((c) => c.status === st).length}`),
+          ch.filter((c) => c.status === st).map((c) => h('button', { class: `rs-ch sev-${c.severity}`, onclick: () => openC(c.id) }, h('span', { class: 'mono' }, `${c.id} · ${c.finding}`), h('span', {}, c.kind.replace(/-/g, ' ')),
+            c.proposed ? h('span', { class: 'rs-prop' }, `proposed: ${c.proposed}`) : null)))))),
+      ]
+    }
+
+    // ── Timeline ────────────────────────────────────────────────────────────
+    function timeline(d) {
+      const mands = d.mandates.filter((m) => !state.hidden.has(m.id))
+      const today = d.as_of
+      const earliest = [...d.mandates.map((m) => m.created), ...d.findings.map((f) => f.created)].filter(Boolean).sort()[0] || addDays(today, -60)
+      const from = state.window === 'all' ? addDays(earliest, -3) : addDays(today, -Number(state.window))
+      const horizon = state.horizon ? 120 : 0
+      const W = 1000, X0 = 170, XM = X0 + (state.horizon ? 0.72 : 1) * (W - 10 - X0), X1 = W - 10
+      const X = (dd) => dd <= today ? X0 + (XM - X0) * Math.max(0, days(from, dd)) / Math.max(1, days(from, today)) : XM + (X1 - XM) * Math.min(1, days(today, dd) / Math.max(1, horizon))
+      const LH = 88, H = 34 + LH * Math.max(1, mands.length) + 20
+      const s = sv('svg', { viewBox: `0 0 ${W} ${H}`, class: 'rs-tl', role: 'img', 'aria-label': 'Research timeline' })
+      if (state.horizon) s.append(sv('rect', { x: XM, y: 22, width: X1 - XM, height: H - 42, fill: 'var(--rs-horizon)' }))
+      const span = days(from, today), step = span > 150 ? 30 : span > 60 ? 14 : 7
+      for (let dd = from; dd <= today; dd = addDays(dd, step)) s.append(sv('line', { x1: X(dd), y1: 22, x2: X(dd), y2: H - 20, stroke: 'var(--rule-soft)' }), sv('text', { x: X(dd) + 3, y: 16, class: 'rs-ax' }, fmt.short(dd)))
+      if (state.horizon) for (const n of [30, 60, 90, 120]) s.append(sv('text', { x: X(addDays(today, n)) - 2, y: 16, class: 'rs-ax', 'text-anchor': 'end' }, `+${n}d`))
+      const fz = Object.fromEntries(d.findings.map((f) => [f.id, f]))
+      mands.forEach((m, i) => {
+        const y = 28 + i * LH, g = sv('g', { class: 'rs-lanegroup', style: `animation-delay:${i * 60}ms` })
+        g.append(sv('rect', { x: 0, y, width: W, height: LH - 4, rx: 4, fill: i % 2 ? 'var(--raised-2)' : 'var(--raised)' }))
+        const lab = sv('text', { x: 8, y: y + 17, class: 'rs-lab' }, m.id)
+        g.append(lab, sv('text', { x: 8, y: y + 31, class: 'rs-sub' }, `${m.status}${m.cadence ? ' · ' + m.cadence : ''}`), sv('text', { x: 8, y: y + 45, class: 'rs-sub' }, `${m.established} est · ${m.provisional} prov`))
+        hover(lab, `<b>${esc(m.id)}</b> ${esc(m.status)}<br>${esc(m.headline)}`)
+        for (const sp of m.lifecycle) {
+          if (['complete', 'closed-negative', 'killed'].includes(sp.phase)) { const xe = X(sp.from); const f = sv('path', { d: `M${xe},${y + 4} v18 M${xe},${y + 4} l11,5 l-11,5`, fill: PHASE[sp.phase], stroke: PHASE[sp.phase], 'stroke-width': 2 }); hover(f, `<b>${sp.phase}</b> on ${sp.from}`); g.append(f); continue }
+          const a = sp.from < from ? from : sp.from, b = sp.to || today
+          if (b < from) continue
+          const r = sv('rect', { x: X(a), y: y + 6, width: Math.max(3, X(b) - X(a)), height: 13, rx: 3, fill: PHASE[sp.phase] })
+          hover(r, `<b>${sp.phase}</b><br>${sp.from} → ${sp.to || 'today'}`)
+          g.append(r)
+          if (X(b) - X(a) > 70) g.append(sv('text', { x: X(a) + 5, y: y + 16, class: 'rs-ph' }, sp.phase))
+        }
+        for (const st of d.steps.filter((z) => z.mandate === m.id && z.started >= from)) {
+          const r = sv('rect', { x: X(st.started) - 3, y: y + 25, width: 6, height: 9, rx: 1, fill: st.barren ? 'none' : 'var(--rs-step)', stroke: st.barren ? 'var(--amber)' : 'var(--rs-step)', 'stroke-width': 1.5 })
+          hover(r, `<b>${st.id}</b> · ${st.mode} · ${st.started}<br>${esc(st.description)}<br>${st.barren ? '<i>barren: found nothing</i>' : st.findings + ' finding(s)'}`)
+          g.append(r)
+        }
+        const placed = {}, xy = {}
+        for (const f of d.findings.filter((z) => z.mandate === m.id && z.created >= from).sort((a, b) => a.created.localeCompare(b.created))) {
+          const x = X(f.created), k = Math.round(x / 7), dy = placed[k] = (placed[k] ?? -1) + 1
+          const cy = y + 44 + (dy % 4) * 8
+          xy[f.id] = [x, cy]
+          const c = sv('circle', { cx: x, cy, r: 4, fill: f.status === 'established' ? TIER[f.tier] : 'var(--raised)', stroke: TIER[f.tier], 'stroke-width': 1.6, opacity: f.live ? 1 : 0.35, class: 'rs-dotf' })
+          hover(c, `<b>${f.id}</b> · ${f.tier} · ${f.confidence} · ${f.epistemic}<br>${esc(f.claim)}<br><span class="rs-tipm">${f.status} · ${f.freshness}${f.superseded_by ? ' · superseded by ' + f.superseded_by : ''} · stale ${f.stale_on || '—'}</span>`)
+          c.addEventListener('click', () => openF(f.id))
+          g.append(c)
+        }
+        for (const f of d.findings.filter((z) => z.mandate === m.id && z.supersedes && xy[z.id] && xy[z.supersedes])) {
+          const [ax, ay] = xy[f.supersedes], [bx, by] = xy[f.id]
+          g.append(sv('path', { d: `M${ax},${ay} C${(ax + bx) / 2},${ay - 14} ${(ax + bx) / 2},${by - 14} ${bx},${by}`, fill: 'none', stroke: 'var(--rs-change)', 'stroke-dasharray': '3 2' }))
+        }
+        d.challenges.filter((c) => c.mandate === m.id).forEach((c, j) => {
+          const a = c.created < from ? from : c.created, e = c.ruled || (c.status === 'open' ? today : c.created)
+          if (e < from) return
+          const yy = y + LH - 12 - (j % 3) * 4
+          const l = sv('line', { x1: X(a), y1: yy, x2: Math.max(X(e), X(a) + 4), y2: yy, stroke: c.severity === 'blocking' ? 'var(--rose-deep)' : c.status === 'open' ? 'var(--rose)' : 'var(--mid-2)', 'stroke-width': c.severity === 'blocking' ? 3.5 : 2, 'stroke-linecap': 'round', class: 'rs-chl' })
+          hover(l, `<b>${c.id}</b> · ${c.kind} · ${c.severity} · ${c.status}<br>${esc(c.argument)}${c.proposed ? '<br><i>proposed: ' + esc(c.proposed) + '</i>' : ''}`)
+          l.addEventListener('click', () => openC(c.id))
+          g.append(l)
+        })
+        for (const x of d.changes.filter((z) => z.mandate === m.id && z.significance !== 'noise' && z.detected_at >= from)) {
+          const r = x.significance === 'material' ? 6 : 4, cx = X(x.detected_at)
+          const dm = sv('rect', { x: cx - r, y: y + 29 - r, width: 2 * r, height: 2 * r, transform: `rotate(45 ${cx} ${y + 29})`, fill: 'var(--rs-change)' })
+          hover(dm, `<b>${x.id}</b> · ${x.significance} · ${x.detected_at}<br>${esc(x.summary)}<br>${x.before.join(', ') || '—'} → ${x.after.join(', ')}`)
+          g.append(dm)
+        }
+        if (state.horizon) for (const q of m.questions) if (q.stale_on && q.stale_on > today && q.stale_on <= addDays(today, horizon)) {
+          const t = sv('g', {}, sv('line', { x1: X(q.stale_on), y1: y + 22, x2: X(q.stale_on), y2: y + 40, stroke: 'var(--amber)', 'stroke-width': 2 }), sv('text', { x: X(q.stale_on) + 3, y: y + 38, class: 'rs-qst' }, q.id))
+          hover(t, `<b>${q.id}</b> goes stale on ${q.stale_on}<br>${esc(q.text)}`)
+          g.append(t)
+        }
+        s.append(g)
+      })
+      s.append(sv('line', { x1: XM, y1: 20, x2: XM, y2: H - 18, stroke: 'var(--ink)', 'stroke-dasharray': '3 3', 'stroke-width': 1.5 }), sv('text', { x: XM - 4, y: H - 6, class: 'rs-ax', 'text-anchor': 'end' }, `today ${today}`))
+      const controls = h('div', { class: 'rs-controls' },
+        h('div', { class: 'chips' }, d.mandates.map((m) => h('button', { class: `rs-toggle${state.hidden.has(m.id) ? '' : ' on'}`, style: `--c:${PHASE[m.status]}`, onclick: () => { state.hidden.has(m.id) ? state.hidden.delete(m.id) : state.hidden.add(m.id); render() } }, m.id))),
+        h('div', { class: 'seg' }, [['30', '30 d'], ['90', '90 d'], ['all', 'all']].map(([k, l]) => h('button', { 'aria-pressed': String(state.window === k), onclick: () => { state.window = k; PS.store.set('rs.window', k); render() } }, l))),
+        h('label', { class: 'rs-check' }, h('input', { type: 'checkbox', checked: state.horizon, onchange: (e) => { state.horizon = e.target.checked; render() } }), ' show the horizon'))
+      return [controls, h('div', { class: 'panel rs-tlwrap' }, s), h('div', { class: 'rs-legend' },
+        Object.entries(PHASE).filter(([k]) => k !== 'killed').map(([k, c]) => h('span', {}, h('i', { style: `background:${c}` }), k)),
+        h('span', {}, h('i', { style: 'background:var(--rs-step)' }), 'step'), h('span', {}, h('i', { style: 'border:1.5px solid var(--amber)' }), 'barren step'),
+        h('span', {}, h('i', { style: 'background:var(--rs-t1);border-radius:50%' }), 'primary'), h('span', {}, h('i', { style: 'background:var(--rs-t2);border-radius:50%' }), 'secondary'), h('span', {}, h('i', { style: 'background:var(--rs-t3);border-radius:50%' }), 'tertiary'), h('span', {}, h('i', { style: 'border:1.5px solid var(--rs-t1);border-radius:50%' }), 'provisional'),
+        h('span', {}, h('i', { style: 'background:var(--rs-change);transform:rotate(45deg)' }), 'change'), h('span', {}, h('i', { style: 'background:var(--rose)' }), 'challenge'),
+        h('span', {}, h('i', { style: 'background:var(--amber)' }), 'goes stale'))]
+    }
+
+    // ── Evidence ────────────────────────────────────────────────────────────
+    function evidence(d) {
+      const F = state.filters
+      const q = state.q.toLowerCase()
+      const rows = d.findings.filter((f) => (!F.tier || f.tier === F.tier) && (!F.status || f.status === F.status) && (!F.freshness || f.freshness === F.freshness) && (!F.mandate || f.mandate === F.mandate)
+        && (!q || `${f.id} ${f.claim} ${f.hosts.join(' ')}`.toLowerCase().includes(q))).sort((a, b) => (a.live === b.live ? 0 : a.live ? -1 : 1) || String(a.stale_on).localeCompare(String(b.stale_on)))
+      const facet = (key, values) => h('div', { class: 'rs-facet' }, h('span', { class: 'eyebrow' }, key), values.map((v) => {
+        const n = d.findings.filter((f) => f[key] === v).length
+        return h('button', { class: `rs-toggle${F[key] === v ? ' on' : ''}`, style: key === 'tier' ? `--c:${TIER[v]}` : '', onclick: () => { F[key] = F[key] === v ? null : v; render() } }, `${v} · ${n}`)
+      }))
+      const search = h('input', { class: 'rs-search', type: 'search', placeholder: 'Search claims, ids, hosts…', value: state.q, oninput: (e) => { state.q = e.target.value; const pos = e.target.selectionStart; render(); const s2 = body.querySelector('.rs-search'); s2.focus(); s2.setSelectionRange(pos, pos) } })
+      const runway = (f) => {
+        if (!f.stale_on || !f.source_date) return h('span', { class: 'faint' }, '—')
+        const total = days(f.source_date, f.stale_on), left = days(d.as_of, f.stale_on)
+        const pct = Math.max(0, Math.min(100, (100 * (total - left)) / Math.max(1, total)))
+        return h('span', { class: 'rs-run', title: `${left} day(s) until stale (${f.stale_on})` }, h('i', { style: `width:0;background:${f.freshness === 'fresh' ? 'var(--green)' : f.freshness === 'aging' ? 'var(--amber)' : 'var(--rose)'}`, 'data-grow': `${pct}%` }))
+      }
+      return [
+        h('div', { class: 'rs-filters' }, facet('tier', ['primary', 'secondary', 'tertiary', 'speculative']), facet('status', ['established', 'provisional', 'withdrawn']),
+          facet('freshness', ['fresh', 'aging', 'stale']), facet('mandate', d.mandates.map((m) => m.id)), search),
+        sec('Findings', `${rows.length} of ${d.findings.length} · sorted by the day each goes stale`, rows.length ? h('div', { class: 'scroll-x' }, h('table', { class: 't' },
+          h('thead', {}, h('tr', {}, ['Finding', 'Claim', 'Tier · confidence', 'Epistemic', 'Status', 'Indep.', 'Runway'].map((x) => h('th', {}, x)))),
+          h('tbody', {}, rows.map((f) => h('tr', { class: `clickable${f.live ? '' : ' off'}`, onclick: () => openF(f.id) },
+            h('td', { class: 'mono' }, f.id, h('div', { class: 'faint' }, `${f.mandate} · ${f.answers.join(', ')}`)),
+            h('td', { style: 'min-width:260px' }, f.claim, f.superseded_by ? h('div', { class: 'faint' }, `superseded by ${f.superseded_by}`) : null, f.open_challenges.length ? h('div', { class: 'rs-chal' }, `challenged: ${f.open_challenges.join(', ')}`) : null),
+            h('td', {}, h('span', { class: 'rs-tier', style: `--c:${TIER[f.tier]}` }, f.tier), h('div', { class: 'faint' }, f.confidence)),
+            h('td', {}, PS.chip(f.epistemic, f.epistemic === 'verified' ? 'good' : ['inferred', 'hypothesis'].includes(f.epistemic) ? 'warn' : '')),
+            h('td', {}, PS.chip(f.status, f.status === 'established' ? 'good' : f.status === 'provisional' ? 'warn' : '')),
+            h('td', { class: 'num' }, f.independent ?? '—', f.not_triangulated ? h('div', { class: 'rs-chal' }, 'not triangulated') : null),
+            h('td', {}, runway(f), h('div', { class: 'faint' }, f.freshness))))))) : PS.empty('No finding matches these filters.')),
+      ]
+    }
+
+    // ── Library ─────────────────────────────────────────────────────────────
+    // model().library: studies (research/reports/RES-M-*.md) and articles (research/topics/*.md), each with its citations'
+    // state today. The shelves, then a reader: the document rendered from its markdown, citations as chips coloured by
+    // state (hover for the finding, click to open it), and the evidence ledger beside it.
+    const CS = [['ok', 'holds', 'var(--rs-t1)'], ['provisional', 'provisional', 'var(--rs-t2)'], ['stale', 'stale', 'var(--amber)'], ['challenged', 'under challenge', 'var(--rs-change)'],
+      ['superseded', 'superseded', 'var(--rose)'], ['withdrawn', 'withdrawn', 'var(--rose-deep)'], ['missing', 'missing', 'var(--ink)']]
+    const CSC = Object.fromEntries(CS.map(([k, , c]) => [k, c])), CSW = Object.fromEntries(CS.map(([k, w]) => [k, w]))
+    const STUDY = { shipped: ['good', 'shipped'], living: ['accent', 'living study'], draft: ['', 'draft'], blocked: ['crit', 'blocked'] }
+    const hbar = (hl) => { const n = Object.values(hl || {}).reduce((a, b) => a + b, 0) || 1
+      return h('div', { class: 'rs-hb' }, h('div', { class: 'rs-hbar' }, CS.map(([k, w, c]) => hl?.[k] ? h('i', { style: `background:${c};width:0`, 'data-grow': `${(100 * hl[k]) / n}%`, title: `${hl[k]} ${w}` }) : null)),
+        h('div', { class: 'rs-hn' }, CS.filter(([k]) => hl?.[k]).map(([k, w, c]) => h('span', {}, h('b', { style: `color:${c}` }, hl[k]), ` ${w}`)))) }
+    const moved = (doc) => doc.citations.some((c) => ['superseded', 'withdrawn', 'missing'].includes(c.state))
+    const CITE_RE = /\[(RES-F-\d{3,}(?:\s*,\s*RES-F-\d{3,})*)\]/g
+    function mdHtml(src) {
+      const inl = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*(?!\s)(.+?)\*/g, '$1<em>$2</em>').replace(/`(.+?)`/g, '<code>$1</code>')
+        .replace(CITE_RE, (_, ids) => ids.split(',').map((i) => `<button class="rs-cite" data-fid="${i.trim()}">${i.trim()}</button>`).join(''))
+      const out = []; let para = [], list = null
+      const flush = () => { if (para.length) { out.push(`<p>${inl(para.join(' '))}</p>`); para = [] } if (list) { out.push(`<${list.k}>${list.items.map((x) => `<li>${inl(x)}</li>`).join('')}</${list.k}>`); list = null } }
+      for (const raw of String(src || '').split('\n')) {
+        const line = raw.trimEnd(), hm = line.match(/^(#{1,4})\s+(.*)/), lm = line.match(/^\s*(?:[-*]|\d+\.)\s+(.*)/)
+        if (line.trim().startsWith('<!--')) continue
+        if (hm) { flush(); out.push(`<h${hm[1].length + 1}>${inl(hm[2])}</h${hm[1].length + 1}>`) }
+        else if (lm) { const k = /^\s*\d+\./.test(line) ? 'ol' : 'ul'; if (para.length || (list && list.k !== k)) flush(); list = list || { k, items: [] }; list.items.push(lm[1]) }
+        else if (!line.trim()) flush()
+        else { if (list) flush(); para.push(line.trim()) }
+      }
+      flush(); return out.join('')
+    }
+    function card(doc) {
+      const study = doc.kind === 'study', [cls, word] = STUDY[doc.status] || ['', doc.status]
+      return h('button', { class: `rs-doc ${study ? `study st-${doc.status}` : 'article'}`, onclick: () => { state.doc = doc.path; render(); body.scrollIntoView({ block: 'start' }) } },
+        h('div', { class: 'rs-dm' }, study ? [PS.chip(word, cls), h('span', { class: 'mono faint' }, doc.mandate), h('span', { class: 'faint' }, doc.generated_at || '')]
+          : [...(doc.tags || []).map((t) => PS.chip(t)), h('span', { class: 'faint' }, `compiled ${doc.compiled_at || ''}`)]),
+        h('div', { class: 'rs-dt' }, doc.title), h('div', { class: 'rs-da' }, study ? doc.answer : doc.lede),
+        hbar(doc.health), moved(doc) ? h('div', { class: 'rs-flag' }, 'evidence has moved since this was written') : null,
+        h('div', { class: 'rs-go' }, `Read · ${doc.citations.length} citation${doc.citations.length === 1 ? '' : 's'} →`))
+    }
+    function reader(d, doc) {
+      const cs = Object.fromEntries(doc.citations.map((c) => [c.id, c]))
+      const flagged = doc.citations.filter((c) => c.state !== 'ok')
+      const say = (c) => c.state === 'superseded' ? [h('b', {}, c.id), ` has been superseded by `, h('b', {}, c.by), c.since ? ` (${c.since})` : '', ` — now: “${c.by_claim || ''}”`]
+        : c.state === 'challenged' ? [h('b', {}, c.id), ` is under open challenge ${(c.challenges || []).join(', ')}`]
+        : c.state === 'stale' ? [h('b', {}, c.id), ' rests on a source past its half-life — re-check before relying on it']
+        : c.state === 'provisional' ? [h('b', {}, c.id), ' is provisional — not yet established'] : [h('b', {}, c.id), ` is ${CSW[c.state]}`]
+      const heads = [doc.status === 'blocked' ? `This study cannot ship: blocking challenge ${(doc.blocking || []).join(', ')} is open.` : null,
+        moved(doc) ? 'The evidence has moved since this was written — the text no longer matches what the research knows.' : flagged.length ? 'Some of the evidence needs care.' : null].filter(Boolean)
+      const text = h('div', { class: 'rs-prose' }); text.innerHTML = mdHtml(doc.markdown)
+      text.querySelectorAll('.rs-cite').forEach((b) => { const c = cs[b.dataset.fid] || { id: b.dataset.fid, state: 'missing' }
+        b.classList.add(`st-${c.state}`); b.style.setProperty('--c', CSC[c.state])
+        hover(b, `<b>${esc(c.id)}</b> · ${esc(CSW[c.state])}<br>${esc(c.claim || 'no such finding')}<div class="rs-tipm">${esc(c.tier || '')} · ${esc(c.confidence || '')} · ${esc(c.epistemic || '')}${c.by ? ` · → ${esc(c.by)}` : ''}</div>`)
+        b.onclick = () => openF(c.id) })
+      const h1 = text.querySelector('h2')   // the document's own title (# → h2 inside the Console page)
+      const [cls, word] = STUDY[doc.status] || ['', doc.status]
+      const pre = [doc.kind === 'study' ? h('div', { class: 'rs-cap' }, 'Mandate: ', h('button', { class: 'rs-link', onclick: () => openM(doc.mandate) }, (d.mandates.find((m) => m.id === doc.mandate) || {}).headline || doc.mandate))
+        : doc.lede ? h('p', { class: 'rs-lede' }, doc.lede) : null,
+      heads.length ? h('div', { class: `rs-notice ${moved(doc) || doc.status === 'blocked' ? 'crit' : 'warn'}` }, h('b', {}, heads.join(' ')), flagged.length ? h('ul', {}, flagged.map((c) => h('li', {}, say(c)))) : null) : null].filter(Boolean)
+      if (h1) h1.after(...pre); else text.prepend(...pre)
+      return h('div', { class: 'rs-reader' },
+        h('div', { class: 'rs-rbar' }, h('button', { class: 'rs-toggle', onclick: () => { state.doc = null; render() } }, '← Library'),
+          h('span', { class: 'eyebrow' }, doc.kind === 'study' ? `study · ${doc.mandate} · ${doc.method || ''} · written ${doc.generated_at || '—'}` : `article · compiled ${doc.compiled_at || '—'} · from ${(doc.mandates || []).join(', ')}`),
+          doc.kind === 'study' ? PS.chip(word, cls) : null, h('span', { class: 'mono faint', style: 'margin-left:auto' }, doc.path)),
+        h('div', { class: 'rs-rgrid' }, h('article', { class: 'rs-paper' }, text),
+          h('aside', { class: 'rs-ledger' }, h('div', { class: 'eyebrow' }, 'Evidence, as it stands today'), hbar(doc.health),
+            h('ul', {}, doc.citations.map((c) => h('li', { style: `--c:${CSC[c.state]}`, onclick: () => openF(c.id) },
+              h('div', { class: 'mono faint' }, `${c.id} · ${c.tier || '—'} · ${c.confidence || '—'} · ${c.epistemic || '—'}`),
+              h('div', {}, h('b', { style: `color:${CSC[c.state]}` }, CSW[c.state]), ' ', c.claim || 'no such finding'),
+              c.state === 'superseded' ? h('div', { class: 'faint' }, `→ ${c.by}: ${c.by_claim || ''}`) : null))))))
+    }
+    function library(d) {
+      const L = d.library || { studies: [], articles: [] }, all = [...L.studies, ...L.articles]
+      const open = state.doc && all.find((x) => x.path === state.doc)
+      if (open) return reader(d, open)
+      const flaggedN = all.reduce((a, x) => a + x.citations.filter((c) => c.state !== 'ok').length, 0)
+      const show = (x) => state.shelf === 'all' || (state.shelf === 'flagged' && x.citations.some((c) => c.state !== 'ok'))
+      const shelf = (docs, empty) => { const v = docs.filter(show); return v.length ? h('div', { class: 'rs-shelf' }, v.map(card)) : PS.empty(empty) }
+      return [
+        d.fixture ? h('div', { class: 'callout warn' }, h('b', {}, 'Sample data. '), 'Every fact on this page is invented; it shows the shape of what you get.') : null,
+        h('div', { class: 'stats' }, PS.tile(L.studies.filter((x) => ['shipped', 'living'].includes(x.status)).length, 'studies out', 'good'),
+          PS.tile(L.studies.filter((x) => ['draft', 'blocked'].includes(x.status)).length, 'in draft'), PS.tile(L.articles.length, 'articles'),
+          PS.tile(all.reduce((a, x) => a + x.citations.length, 0), 'citations'), PS.tile(flaggedN, 'flagged today', flaggedN ? 'warn' : 'good'),
+          PS.tile(all.filter(moved).length, 'evidence moved', all.some(moved) ? 'crit' : 'good')),
+        h('div', { class: 'rs-controls' }, ['all', 'flagged'].map((k) => h('button', { class: `rs-toggle${state.shelf === k ? ' on' : ''}`, onclick: () => { state.shelf = k; render() } }, k === 'all' ? 'Everything' : 'Only what needs care')),
+          h('span', { class: 'rs-legend', style: 'padding:0' }, CS.slice(0, 5).map(([, w, c]) => h('span', {}, h('i', { style: `background:${c}` }), w)))),
+        sec('What has the research concluded?', 'one study per mandate — shipped, living (a standing mandate\'s latest), draft, or blocked by an open challenge',
+          shelf(L.studies, 'No study yet — research-brief draft writes a mandate\'s deliverable.')),
+        sec('What do we know, by topic?', 'articles compiled across mandates; projections, regenerated when their evidence moves',
+          shelf(L.articles, 'No article yet — research-brief article compiles a topic page across mandates.')),
+      ]
+    }
+  },
+}
+
+const RS_CSS = `
+.rs,.rs-body{--rs-t1:#2e8b6c;--rs-t2:#6fb59a;--rs-t3:#aecfbf;--rs-t4:#d6cbb8;--rs-change:#8a6fd1;--rs-lock:#8e99a3;--rs-step:#7d8b96;--rs-horizon:color-mix(in srgb,var(--rs-change) 9%,transparent)}
+.rs .seg{margin:4px 0 14px}.rs-body{position:relative}
+.rs-dot{width:9px;height:9px;border-radius:50%;background:var(--mid-2);margin-top:5px}.rs-dot.crit{background:var(--rose)}.rs-dot.warn{background:var(--amber)}
+.rs-mandates{display:grid;gap:10px;padding:10px 18px 14px}.rs-m{border-top:1px solid var(--rule-soft);padding-top:10px}.rs-m:first-child{border-top:0;padding-top:0}
+.rs-m header,.rs-card header{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}.rs-m header b{font-weight:700}
+.rs-ph{background:var(--c);color:#fff;border-color:var(--c)}
+.rs-link{background:none;border:0;padding:0;color:var(--terra-deep);cursor:pointer;text-decoration:underline dotted}
+.rs-qs{display:grid;gap:4px;margin-top:8px}.rs-q{display:grid;grid-template-columns:30px 1fr auto 74px;gap:10px;align-items:center;font-size:13px;padding:3px 6px;border-radius:5px;transition:background .15s}.rs-q:hover{background:var(--raised-2)}
+@media (max-width:620px){.rs-q{grid-template-columns:26px 1fr}.rs-q .chip,.rs-q .rs-tb{grid-column:2}}
+.rs-moved{font-family:var(--ps-mono);font-size:10.5px;color:var(--rs-change);margin-left:6px}
+.rs-tb{display:inline-flex;height:8px;border-radius:2px;overflow:hidden;background:var(--raised-2)}.rs-tb i{display:block;height:100%;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.rs-neg{margin-top:8px;padding:8px 10px;background:var(--green-wash);border-left:3px solid var(--green);font-size:13px}
+.rs-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:16px}
+.rs-card{background:var(--raised);border:1px solid var(--rule);padding:14px 16px;display:grid;gap:10px;box-shadow:var(--card-shadow);animation:rs-rise .45s both}.rs-card.blocked{border-color:var(--rose);box-shadow:inset 3px 0 0 var(--rose)}
+.rs-hl{font-family:var(--ps-serif);font-weight:700;font-size:14.5px;line-height:1.3}
+.rs-row{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center}.rs-kv{display:grid;gap:3px;font-size:12.5px;color:var(--mid)}.rs-kv b{color:var(--ink);font-variant-numeric:tabular-nums}
+.rs-gauge{width:96px;height:auto}.rs-arc{transition:stroke-dasharray 1s cubic-bezier(.2,.8,.2,1)}.rs-gv{font-family:var(--ps-serif);font-weight:700;font-size:17px;fill:var(--ink)}.rs-gl{font-family:var(--ps-mono);font-size:8.5px;fill:var(--mid)}
+.rs-cap{font-size:10.5px;color:var(--mid);font-family:var(--ps-mono);margin-bottom:4px}
+.rs-spine{width:100%;height:auto;padding:10px 12px 0}.rs-grow{transform-box:fill-box;transform-origin:bottom;animation:rs-grow .5s both}
+.rs-ax{font-family:var(--ps-mono);font-size:9.5px;fill:var(--mid)}
+.rs-legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--mid);padding:8px 14px}.rs-legend i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px;border-radius:2px}
+.rs-mx{display:grid;grid-template-columns:90px repeat(3,1fr);gap:5px;padding:14px 18px}.rs-mxh{font-family:var(--ps-mono);font-size:10.5px;color:var(--mid);align-self:center}
+.rs-cell{height:40px;border:1px solid var(--rule);background:color-mix(in srgb,var(--c) calc(var(--a)*85%),var(--raised));color:var(--ink);font-family:var(--ps-serif);font-weight:700;font-size:15px;cursor:pointer;transition:transform .15s}.rs-cell:hover{transform:scale(1.05)}
+.rs-lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;padding:12px 18px}.rs-lane{display:grid;gap:6px;align-content:start}
+.rs-ch{display:grid;gap:2px;text-align:left;background:var(--raised);border:1px solid var(--rule);border-left:3px solid var(--mid-2);padding:7px 9px;font-size:12px;cursor:pointer;transition:transform .15s}.rs-ch:hover{transform:translateX(2px)}
+.rs-ch.sev-blocking{border-left-color:var(--rose-deep)}.rs-ch.sev-material{border-left-color:var(--amber)}.rs-prop{color:var(--mid);font-style:italic}
+.rs-controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:10px}
+.rs-toggle{border:1px solid var(--rule);background:var(--raised);color:var(--mid);font-family:var(--ps-mono);font-size:11px;padding:3px 9px;border-radius:999px;cursor:pointer;transition:all .15s}
+.rs-toggle.on{background:var(--c,var(--ink));border-color:var(--c,var(--ink));color:#fff}.rs-toggle.on:not([style*="--c"]){color:var(--paper)}.rs-check{font-size:12px;color:var(--mid)}
+.rs-tlwrap{position:relative;padding:8px}.rs-tl{width:100%;height:auto;display:block}.rs-lanegroup{animation:rs-fade .5s both}
+.rs-lab{font-family:var(--ps-serif);font-weight:700;font-size:12.5px;fill:var(--ink);cursor:default}.rs-sub{font-family:var(--ps-mono);font-size:9.5px;fill:var(--mid)}.rs-ph{fill:#fff;font-size:9.5px;font-weight:700;font-family:var(--ps-body)}
+.rs-qst{font-family:var(--ps-mono);font-size:9.5px;fill:var(--amber-deep)}.rs-dotf,.rs-chl{cursor:pointer;transition:r .15s}.rs-dotf:hover{r:6}
+.rs-tip{position:absolute;z-index:5;max-width:300px;pointer-events:none;opacity:0;transition:opacity .12s;background:var(--ink);color:var(--paper);font-size:12px;line-height:1.4;padding:8px 10px;border-radius:6px;box-shadow:var(--pop-shadow)}
+.rs-tip b{color:var(--paper)}.rs-tipm{opacity:.75;font-family:var(--ps-mono);font-size:10.5px}
+.rs-filters{display:grid;gap:8px;margin-bottom:12px}.rs-facet{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.rs-facet .eyebrow{min-width:78px}
+.rs-search{max-width:360px;padding:7px 10px;border:1px solid var(--rule);background:var(--raised);color:var(--ink);font:inherit;font-size:13px}
+.rs-run{display:inline-block;width:90px;height:6px;background:var(--raised-2);border-radius:3px;overflow:hidden}.rs-run i{display:block;height:100%;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.rs-tier{display:inline-block;padding:1px 7px;border-radius:3px;background:color-mix(in srgb,var(--c) 22%,transparent);border:1px solid var(--c);font-size:11.5px}
+.rs-chal{font-size:11px;color:var(--rose-deep)}
+.rs-shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:14px 18px}
+.rs-doc{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:8px;background:var(--raised);border:1px solid var(--rule);padding:14px 16px 12px;box-shadow:var(--card-shadow);position:relative;overflow:hidden;animation:rs-rise .45s both;transition:transform .15s,border-color .15s}
+.rs-doc:hover,.rs-doc:focus-visible{transform:translateY(-2px);border-color:var(--terra)}.rs-doc.study{box-shadow:inset 4px 0 0 var(--rs-t1),var(--card-shadow)}.rs-doc.st-blocked{box-shadow:inset 4px 0 0 var(--rose),var(--card-shadow)}
+.rs-doc.st-draft{box-shadow:inset 4px 0 0 var(--mid-2),var(--card-shadow)}.rs-doc.st-living{box-shadow:inset 4px 0 0 var(--rs-change),var(--card-shadow)}
+.rs-doc.article{background:linear-gradient(180deg,color-mix(in srgb,var(--rs-t1) 10%,var(--raised)),var(--raised) 45%)}
+.rs-dm{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:11.5px}.rs-dt{font-family:var(--ps-serif);font-weight:700;font-size:16px;line-height:1.25;color:var(--ink)}
+.rs-da{font-size:12.5px;color:var(--mid);line-height:1.45;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}.rs-go{margin-top:auto;font-size:12px;color:var(--terra-deep)}
+.rs-flag{font-family:var(--ps-mono);font-size:10.5px;color:var(--rose-deep)}
+.rs-hb{display:grid;gap:4px}.rs-hbar{display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--raised-2)}.rs-hbar i{display:block;height:100%;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.rs-hn{display:flex;flex-wrap:wrap;gap:2px 10px;font-family:var(--ps-mono);font-size:10.5px;color:var(--mid)}
+.rs-reader{animation:rs-fade .3s both}.rs-rbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:12px}
+.rs-rgrid{display:grid;grid-template-columns:minmax(0,1fr) 300px;border:1px solid var(--rule);background:var(--raised);box-shadow:var(--card-shadow)}@media (max-width:900px){.rs-rgrid{grid-template-columns:1fr}}
+.rs-paper{padding:22px 30px 30px;min-width:0}.rs-prose h2{font-family:var(--ps-serif);font-size:26px;line-height:1.15;margin:0 0 10px}.rs-prose h3{font-family:var(--ps-serif);font-size:17px;margin:24px 0 6px}
+.rs-prose p,.rs-prose li{font-size:14.5px;line-height:1.65;max-width:68ch}.rs-prose ul{padding-left:20px}.rs-lede{font-size:15px;color:var(--mid);max-width:66ch;margin:0 0 12px}
+.rs-cite{font-family:var(--ps-mono);font-size:10.5px;padding:0 5px;margin:0 2px;border:1px solid var(--c);color:var(--c);background:color-mix(in srgb,var(--c) 10%,transparent);border-radius:3px;cursor:pointer;vertical-align:1px}
+.rs-cite.st-provisional{border-style:dashed}.rs-cite.st-superseded,.rs-cite.st-withdrawn,.rs-cite.st-missing{text-decoration:line-through}.rs-cite:hover{background:var(--c);color:#fff}
+.rs-notice{padding:10px 14px;margin:0 0 14px;font-size:13px;border:1px solid}.rs-notice.crit{background:var(--rose-wash,color-mix(in srgb,var(--rose) 10%,transparent));border-color:var(--rose)}.rs-notice.warn{background:color-mix(in srgb,var(--amber) 10%,transparent);border-color:var(--amber)}
+.rs-notice ul{margin:6px 0 0;padding-left:18px}
+.rs-ledger{border-left:1px solid var(--rule);background:var(--raised-2);padding:18px 16px;display:grid;gap:10px;align-content:start}@media (max-width:900px){.rs-ledger{border-left:0;border-top:1px solid var(--rule)}}
+.rs-ledger ul{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:8px}.rs-ledger li{border-left:3px solid var(--c);padding:2px 0 2px 9px;font-size:12px;line-height:1.4;cursor:pointer;transition:transform .15s}.rs-ledger li:hover{transform:translateX(2px)}
+@keyframes rs-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}@keyframes rs-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@keyframes rs-fade{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.rs *{animation:none!important;transition:none!important}}
+`
 
 // ── views/ops.js
 // Inputs, Change register, Outputs, Processing, Automation — and Admin (people, access, audit).
@@ -2079,5 +2527,5 @@ PS.views.admin = {
   },
 }
 
-PS.boot({ viewIds: ["today","dashboard","board","capabilities","calendar","goals","milestones","inputs","decisions","risks","changes","lessons","documents","team","feedback","matrix","outputs","tech","queue","gaps","processing","automation","costing","substrate","activity","scoreboard","wiki","admin","cap-sred","cap-intel","cap-tender","cap-portfolio"], single: false, title: "Project State Console" })
+PS.boot({ viewIds: ["today","dashboard","board","capabilities","calendar","goals","milestones","inputs","decisions","risks","changes","lessons","documents","team","feedback","matrix","outputs","tech","queue","gaps","processing","automation","costing","substrate","activity","scoreboard","wiki","admin","cap-sred","cap-intel","cap-tender","cap-portfolio","cap-research"], single: false, title: "Project State Console" })
 </script>

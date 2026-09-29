@@ -9,13 +9,17 @@ Reads:
     intel/claims/*.yaml           the atoms — freshness is DERIVED here from the half-life table
     intel/changes/*.yaml          change events (noise omitted)
     intel/battlecards/*.md        projection frontmatter (generated_at) for currency
-    state/intel.json              projection hashes (forks are flagged)
+    state/intel.json              projection hashes (forks are flagged); the monitor's cursors
+    intel/watch.yaml, intel/winloss/*.yaml   (1.2) the watch list and the win-loss records
 
 Writes ONE file (default <facility>/intel/reports/competitive.html) and nothing else. A lens.
 Declared in surfaces.yaml (`reports:`), rendered in place by the app's Intel page; no scripts,
 no external resources. Five pictures (docs/INTEL-CI-SPEC.md §9.2): coverage per competitor
 (claims stacked fresh / aging / stale, stale hatched, self first), the contested grid, open
-unknowns on P0 competitors, battlecard currency, and the last 30 days of change events.
+unknowns on P0 competitors, battlecard currency, and the last 30 days of change events; from
+1.2 two more (§14.4): the watch list as the monitor last read it, and what closed deals teach —
+sellers' reasons against buyers', every pattern with its sample. Those two reuse
+capabilities/intel/scripts (monitor.plan, winloss.analyse), so the report and the skills agree.
 """
 from __future__ import annotations
 
@@ -34,6 +38,14 @@ try:
 except ImportError:  # pragma: no cover
     print("build-intel-competitive: PyYAML is required (pip install pyyaml)", file=sys.stderr)
     sys.exit(2)
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+try:  # the 1.2 sections; the report still renders the first five without them
+    from intel_lib import Facility as _Facility
+    import monitor as _monitor
+    import winloss as _winloss
+except Exception:  # pragma: no cover
+    _Facility = None
 
 DEFAULT_HALF_LIVES = {"pricing": 90, "packaging": 90, "product": 180, "feature": 180, "integration": 180, "positioning": 180, "messaging": 180, "go-to-market": 180, "security": 180,
                       "customer": 270, "partnership": 270, "compliance": 270, "leadership": 365, "funding": 365, "market": 365, "objection": 120, "win-loss": 120, "sales-tactic": 120, "product-gap": 120}
@@ -247,9 +259,46 @@ def main(argv=None) -> int:
     change_rows = "".join(f'<tr><td class="mono">{esc(x.get("detected_at"))}</td><td class="lbl">{esc(ents.get(x.get("subject"), {}).get("name") or x.get("subject"))}</td><td>{esc(x.get("change_type"))}</td><td>{esc(x.get("significance"))}</td><td class="tiny">{" → ".join(esc(", ".join(x.get(k) or [])) for k in ("before", "after"))}</td><td class="tiny">{esc(x.get("recommended_action"))}</td></tr>' for x in sorted(recent, key=lambda x: str(x.get("detected_at")), reverse=True))
     noise_n = sum(1 for x in changes if x.get("significance") == "noise")
 
+    # ── 6. the monitor, 7. win-loss (1.2) ────────────────────────────────────
+    mon = wl = None
+    if _Facility is not None:
+        try:
+            F = _Facility(fac, today.isoformat())
+            mon = _monitor.plan(F) if (fac / "intel" / "watch.yaml").exists() else None
+            wl = _winloss.analyse(F) if F.winloss else None
+        except Exception as e:  # a broken watch list must not take the report down
+            print(f"build-intel-competitive: monitor / win-loss sections skipped: {e}", file=sys.stderr)
+    if mon:
+        srows = [(r, "overdue" if r["id"] in mon["overdue"] else "due") for r in mon["due"]] + [(r, "ok") for r in mon["waiting"]]
+        badge = {"overdue": "<span class=badge-crit>overdue</span>", "due": "<span class=badge-warn>due</span>", "ok": "<span class=badge-ok>read</span>"}
+        mon_rows = "".join(f'<tr><td class="lbl">{esc(r["name"])}</td><td class="mono">{esc(r["id"])}</td><td>{esc(r["via"])}</td><td class="tiny">{esc(", ".join(r["categories"]))}</td>'
+                           f'<td class="mono">{esc(r["last_checked"] or "never")}</td><td>{badge[st]}{(" <span class=tiny>" + esc(r["last_status"]) + "</span>") if r.get("last_status") else ""}</td></tr>' for r, st in srows)
+        mon_rows += "".join(f'<tr><td class="lbl">{esc(ents.get(x["id"], {}).get("name") or x["id"])}</td><td class="mono">{esc(x["id"])}</td><td colspan="3" class="tiny">{esc(x["status"])}</td><td></td></tr>' for x in mon["paused"])
+        gaps = [f'{esc(u["name"])} — no active source' for u in mon["unwatched"]] + [f'{esc(t["name"])} — nothing reads {esc(", ".join(t["uncovered"]))}' for t in mon["thin"]]
+        mon_html = (f'<div class="fig"><div class="tbl"><table><thead><tr><th>Entity</th><th>Source</th><th>Via</th><th>Settles</th><th>Last read</th><th>Status</th></tr></thead><tbody>{mon_rows or "<tr><td colspan=6 class=mut>The watch list is empty.</td></tr>"}</tbody></table></div>'
+                    f'<p class="cites">Last run {esc(mon["last_run"] or "never")} · {len(mon["due"])} source(s) due, {len(mon["overdue"])} overdue · connectors in use: {esc(", ".join(sorted({r["via"] for r, _ in srows})) or "none")}'
+                    + (f'<br>Not watched: {"; ".join(gaps)}' if gaps else "") + "</p></div>")
+    else:
+        mon_html = '<div class="fig"><p class="mut">No watch list yet (intel/watch.yaml). Run <b>intel-monitor watch</b> to propose sources from the ones the claims already cite.</p></div>'
+    if wl:
+        s_, d_ = wl["sample"], wl["divergence"]
+        pat_rows = "".join(f'<tr><td>{esc(p["segment"])}</td><td class="lbl">{esc(p["competitor_name"])}</td><td>{esc(p["outcome"])}</td><td>{esc(p["reason"])}</td><td class="num">{p["k"]} of {p["n"]}</td>'
+                           f'<td>{"<span class=badge-warn>anecdote</span> " if p["anecdote"] else ""}{("<span class=tiny>" + str(p["seller_only"]) + " on the seller&#39;s word only</span>") if p["seller_only"] else ""}</td><td class="tiny">{esc(", ".join(p["records"]))}</td></tr>' for p in wl["patterns"])
+        flows = "; ".join(f'seller said {esc(f["seller"])}, buyer said {esc(f["buyer"])} ×{f["n"]}' for f in d_["flows"])
+        rev = "".join(f'<p class="cites"><b>Segment before generalising:</b> {esc(r["text"])}</p>' for r in wl["reversals"])
+        nobuy = ", ".join(f'{esc(r["id"])} ({esc(r["deal_ref"])}, {r["days_since_close"]} d)' for r in wl["no_buyer_evidence"])
+        wl_html = (f'<div class="counts"><div class="c"><b>{s_["records"]}</b><span>closed deals</span></div><div class="c"><b>{s_["wins"]}–{s_["losses"]}</b><span>won – lost</span></div>'
+                   f'<div class="c"><b>{s_["with_buyer_evidence"]}</b><span>with buyer evidence</span></div><div class="c"><b>{"—" if d_["rate"] is None else str(round(100 * d_["rate"])) + "%"}</b><span>seller ≠ buyer</span></div></div>'
+                   f'<div class="fig"><div class="tbl"><table><thead><tr><th>Segment</th><th>Competitor</th><th>Outcome</th><th>Reason</th><th class="num">Sample</th><th></th><th>Records</th></tr></thead><tbody>{pat_rows}</tbody></table></div>'
+                   f'<p class="cites">{d_["diverged"]} of {d_["pairs"]} deals with both reasons disagree{(": " + flows) if flows else ""}. Below {wl["min_sample"]} deals a pattern is anecdote.'
+                   + (f'<br>No buyer evidence yet: {nobuy}' if nobuy else "") + f"</p>{rev}</div>")
+    else:
+        wl_html = '<div class="fig"><p class="mut">No win-loss records yet. <b>intel-winloss record &lt;deal&gt;</b> after each close — the tender capability prompts it on won and lost.</p></div>'
+
     n_cur = len([c for c in current if c["_subject"] in subjects]); n_fresh = sum(1 for c in current if c["_subject"] in subjects and c["_fresh"] == "fresh")
     n_stale_mat = sum(1 for c in current if c["_subject"] in subjects and c.get("material") and c["_fresh"] == "stale")
-    counts = [(n_cur, "current claims"), (n_fresh, "fresh"), (n_stale_mat, "material & stale"), (n_conf, "open conflicts"), (len(unk), "P0 unknowns"), (sum(1 for c in cards if c[3]), "battlecards behind")]
+    counts = [(n_cur, "current claims"), (n_fresh, "fresh"), (n_stale_mat, "material & stale"), (n_conf, "open conflicts"), (len(unk), "P0 unknowns"), (sum(1 for c in cards if c[3]), "battlecards behind"),
+              (len(mon["due"]) if mon else 0, "sources due")]
     if args.json:
         nm = lambda sid: (ents.get(sid) or {}).get("name") or sid
         data = {
@@ -264,13 +313,17 @@ def main(argv=None) -> int:
             "battlecards": [{"file": f, "subject": nm(sid), "generated": (g.isoformat() if g else None), "behind": b, "forked": fk, "stale_used": su, "unsourced": us, "audience": au} for f, sid, g, b, fk, su, us, au in cards],
             "changes": [{"detected_at": str(x.get("detected_at")), "subject": nm(x.get("subject")), "type": x.get("change_type"), "significance": x.get("significance"), "before": x.get("before") or [], "after": x.get("after") or [], "action": x.get("recommended_action")} for x in sorted(recent, key=lambda x: str(x.get("detected_at")), reverse=True)],
             "noise_suppressed": noise_n, "claims_total": len(claims), "superseded": len(superseded),
+            "monitor": ({"last_run": mon["last_run"], "due": [{k: r[k] for k in ("id", "name", "via", "categories", "last_checked", "last_status", "days_since")} | {"overdue": r["id"] in mon["overdue"]} for r in mon["due"]],
+                         "read": [{k: r[k] for k in ("id", "name", "via", "categories", "last_checked", "last_status", "days_since")} for r in mon["waiting"]],
+                         "paused": mon["paused"], "unwatched": mon["unwatched"], "thin": mon["thin"]} if mon else None),
+            "winloss": ({k: wl[k] for k in ("window", "min_sample", "sample", "divergence", "patterns", "reversals", "by_competitor", "heard", "no_buyer_evidence")} if wl else None),
         }
         Path(args.json).parent.mkdir(parents=True, exist_ok=True)
         Path(args.json).write_text(json.dumps(data, indent=2, default=str))
     counts_html = '<div class="counts">' + "".join(f'<div class="c"><b>{v}</b><span>{k}</span></div>' for v, k in counts) + "</div>"
     self_note = (f'Self entity <b>{esc(ents[self_id].get("name"))}</b> ({esc(self_id)}) with {sum(1 for c in current if c["_subject"] == self_id)} claim(s).' if self_id in ents else '<b>No self entity declared</b> — nothing about us is provable; battlecards cannot pass the three-part test. Run intel-onboarding competitive.')
     page = PAGE.format(title=esc(name), now=esc(now_s), self_note=self_note, coverage=coverage_svg, legend=legend, counts=counts_html, contested=contested_svg, conf_rows=conf_rows or "", n_conf=n_conf,
-                       unk_rows=unk_rows, card_rows=card_rows, changes=changes_svg, change_rows=change_rows or '<tr><td colspan="6" class="mut">No material or notable change in the last 30 days.</td></tr>', noise=noise_n, nclaims=len(claims), nsup=len(superseded))
+                       unk_rows=unk_rows, card_rows=card_rows, monitor=mon_html, winloss=wl_html, changes=changes_svg, change_rows=change_rows or '<tr><td colspan="6" class="mut">No material or notable change in the last 30 days.</td></tr>', noise=noise_n, nclaims=len(claims), nsup=len(superseded))
     out = Path(args.out) if args.out else fac / "intel" / "reports" / "competitive.html"
     out.parent.mkdir(parents=True, exist_ok=True); out.write_text(page, encoding="utf-8")
     print(f"intel-competitive → {out}\n  as of {today} · {n_cur} current claims ({n_fresh} fresh, {n_stale_mat} material stale) · {n_conf} open conflict(s) · {len(unk)} P0 unknown(s) · {len(cards)} battlecard(s), {sum(1 for c in cards if c[3])} behind · {len(recent)} change(s) in 30 d")
@@ -319,6 +372,12 @@ td.num,th.num{{text-align:right;font-variant-numeric:tabular-nums}}td.lbl,.lbl{{
   <section><header><div class="q">What changed in the last 30 days?</div><div class="w">Change events as claim deltas · material and notable only · {noise} noise event(s) suppressed</div></header>
   <div class="fig">{changes}<div class="tbl"><table><thead><tr><th>Detected</th><th>Subject</th><th>Type</th><th>Significance</th><th>Before → after</th><th>Action</th></tr></thead><tbody>{change_rows}</tbody></table></div>
   <p class="cites">{nclaims} claims on file, {nsup} superseded. Claims are never edited; a correction is a new claim pointing at the old one.</p></div></section>
+
+  <section><header><div class="q">Is the watch list being read?</div><div class="w">The monitor's sources, when each was last read, what is due · monitoring is periodic reading of sources we may read, not crawling</div></header>
+  {monitor}</section>
+
+  <section><header><div class="q">What are closed deals teaching us?</div><div class="w">Win-loss records · the seller's reason and the buyer's kept apart · every pattern with its sample, by segment</div></header>
+  {winloss}</section>
 </div></body></html>
 """
 

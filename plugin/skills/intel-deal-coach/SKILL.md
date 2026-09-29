@@ -9,7 +9,7 @@ map:
   reads: [intel, tenders, documents, manifest]
   writes: [intel, log]
   produces: [intel-competitive]
-  calls: [intel-harvester]
+  calls: [intel-harvester, intel-winloss]
 ---
 
 # intel-deal-coach — evidence plus this deal, into the next move
@@ -40,6 +40,13 @@ supplied it in `context_read`:
   seller's notes. Everything in it is `reported`; a verbatim buyer quote is `buyer-direct`.
 - `inbox` — registered documents whose tags or filename carry the ref.
 - a CRM — only through a connector that exposes `deals.read`; never a product name.
+
+**What closed deals taught** (intel 1.2): the win-loss records against this competitor and in
+this deal's segment (`intel/winloss/`), with the numbers from
+`python3 <plugin>/capabilities/intel/scripts/winloss.py <facility>/project-state --json`. A buyer's
+evidenced reason from a past loss is the strongest input a move can have — *the Saskatoon buyer
+chose Northline for a committed go-live date* — cite the record `[INT-W-…]` and say its sample; a
+seller-only reason is labelled as such and never ranks a move on its own.
 
 **Every input except the subject is optional.** Absent context thins the brief and is
 named in *Missing context*; it is never invented.

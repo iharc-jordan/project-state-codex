@@ -66,7 +66,9 @@ memory layer turns that into a place:
 | `intel-mandate` | `intel/mandates/INT-M-NNN.yaml` | file name (or its prefix before a dash) | id, type, entity_id, status, summary |  |
 | `intel-claim` | `intel/claims/INT-C-NNN.yaml` | file name (or its prefix before a dash) | id, subject, category, statement, material, epistemic_status, source, retrieved_at, confidence, logged_by, created | append-only: supersede, never edit |
 | `intel-change` | `intel/changes/INT-X-NNN.yaml` | file name (or its prefix before a dash) | id, subject, detected_at, change_type, before, after, significance, detected_by | append-only: supersede, never edit |
+| `intel-winloss` | `intel/winloss/INT-W-NNN.yaml` | file name (or its prefix before a dash) | id, deal_ref, outcome, closed_at, seller_reported_reason, logged_by, created | append-only except `buyer_evidenced_reason`, `claims_generated`, `interviews`, `last_modified` |
 | `intel:agenda.yaml` | `intel/agenda.yaml` | — | — |  |
+| `intel:watch.yaml` | `intel/watch.yaml` | — | — |  |
 | `intel:intel.json` | `state/intel.json` | — | — |  |
 | `portfolio-member` | `portfolio/members/<member-slug>.yaml` | file name (or its prefix before a dash) | id, name, member_kind, status, priority, location, added |  |
 | `portfolio-snapshot` | `portfolio/snapshots/<member-slug>/<YYYY-MM-DD>.yaml` | — | kind, member_id, captured_at, reachable | append-only: supersede, never edit |
@@ -74,6 +76,14 @@ memory layer turns that into a place:
 | `portfolio-finding` | `portfolio/findings/PF-F-NNN.yaml` | file name (or its prefix before a dash) | id, type, question, severity, members, summary, basis, evidence, first_seen, last_seen, status, logged_by | append-only except `last_seen`, `status`, `became`, `dismissed_reason` |
 | `portfolio:registry.yaml` | `portfolio/registry.yaml` | — | — | derived: rebuilt, never written |
 | `portfolio:portfolio.json` | `state/portfolio.json` | — | — |  |
+| `research-mandate` | `research/mandates/RES-M-NNN.yaml` | file name (or its prefix before a dash) | id, status, iteration, headline, questions, methodology_type, methodology, deliverable, success_criteria, created |  |
+| `research-step` | `research/steps/RES-S-NNN.yaml` | file name (or its prefix before a dash) | id, mandate_id, mode, description, status, started_at |  |
+| `research-finding` | `research/findings/RES-F-NNN.yaml` | file name (or its prefix before a dash) | id, mandate_id, step_id, answers, claim, evidence, source_tier, confidence, epistemic_status, independent_sources, category, material, status, logged_by, created | append-only except `status`, `became`, `last_modified` |
+| `research-challenge` | `research/challenges/RES-C-NNN.yaml` | file name (or its prefix before a dash) | id, mandate_id, finding_id, kind, argument, severity, status, logged_by, created | append-only except `status`, `resolution`, `resolved_by`, `resolved_at`, `proposed_resolution`, `last_modified` |
+| `research-candidate` | `research/candidates/RES-L-NNN.yaml` | file name (or its prefix before a dash) | id, mandate_id, name, status |  |
+| `research-change` | `research/changes/RES-X-NNN.yaml` | file name (or its prefix before a dash) | id, mandate_id, subject, detected_at, before, after, significance, summary, detected_by | append-only: supersede, never edit |
+| `research:agenda.yaml` | `research/agenda.yaml` | — | — |  |
+| `research:research.json` | `state/research.json` | — | — |  |
 | `sred.technological_uncertainty` | `sred/uncertainties/TU-NN-<slug>.yaml` | file name (or its prefix before a dash) | — |  |
 | `sred.experiment` | `sred/experiments/EX-NN-<slug>.yaml` | file name (or its prefix before a dash) | — |  |
 | `sred.technological_advancement` | `sred/advancements/ADV-NN-<slug>.yaml` | file name (or its prefix before a dash) | — |  |

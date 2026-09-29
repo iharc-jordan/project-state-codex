@@ -81,6 +81,8 @@ Reason codes: `no_capability_fit` · `excluded_term` · `timeline_too_short` · 
 
 Terminalize with evidence; prompt a `project-lessons` retrospective (what the winning bid had, what our gap was, profile adjustments). Cancellation of a pursued tender triggers the immediate notifier rule.
 
+**Win-loss (when the intel capability is enabled).** On `won`, `lost` and `cancelled` alike, offer `/intel-winloss record <tender-id>`: the seller's reason now, while it is remembered, and the buyer's later from the debrief (`evidence`). The tender is the record's `deals.read` source; the digest raises `intel.winloss-unrecorded` for any awarded or unsuccessful tender without one.
+
 ### `pipeline` — the board in words
 
 Summarize the facility's tenders grouped by lifecycle band (Discovery / Review / Decision / Pursuit / Closed), with score, days remaining, owner, next action — same grouping the kanban renders. Flag: act-now unowned; decisions past due; deadlines within 10 days; stale `under_review` (> 7 days without activity).

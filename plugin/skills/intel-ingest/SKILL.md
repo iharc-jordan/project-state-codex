@@ -49,6 +49,10 @@ or named by the user. Oldest first. Empty → "Inbox holds nothing for intel." a
    (`intel.entity.updated`).
 5. **Propose new entities** — collected and presented at the end; created only on
    confirmation.
+5a. **Debriefs go to win-loss** (intel 1.2). A buyer's debrief letter, scoring sheet or
+   post-decision email about a closed deal is the buyer's evidenced reason: hand it to
+   `/intel-winloss evidence <INT-W-NNN>` (or `record <deal-ref>` when no record exists) rather
+   than only logging a signal. The seller's own notes are not buyer evidence.
 6. **Hand the document on** — it proceeds through the normal pipeline
    (`project-document-curator` registration or `processed/` archival per house inbox
    rules); once registered, add the doc id to each signal's `became:`/citation edge.

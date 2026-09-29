@@ -1,0 +1,43 @@
+# research-mandate template (spec §4.2). Mutable while draft; once locked only status, iteration,
+# questions[].state, questions[].answered_by and the lifecycle stamps advance. Changing the questions
+# or the methodology reopens the mandate as a new iteration (research-mandate iterate).
+id: RES-M-NNN
+kind: research-mandate
+slug: short-kebab-slug
+status: draft               # draft | locked | in-progress | standing | complete | closed-negative | killed
+iteration: 1
+headline: "The question, in one sentence a steering group would recognise."
+questions:                  # structured, so a question can reopen; stale and reopened are DERIVED
+  - id: Q1
+    text: "…"
+    state: open             # open | answered | dropped
+    answered_by: []         # RES-F ids (established, live findings answer; provisional ones do not)
+methodology_type: narrative # narrative | longlist | comparative | deep-web-investigation
+also_types: []
+methodology:                # ≥ 3 concrete steps to lock
+  - { step: 1, description: "…" }
+  - { step: 2, description: "…" }
+  - { step: 3, description: "…" }
+deliverable:
+  format: html              # html | md | docx | pptx | xlsx
+  also: []
+  structure: []             # section or column list
+  audience: "…"
+  citation_style: inline
+success_criteria: []        # testable; ≥ 1 to lock
+primary_source_min_ratio: 0.5
+longlist_criteria: []       # longlist: [{id, label, weight, rubric}] — weights sum to 1.0
+comparison_subjects: []     # comparative
+comparative_dimensions: []  # comparative: [{id, label, type}]
+deepweb_depth_cap: 3
+source_relevance: []        # [{ref: "documents/…", score: 0..3}] — ≥ 1 at score ≥ 2 to lock, or corpus_independent
+corpus_independent: false
+standing: ~                 # {cadence: nightly|weekly, delta_audience: "…"} when status is standing
+null_result_statement: ~    # REQUIRED when closed-negative: what was searched, over what period, what was not found
+locked_at: ~
+locked_iteration: ~
+completed_at: ~
+killed_at: ~
+kill_reason: ~
+owner: "…"
+created: YYYY-MM-DDTHH:MM:SSZ

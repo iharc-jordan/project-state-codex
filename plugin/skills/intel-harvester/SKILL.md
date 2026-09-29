@@ -89,7 +89,9 @@ unknown), `source.class` (§3.8 of the spec), rubric `confidence`, `material:` f
    never estimate unpublished pricing from weak signal. Confidence by the rubric: first-party
    for its category or two independent origins and fresh → high; one reliable source → medium;
    anecdotal, single weak, stale, inferred → low. Independent means different origin, not
-   different URL.
+   different URL. Which of two disagreeing sources is stronger follows the category's source
+   ordering (`docs/INTEL-CI-SPEC.md` §14.6, overridden per row by `competitive.source_precedence`)
+   — and the disagreement is still recorded, never resolved silently.
 5. **Reconcile.** New evidence that contradicts a stored claim → a new claim with
    `supersedes:` (the old claim is never edited), and when the old claim was material, an
    `intel-change` (`templates/entities/X.yaml`, `before`/`after`, significance, affected

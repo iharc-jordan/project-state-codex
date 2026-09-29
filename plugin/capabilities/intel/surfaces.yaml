@@ -1,7 +1,7 @@
 capability: intel
 label: Intel
 description: Ecosystem and competitive intelligence held natively — entities (the players), append-only signals (the findings), mandates (engagements), and from 1.1 claims (sourced, dated, confidence-rated, append-only) projected into profiles, battlecards, deal briefs and briefs — harvested by research runs and inbox drains, surfaced through the one daily briefing.
-version: 1.1.0
+version: 1.2.0
 entities:
 - kind: intel-entity
   label: Entities
@@ -168,6 +168,46 @@ entities:
       statuses: [notable]
     - label: Noise
       statuses: [noise]
+- kind: intel-winloss
+  label: Win-loss
+  dir: intel/winloss
+  id_field: id
+  title_field: deal_ref
+  status_field: outcome
+  columns:
+  - path: id
+    label: ID
+  - path: deal_ref
+    label: Deal
+  - path: outcome
+    label: Outcome
+  - path: closed_at
+    label: Closed
+  - path: competitor
+    label: Competitor
+  - path: segment
+    label: Segment
+  - path: seller_reported_reason.category
+    label: Seller says
+  - path: buyer_evidenced_reason.category
+    label: Buyer says
+  board:
+    lanes:
+    - label: Won
+      statuses: [win]
+    - label: Lost
+      statuses: [loss]
+    - label: No decision
+      statuses: [no-decision]
+  workspace:
+    guide: "You are on the INTEL WIN-LOSS workspace — one closed deal, grounded in its live YAML under\n\
+      intel/winloss/INT-W-NNN.yaml (intel 1.2, OCI win-loss-analyzer). The seller's reported reason and the buyer's\n\
+      evidenced reason are kept apart and NEVER merged; the record is append-only except the buyer evidence that\n\
+      arrives after the close. A) The only writes are adding the buyer's reason (a debrief, a letter, an email from\n\
+      the buyer — never inferred from the seller's notes) through /intel-winloss evidence, and the claims it teaches.\n\
+      B) REPLY with heading (id · deal · outcome · competitor · segment), the two reasons side by side with their\n\
+      sources, the criteria (explicit vs inferred), the claims it wrote, and 2-4 follow-ups (e.g. \"Add the buyer's\n\
+      debrief\", \"Run the win-loss analysis\", \"Regenerate the battlecard\").\n"
 reports:
 - id: competitive
   label: Competitive
@@ -215,6 +255,10 @@ flow:
   does: The period's material changes for a named audience, allowed to say nothing changed.
 - skill: intel-ask
   does: Grounded answers from retrieved claims with staleness inline; unknown is an answer.
+- skill: intel-monitor
+  does: The scheduled change monitor — re-reads the watch list's sources through their connectors, writes what changed as superseding claims and change events classed material, notable or noise, each with its owners.
+- skill: intel-winloss
+  does: Closed deals into learning — the seller's reason and the buyer's kept apart, the claims each deal teaches, and analyses with the sample behind every pattern.
 setup:
   stages:
   - stage: Enable the capability
@@ -295,6 +339,30 @@ setup:
       check:
         type: manual
       hint: /intel-battlecard <competitor> — every differentiator passes the three-part test, avoid-saying populated, health.unsourced_lines 0. The Competitive report shows its currency from then on.
+  - stage: Watch and learn
+    intro: Intel 1.2 — the monitor keeps the claims current on a cadence, and closed deals feed back as win-loss records. Together with two connectors beyond the web, this is OCI level L2.
+    steps:
+    - label: Watch list declared (intel/watch.yaml)
+      check:
+        type: manual
+      hint: /intel-monitor watch proposes sources from the ones the claims already cite — pricing and home pages through web.read, the project's own deals through deals.read, the inbox through documents.search.
+      action:
+        type: run_skill
+        button: Propose the watch list
+        prompt: 'Run /intel-monitor watch — propose sources for every in-scope competitor from the refs its claims already cite, plus a deals.read and a documents.search source where deals and inbox documents name it; write the ones I confirm.'
+    - label: First monitor run
+      check:
+        type: manual
+      hint: The intel-weekly-monitor matrix entry runs it unattended from then on; the digest raises intel.monitor-overdue and intel.change-material.
+    - label: First closed deal recorded
+      check:
+        type: entity_count
+        kind: intel-winloss
+        min: 1
+      action:
+        type: run_skill
+        button: Record a closed deal
+        prompt: 'Run /intel-winloss record <the deal> — the seller''s reason and the buyer''s kept apart; if the buyer has not said why, leave it empty and tell me who to ask.' 
 operations: '**Daily rhythm.** The digest raises unanswered P0 questions, an overnight longlist
 
   awaiting review, intel documents waiting in the inbox, and entities past the staleness
@@ -310,6 +378,13 @@ operations: '**Daily rhythm.** The digest raises unanswered P0 questions, an ove
   **Your part.** Keep the focus honest, decide what to track, promote signals into risks and
 
   decisions where they belong. Nothing is fabricated: a search that finds nothing says so.
+
+
+  **Watch and learn.** The weekly monitor re-reads the watch list and writes changes as claim
+
+  deltas; the digest raises a material change the same week. Record every closed deal with the
+
+  seller''s and the buyer''s reasons apart; the quarterly analysis reports patterns with their samples.
 
 
   **Competitive.** The weekly refresh re-researches stale material claims; the monthly brief
@@ -347,6 +422,10 @@ enablement:
       half_lives_days: {pricing: 90, packaging: 90, product: 180, feature: 180, integration: 180, positioning: 180, messaging: 180, go-to-market: 180, security: 180, customer: 270, partnership: 270, compliance: 270, leadership: 365, funding: 365, market: 365, objection: 120, win-loss: 120, sales-tactic: 120, product-gap: 120}
       source_precedence: {}
       deal_context: [tender, deals-dir, inbox]
+      monitor:
+        connectors: {web.read: {class: by-owner, status: verified}, documents.search: {class: by-document, status: reported}, deals.read: {class: internal-observation, status: reported}, messages.search: {class: internal-observation, status: reported}, mail.search: {class: internal-observation, status: reported}}
+        significance: {material_categories: [pricing, packaging, product, feature, positioning, security, compliance, partnership, customer]}
+      winloss: {min_sample: 3, reason_categories_extra: []}
       conformance_target: L1
   scaffold:
   - intel/entities
@@ -360,7 +439,10 @@ enablement:
   - intel/battlecards
   - intel/deals
   - intel/answers
+  - intel/winloss
+  - intel/monitor
   - intel/agenda.yaml
+  - intel/watch.yaml
   state_init:
     counters:
       entity: 0
@@ -368,9 +450,14 @@ enablement:
       mandate: 0
       claim: 0
       change: 0
+      winloss: 0
     cursors: {}
     last_longlist: null
     last_sweep: null
     projections: {}
     last_refresh: null
     last_brief: null
+    monitor:
+      last_run: null
+      sources: {}
+    last_winloss_analysis: null

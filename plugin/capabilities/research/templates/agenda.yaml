@@ -1,0 +1,7 @@
+# research/agenda.yaml — standing questions by priority. A standing mandate's walk reads this
+# alongside stale evidence to decide what the night works on. Spec §4.1.
+tiers:
+  p0: []      # - {q: "…", mandate: RES-M-NNN}
+  p1: []
+  p2: []
+  p3: []

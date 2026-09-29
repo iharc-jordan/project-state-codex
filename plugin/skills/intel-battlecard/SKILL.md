@@ -54,7 +54,12 @@ and derive freshness per claim now. Read the audience from `competitive.audience
    liability in a buyer's inbox.
 6. **Conflicts stay visible.** A contested category is rendered as *contested* with both
    claims and dates, never as the one we prefer.
-7. **Health.** `stale_claims_used` counts stale claims cited (cited with their date and
+7. **When they win, when we win — from outcomes.** Where win-loss records exist against this
+   competitor (`intel/winloss/`, intel 1.2), ground both sections in the buyers' evidenced
+   reasons with their sample — *"lost 1 of 3 municipal deals on a committed go-live date"* —
+   citing the records `[INT-W-…]` and their claims. A seller-only reason is not evidence of why
+   buyers choose; say so or leave it out.
+8. **Health.** `stale_claims_used` counts stale claims cited (cited with their date and
    marked); `unsourced_lines` must be 0 — a material line with no `[INT-C-…]` is a bug.
 
 ## Output

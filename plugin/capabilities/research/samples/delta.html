@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Interior AI Readiness — the delta</title><style>
+:root{--ground:#F5F7F4;--paper:#FFFFFF;--ink:#1B2230;--muted:#6B7480;--faint:#A9B1B8;--line:#DDE3DE;--rule:#B9C2BC;
+--accent:#1F5F6B;--accent-soft:#E3EEF0;--crit:#C23A3A;--crit-soft:#F6E0E0;--warn:#B07600;--warn-soft:#F7ECD6;--ok:#2E7D4F;--ok-soft:#E1F0E6;
+--t-primary:#1F5F6B;--t-secondary:#5C93A0;--t-tertiary:#B5C9CD;--t-spec:#E3D6C2;
+--f-step:#5C93A0;--f-finding:#2E7D4F;--f-barren:#B07600;--f-red:#C23A3A;--f-change:#6B4FA0;--f-ship:#1F5F6B;--f-gate:#1B2230;--f-mandate:#A9B1B8;
+--mono:ui-monospace,Menlo,monospace;--sans:system-ui,-apple-system,"Segoe UI",sans-serif;--serif:Georgia,"Times New Roman",serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--ground:#12181E;--paper:#1A222A;--ink:#E7EBEE;--muted:#A3ACB4;--faint:#5B6670;--line:#2C3640;--rule:#465262;
+--accent:#6FBFC9;--accent-soft:#1E3238;--crit:#E66767;--crit-soft:#3E2222;--warn:#E0B463;--warn-soft:#3A2F17;--ok:#6CC58F;--ok-soft:#1D3327;
+--t-primary:#6FBFC9;--t-secondary:#3F7F8C;--t-tertiary:#2E4A50;--t-spec:#4A3F30;
+--f-step:#3F7F8C;--f-finding:#6CC58F;--f-barren:#E0B463;--f-red:#E66767;--f-change:#A58BDB;--f-ship:#6FBFC9;--f-gate:#E7EBEE;--f-mandate:#5B6670}}
+:root[data-theme="dark"]{color-scheme:dark;--ground:#12181E;--paper:#1A222A;--ink:#E7EBEE;--muted:#A3ACB4;--faint:#5B6670;--line:#2C3640;--rule:#465262;
+--accent:#6FBFC9;--accent-soft:#1E3238;--crit:#E66767;--crit-soft:#3E2222;--warn:#E0B463;--warn-soft:#3A2F17;--ok:#6CC58F;--ok-soft:#1D3327;
+--t-primary:#6FBFC9;--t-secondary:#3F7F8C;--t-tertiary:#2E4A50;--t-spec:#4A3F30;
+--f-step:#3F7F8C;--f-finding:#6CC58F;--f-barren:#E0B463;--f-red:#E66767;--f-change:#A58BDB;--f-ship:#6FBFC9;--f-gate:#E7EBEE;--f-mandate:#5B6670}
+
+*{box-sizing:border-box}body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 20px 64px}h1{font-family:var(--serif);font-weight:600;font-size:2rem;line-height:1.1;margin:0;text-wrap:balance}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.lede{color:var(--muted);max-width:68ch;margin:8px 0 22px}
+.scope{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 6px 6px 0;margin:0 0 22px;font-size:.93rem}
+section{margin-bottom:48px}section>header .q{font-family:var(--serif);font-size:1.45rem;font-weight:600;text-wrap:balance}section>header .w{color:var(--muted);font-size:.9rem;margin-top:2px;max-width:78ch}
+.fig{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:16px 18px 14px;margin-top:14px}
+svg{width:100%;height:auto;display:block;font-family:var(--sans)}svg text{fill:var(--ink);font-size:12px}svg .mut{fill:var(--muted);font-size:11px}svg .mono{font-family:var(--mono);font-size:10px;fill:var(--muted)}svg .grid{stroke:var(--line);stroke-width:1}
+.counts{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 30px}.counts .c{border:1px solid var(--line);border-radius:8px;background:var(--paper);padding:10px 14px;min-width:104px}
+.counts .c b{display:block;font-family:var(--serif);font-size:1.6rem;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}.counts .c span{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.counts .c.alert{border-color:var(--crit);background:var(--crit-soft)}.counts .c.alert b{color:var(--crit)}
+.tbl{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.88rem}th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:500}tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}.id{font-family:var(--mono);font-size:.78rem;color:var(--muted);white-space:nowrap}.mut{color:var(--muted)}.small{font-size:.82rem}
+.chip{display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.03em;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-soft)}.chip.warn{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.chip.crit{border-color:var(--crit);color:var(--crit);background:var(--crit-soft)}.chip.acc{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}.chip.solid{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.78rem;color:var(--muted);margin-top:10px}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.cites{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin:10px 0 0;line-height:1.7}.cites b{color:var(--accent);font-weight:500}
+.fixture{font-family:var(--mono);font-size:.7rem;color:var(--warn);border:1px dashed var(--warn);border-radius:4px;padding:2px 8px;display:inline-block;margin-left:8px;vertical-align:4px}
+
+.mandate{border-top:2px solid var(--ink);padding-top:14px;margin-top:8px}
+.change{padding:12px 0;border-top:1px solid var(--line)}.change:first-child{border-top:0;padding-top:0}
+.change .sum{font-family:var(--serif);font-size:1.08rem;font-weight:600;line-height:1.35}
+.ba{display:grid;grid-template-columns:70px 1fr;gap:4px 12px;margin-top:8px;font-size:.88rem}
+.ba .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:2px}
+.before{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--faint)}
+.ex{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:.84rem;margin-top:2px}
+.meta{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-top:6px}
+.quiet{font-family:var(--serif);font-size:1.3rem;color:var(--ok);padding:6px 0}
+.qrow{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:5px 0;border-top:1px solid var(--line);font-size:.9rem}
+.qrow:first-child{border-top:0}.qrow .qid{font-family:var(--mono);font-size:.74rem;color:var(--muted)}
+.soon{font-family:var(--mono);font-variant-numeric:tabular-nums}
+</style></head><body><div class="wrap">
+  <div class="eyebrow">research capability · generated by build-research-delta · 2026-09-22 06:30</div>
+  <h1>Interior AI Readiness — the delta<span class="fixture">fixture · every fact invented</span></h1>
+  <p class="lede">2 material changes since 2026-09-14. Built from change records, so it reports only what the research recorded moving; interpretation is added by research-brief when it composes the brief that leaves the Project.</p>
+  
+  <div class="mandate"><div class="eyebrow">RES-M-002 · standing · nightly · period 2026-09-14 → 2026-09-22</div>
+  <h2 style="font-family:var(--serif);font-size:1.5rem;margin:4px 0 0;text-wrap:balance">How is AI adoption among Interior small businesses moving, and what is holding it back?</h2></div>
+  <section><header><div class="q">What changed?</div><div class="w">Material changes only — each shows the finding it replaced, struck through, and the finding that replaced it.</div></header>
+  <div class="fig"><div class="change"><div class="sum">A fourth support programme opened; the voucher round now closes in eight days.</div><div class="ba"><div class="k">before</div><div><span class="before">Three programmes are open to Interior SMBs this quarter.</span> <span class="id">RES-F-017 · primary · verified · fresh</span></div><div class="k">after</div><div><span class="">Four programmes are now open to Interior SMBs; the voucher round closes in eight days.</span> <span class="id">RES-F-029 · primary · verified · fresh</span><div class="ex">“Open now: vouchers, mentoring, export readiness, AI mentoring”</div></div></div><div class="meta">RES-X-002 · Q3 · detected 2026-09-22 by research-walk in RUN-2026-09-22-1</div></div><div class="change"><div class="sum">Weekly AI use among Interior SMBs rose from 31% to 38% in the 2026 survey, confirmed by a second source.</div><div class="ba"><div class="k">before</div><div><span class="before">31% of surveyed Interior SMBs report using AI tools weekly.</span> <span class="id">RES-F-012 · primary · reported · aging</span></div><div class="k">after</div><div><span class="">Weekly AI use among Interior SMBs rose from 31% to 38% between the 2025 and 2026 pulse surveys.</span> <span class="id">RES-F-027 · primary · verified · fresh</span><div class="ex">“38% (2026) against 31% (2025)”</div></div></div><div class="meta">RES-X-001 · Q1 · detected 2026-09-19 by research-walk in RUN-2026-09-19-1</div></div></div></section>
+  <section><header><div class="q">What else moved?</div></header><div class="fig"><p class="mut small">1 noise change suppressed.</p></div></section>
+  <section><header><div class="q">Where do the questions stand?</div><div class="w">A question reopens when every finding that answered it has gone stale.</div></header><div class="fig"><div class="qrow"><span class="qid">Q1</span><span>What share of Interior SMBs report using AI tools in daily operations?</span><span class="chip ok">answered</span></div><div class="qrow"><span class="qid">Q2</span><span>What do owners name as the main barrier to adoption?</span><span class="chip crit">reopened</span></div><div class="qrow"><span class="qid">Q3</span><span>Which support programmes are open to them this quarter?</span><span class="chip ok">answered</span></div></div></section>
+  <section><header><div class="q">What is not yet settled?</div><div class="w">Findings that do not count until corroborated, and objections waiting on a ruling.</div></header><div class="fig"><div class="tbl"><table><tbody><tr><td class="id">RES-F-028</td><td>A mentoring programme for AI adoption opened on 20 September.</td><td><span class="chip warn">provisional</span></td><td class="small mut">waits for an independent origin or a person</td></tr><tr><td class="id">RES-C-006</td><td>The new mentoring programme is known from one news item; the programme&#x27;s own page was not found.</td><td><span class="chip warn">material</span></td><td class="small mut">against RES-F-028 · a person rules</td></tr></tbody></table></div></div></section>
+  <section><header><div class="q">What are we watching next?</div><div class="w">Evidence due to go stale soonest, and facts with a date on them.</div></header><div class="fig"><div class="tbl"><table><thead><tr><th class="num">Days</th><th>What</th><th>Detail</th></tr></thead><tbody><tr><td class="num soon">99</td><td class="small">time-bound: RES-F-016</td><td class="small mut">The digital adoption voucher round closes on 30 September.</td></tr><tr><td class="num soon">118</td><td class="small">time-bound: RES-F-028</td><td class="small mut">A mentoring programme for AI adoption opened on 20 September.</td></tr></tbody></table></div></div></section>
+</div></body></html>

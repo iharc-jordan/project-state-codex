@@ -18,7 +18,8 @@ runner into the bundled pack's reporting-matrix defaults.
 | `plugin.yaml` | identity, `intel` namespace, payload declaration |
 | `schema/` | INT-E / INT-S / INT-M kinds, `intel/` directories, `intel.*` events |
 | `templates/` | manifest block (`focus` REQUIRED), agenda, entity templates |
-| `skills/` | `intel-onboarding` · `intel-harvester` · `intel-ingest` |
+| `skills/` | `intel-onboarding` · `intel-harvester` · `intel-ingest`; 1.1 `intel-battlecard` · `intel-deal-coach` · `intel-brief` · `intel-ask`; 1.2 `intel-monitor` · `intel-winloss` |
+| `scripts/` | 1.2: `monitor.py` · `winloss.py` · `eval_metrics.py` (read-only lenses) · `migrate_intel_state.py` (the one writer) · `intel_lib.py` |
 | `routine.yaml` | the digest checks (was the intel-orchestrator briefing) |
 | `validator/` | composed with the core validator; polices only `intel/` records |
 | `packs/intel-default/` | matrix defaults that absorb intel-runner's cadences |
@@ -53,3 +54,22 @@ Every material line of every projection carries `[INT-C-…]`; a hand-edited pro
 The **Competitive** page (`views/build-intel-competitive.py`) is the second declared report:
 coverage per competitor by freshness, the contested grid, open unknowns, battlecard currency,
 30 days of change events. `samples/competitive.html` is its fixture render.
+
+## Watch, learn, measure (1.2) — `docs/INTEL-CI-SPEC.md` §14
+
+- **`intel-monitor`** re-reads the watch list (`intel/watch.yaml`) on a weekly cadence through its
+  connectors — `web.read`, `deals.read`, `documents.search` — and writes what changed as claim deltas:
+  superseding claims and change events classed material / notable / noise, each owned. `scripts/monitor.py`
+  says what is due and what changed; the skill reads and judges.
+- **`intel-winloss`** records every closed deal (`intel/winloss/INT-W-NNN.yaml`) with the seller's and the
+  buyer's reasons in separate fields, writes the claims each deal teaches, and analyses them with the
+  sample behind every pattern, segmented before generalised (`scripts/winloss.py`). The tender
+  capability's won / lost offers it.
+- **The evaluation harness.** `examples/fixture/golden.yaml` is the OCI §13 golden set, generated with the
+  fixture; `scripts/eval_metrics.py` computes the six headline metrics over any project's projections;
+  `examples/fixture/eval-results.md` publishes the fixture baseline, and the `intel-*` cases under
+  `evals/` ask the skills the golden questions. `scripts/test-intel.py` (repo root) holds it all together.
+- **Migration.** `scripts/migrate_intel_state.py <intel-state> <project-state>` moves a standalone
+  intel-state facility in, non-destructively (`intel-onboarding migrate`).
+- The Competitive page gains *Is the watch list being read?* and *What are closed deals teaching us?*
+

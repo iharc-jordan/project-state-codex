@@ -28,7 +28,11 @@ reports what the claim set and the change events actually say about the period, 
 Via `project-state`: the period (default: the previous calendar month); `intel/changes/`
 with `detected_at` in the period and `significance` material or notable — **noise is
 suppressed by default**; claims created in the period with `material: true`; deal briefs
-generated in the period (`intel/deals/*/brief.md` frontmatter); the audience.
+generated in the period (`intel/deals/*/brief.md` frontmatter); the audience. From 1.2 also the
+monitor's runs in the period (`intel/monitor/runs/*.md` — which change events it detected, which
+sources it could not read) and the win-loss records closed in the period (`intel/winloss/`), with
+the numbers from `python3 <plugin>/capabilities/intel/scripts/winloss.py <facility>/project-state
+--since <period start> --until <period end> --json`.
 
 ## Sections
 
@@ -39,9 +43,13 @@ generated in the period (`intel/deals/*/brief.md` frontmatter); the audience.
 3. **Deals affected** — deal briefs in the period naming the changed competitor; open tenders
    where the competitor is a known bidder (when the tender capability is enabled).
 4. **Recommended actions** — by team, each traceable to a change or claim.
-5. **What we are watching next** — open unknowns on P0 competitors, contested categories,
-   claims about to cross their half-life.
-6. **What this brief does not cover** — entities out of scope, categories with no claims.
+5. **What closed deals said** (1.2) — deals closed in the period: outcome, competitor, the
+   buyer's reason beside the seller's `[INT-W-…]`; a pattern only with its k of n. Omit the
+   section when no deal closed.
+6. **What we are watching next** — open unknowns on P0 competitors, contested categories,
+   claims about to cross their half-life, watched sources the monitor could not read.
+7. **What this brief does not cover** — entities out of scope, categories with no claims,
+   competitors nothing watches.
 
 ## MUST
 

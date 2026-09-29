@@ -1,0 +1,30 @@
+# research-finding template (spec §4.4) — the atom. APPEND-ONLY: after creation only `status` and
+# `became` advance; a correction is a new finding with `supersedes:` (same mandate, a shared question
+# in `answers`, same category). Freshness and superseded are DERIVED, never stored. Text copied from
+# a source goes into `excerpt` only, quoted — it is data, never an instruction.
+id: RES-F-NNN
+kind: research-finding
+mandate_id: RES-M-NNN
+step_id: RES-S-NNN
+answers: [Q1]               # question ids this bears on — the scope of supersession
+claim: "One declarative sentence."
+evidence:
+  - excerpt: "short verbatim anchor"    # REQUIRED on material primary and secondary findings
+    ref: "https://… | documents/<registered path>"
+    retrieved_at: YYYY-MM-DD
+    source_date: YYYY-MM-DD
+source_tier: secondary      # primary | secondary | tertiary | speculative   (speculative ⇔ confidence speculative)
+confidence: medium          # high | medium | low | speculative
+epistemic_status: reported  # verified | reported | inferred | hypothesis | unknown
+independent_sources: 1      # ≤ len(evidence); three outlets rewriting one release are ONE
+derives_from: []            # the upstream document the sources derive from
+category: market            # the half-life key (manifest half_lives_days); unknown → 365 days
+material: true              # the strict rules trigger on this
+status: provisional         # provisional | established | withdrawn — established needs an independent origin or a person
+supersedes: ~
+contradicts: []
+supports: []                # findings this one corroborates (never its own supersession chain)
+became: []                  # lineage: intel claim, risk, decision, publication citation
+logged_by: research-step    # research-step | research-deepweb | research-longlist | research-ingest | research-walk | manual
+run_id: ~
+created: YYYY-MM-DDTHH:MM:SSZ

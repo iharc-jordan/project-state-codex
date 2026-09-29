@@ -1,0 +1,33 @@
+# The `capabilities: research:` block that `enable` writes into project-state/manifest.yaml.
+# Spec §5. There is no REQUIRED field: research's lens is the mandate, and an unlocked mandate
+# cannot run — the lock checklist does the work intel's REQUIRED `focus` does.
+capabilities:
+  research:
+    enabled: true
+    version: "0.1.0"               # plugin version at enable time; validator checks drift
+    pack: research-default         # bundled default; swappable
+    defaults:
+      primary_source_min_ratio: 0.5
+      deliverable_format: html
+      citation_style: inline
+    half_lives_days:               # freshness is DERIVED from these, never authored; the table must be documented
+      statistic: 365
+      market: 365
+      organisation: 365
+      offering: 270
+      pricing: 90
+      programme: 180
+      regulation: 180
+      technology: 270
+      event: 60
+      literature: 730
+      method: 1095
+    walk:
+      budget_seconds: 14400
+      max_actions: 40
+      barren_run: 3                # consecutive barren steps before reopen-or-close is parked for a person
+    learning:
+      path: research/learned       # point at a shared path to carry lessons across projects
+      share_calibration: true
+    crossings:
+      intel: auto                  # auto = promotion to intel allowed when intel is enabled on this Project

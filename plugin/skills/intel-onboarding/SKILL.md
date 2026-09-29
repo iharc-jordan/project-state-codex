@@ -87,6 +87,38 @@ Run after enablement, or when the digest raises `intel.no-self`. One conversatio
 The app's Position setup stage writes `self_entity` as a scalar (`manifest_set`); older manifests
 may hold a one-element list from the list-only action — read either shape.
 
+## `watch` — the monitor and win-loss setup (intel 1.2)
+
+After `competitive`, or when the digest raises `intel.unwatched-competitor`: hand over to
+`/intel-monitor watch` to propose the watch list from the sources the claims already cite, confirm
+the weekly monitor and the quarterly win-loss analysis are in the matrix (`intel-weekly-monitor`,
+`intel-quarterly-winloss` from the pack), and ask for the last two or three closed deals —
+`/intel-winloss record <ref>` each — so the first analysis has a sample. A project on 1.1 gains
+`intel/watch.yaml`, `intel/winloss/`, `intel/monitor/` and the new counters the first time either
+skill writes; `version:` in the manifest block moves to 1.2.0 through project-state.
+
+## `migrate <intel-state folder>` — from a standalone facility
+
+A project that used the retired standalone intel-state suite moves into the capability with the
+migration script (docs/INTEL-CAPABILITY-SPEC.md §10 step 4). Plan first, always:
+
+```bash
+python3 <plugin>/capabilities/intel/scripts/migrate_intel_state.py <intel-state folder> <facility>/project-state
+```
+
+Show the plan — counts, the id map (`FRM-C-002 → INT-E-002`), the types it will add, the
+proposed focus from the old facility's description, mandates with no named client (they get the
+self entity, tagged `migration:entity-unassigned`), inbox files it will not move. Settle the
+focus with the operator (the old description is a proposal, not the focus), then:
+
+```bash
+python3 <plugin>/capabilities/intel/scripts/migrate_intel_state.py <intel-state folder> <facility>/project-state --write --actor <operator email> --focus "<the focus>"
+```
+
+The old tree is never changed; re-running skips what was already migrated. Then validate, run
+`competitive`, and tell the operator the old folder can be archived when they are ready — theirs
+to do, not this skill's.
+
 ## Discipline
 
 - Refuse on missing `focus`; refuse on prefix collision (memory layer enforces).

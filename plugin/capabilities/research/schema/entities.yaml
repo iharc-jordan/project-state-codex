@@ -1,0 +1,80 @@
+# research capability — schema extension registered at enable time.
+# Directories are created inside the host project-state/; kinds are accepted by the memory
+# layer while the capability is enabled (CAPABILITY-PLUGINS.md §6). Spec §4.
+schema_version: 1
+capability: research
+
+directories:
+  - { path: "research/mandates",   kind: research-mandate }
+  - { path: "research/steps",      kind: research-step }
+  - { path: "research/findings",   kind: research-finding }
+  - { path: "research/challenges", kind: research-challenge }
+  - { path: "research/candidates", kind: research-candidate }
+  - { path: "research/changes",    kind: research-change }
+  - { path: "research/runs",       kind: none }   # unattended walk records
+  - { path: "research/topics",     kind: none }   # compiled topic pages — projections, never edited
+  - { path: "research/reports",    kind: none }   # deliverables and the declared reports
+  - { path: "research/learned",    kind: none }   # query yield, domain tiers, calibration
+
+files:
+  - path: "research/agenda.yaml"
+    template: "templates/agenda.yaml"
+  - path: "state/research.json"
+    seed: '{"counters":{"mandate":0,"step":0,"finding":0,"challenge":0,"candidate":0,"change":0},"walk":{"active":null,"last_run":null},"last_brief":null,"last_sweep":null}'
+
+kinds:
+  research-mandate:
+    id_format: "RES-M-NNN"
+    file: "research/mandates/RES-M-NNN.yaml"
+    required: [id, status, iteration, headline, questions, methodology_type, methodology, deliverable, success_criteria, created]
+    enums:
+      status: [draft, locked, in-progress, standing, complete, closed-negative, killed]
+      methodology_type: [narrative, longlist, comparative, deep-web-investigation]
+      "questions[].state": [open, answered, dropped]      # stale and reopened are DERIVED
+    mutable: true            # while draft; once locked only status, iteration, question state and lifecycle stamps advance
+  research-step:
+    id_format: "RES-S-NNN"
+    file: "research/steps/RES-S-NNN.yaml"
+    required: [id, mandate_id, mode, description, status, started_at]
+    enums:
+      mode: [consult, query, compare, extract, validate]
+      status: [in-progress, complete, abandoned]
+    mutable: true            # frozen once complete
+  research-finding:
+    id_format: "RES-F-NNN"
+    file: "research/findings/RES-F-NNN.yaml"
+    required: [id, mandate_id, step_id, answers, claim, evidence, source_tier, confidence, epistemic_status, independent_sources, category, material, status, logged_by, created]
+    enums:
+      source_tier: [primary, secondary, tertiary, speculative]
+      confidence: [high, medium, low, speculative]
+      epistemic_status: [verified, reported, inferred, hypothesis, unknown]
+      status: [provisional, established, withdrawn]
+      logged_by: [research-step, research-deepweb, research-longlist, research-ingest, research-walk, manual]
+    extensible: [category]
+    mutable: false           # APPEND-ONLY — supersede, never edit; only status and became advance
+    lifecycle_fields: [status, became, last_modified]
+    lineage: true            # became:/cited_by edges — intel claim, risk, decision, publication
+  research-challenge:
+    id_format: "RES-C-NNN"
+    file: "research/challenges/RES-C-NNN.yaml"
+    required: [id, mandate_id, finding_id, kind, argument, severity, status, logged_by, created]
+    enums:
+      kind: [single-source, self-interested-primary, non-independent-triangulation, unresolved-contradiction, inference-gap, stale-evidence, off-mandate, unfalsifiable]
+      severity: [blocking, material, minor]
+      status: [open, accepted, rejected, resolved]
+    mutable: false           # content immutable; status, resolution, resolved_by advance — by a person
+    lifecycle_fields: [status, resolution, resolved_by, resolved_at, proposed_resolution, last_modified]
+  research-candidate:
+    id_format: "RES-L-NNN"
+    file: "research/candidates/RES-L-NNN.yaml"
+    required: [id, mandate_id, name, status]
+    enums:
+      status: [discovered, enriched, scored, shortlisted, excluded]
+    mutable: true            # scoring evolves; every score cites findings
+  research-change:
+    id_format: "RES-X-NNN"
+    file: "research/changes/RES-X-NNN.yaml"
+    required: [id, mandate_id, subject, detected_at, before, after, significance, summary, detected_by]
+    enums:
+      significance: [material, notable, noise]
+    mutable: false           # APPEND-ONLY — the delta of a supersession

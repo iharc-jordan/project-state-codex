@@ -42,3 +42,24 @@ entries:
     surface: "intel/reports/brief-{date}.md"
     producer: intel-brief
     review: PL                 # a brief that leaves the Project is gated; may honestly say nothing changed
+  # ── monitor and win-loss (1.2, docs/INTEL-CI-SPEC.md §14) ─────────────────────
+  - id: intel-weekly-monitor
+    stakeholder: internal
+    report: "Weekly change monitor — the watch list re-read, changes written as claim deltas"
+    cadence: weekly
+    at: "02:00"
+    format: markdown
+    surface: "intel/monitor/runs/{date}.md"
+    producer: intel-monitor
+    producer_args: "run"
+    unattended: true           # claims and change events land; intel.change-material is the review hook
+    review: none
+  - id: intel-quarterly-winloss
+    stakeholder: internal
+    report: "Win-loss analysis — seller vs buyer reasons, patterns by segment with their samples"
+    cadence: quarterly
+    format: markdown
+    surface: "intel/reports/winloss-{quarter}.md"
+    producer: intel-winloss
+    producer_args: "analyze"
+    review: PL                 # a finding about the sales organisation goes to people after review

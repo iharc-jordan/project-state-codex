@@ -1,0 +1,15 @@
+# The monitor's watch list (intel 1.2, docs/INTEL-CI-SPEC.md §14.1) — what intel-monitor re-reads on its
+# cadence. The operator's to edit; `intel-monitor watch` proposes entries from the sources the claims
+# already cite. Monitoring is periodic reading of sources the operator may read (OCI §3.6): public pages
+# on the publisher's terms, the project's own inbox and deal records. No crawling, no logins, no NDA'd material.
+schema_version: 1
+cadence_days: 7                     # a source is due when last checked longer ago than this (per-source override: every_days)
+sources: []
+# - id: northline-pricing           # stable slug; the runtime cursor in state/intel.json is keyed by it
+#   entity: INT-E-004               # whose claims this source speaks to
+#   ref: "https://northline.example/pricing"
+#   via: web.read                   # web.read | documents.search | deals.read | messages.search | mail.search
+#   categories: [pricing, packaging]   # the claim categories this source can settle — the monitor reads nothing else from it
+#   every_days: ~                   # optional per-source cadence
+#   status: active                  # active | paused | retired (retired sources stay listed; a record, not a deletion)
+#   note: ~

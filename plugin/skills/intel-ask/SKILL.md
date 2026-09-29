@@ -33,13 +33,18 @@ not evidence; it is the thing this skill exists to replace. Spec: `docs/INTEL-CI
    one), then derive freshness from `half_lives_days`. Prefer fresh over aging over stale;
    prefer higher confidence; never drop a stale claim silently — cite it with its date and
    the word *stale*.
-3. **Fall back to signals** only where no claim covers the question; label them *(signal —
+3. **Win-loss questions** ("why do we lose to X", "what do buyers say about us") are answered
+   from the win-loss records (`intel/winloss/`) and the numbers from
+   `python3 <plugin>/capabilities/intel/scripts/winloss.py <facility>/project-state --json`: the
+   buyer's reason and the seller's side by side, every pattern with its k of n and segment,
+   anecdote labelled, losses without a debrief named — never "we lose on price".
+4. **Fall back to signals** only where no claim covers the question; label them *(signal —
    no epistemic status)* and offer to lift them into claims.
-4. **Compose** the answer from what was retrieved: verified facts in the register of fact;
+5. **Compose** the answer from what was retrieved: verified facts in the register of fact;
    `reported` as "X reports…"; `inferred` / `hypothesis` with "likely", "appears", or the
    explicit label; `unknown` as *we have no evidence on that*.
-5. **Conflicts surface**: a contested category is answered as contested, both claims dated.
-6. **Offer the gap as an action**: an unanswerable or thin question proposes
+6. **Conflicts surface**: a contested category is answered as contested, both claims dated.
+7. **Offer the gap as an action**: an unanswerable or thin question proposes
    `/intel-harvester competitor <id>` scoped to the category, or `/intel-harvester question`.
 
 ## Output

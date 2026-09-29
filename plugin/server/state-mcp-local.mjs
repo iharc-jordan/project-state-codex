@@ -31773,6 +31773,7 @@ var registry_default = {
     "packages/substrate-core/kinds/core.yaml",
     "capabilities/intel/schema/entities.yaml",
     "capabilities/portfolio/schema/entities.yaml",
+    "capabilities/research/schema/entities.yaml",
     "capabilities/sred/schema/entities.yaml",
     "capabilities/tender/schema/entities.yaml"
   ],
@@ -33226,6 +33227,8 @@ var registry_default = {
           "intel-harvester",
           "intel-deal-coach",
           "intel-ask",
+          "intel-monitor",
+          "intel-winloss",
           "manual"
         ]
       },
@@ -33278,6 +33281,51 @@ var registry_default = {
       ],
       format: "yaml",
       id_from: "filename"
+    },
+    "intel-winloss": {
+      source: "capability:intel",
+      capability: "intel",
+      entity: false,
+      common: [],
+      required: [
+        "id",
+        "deal_ref",
+        "outcome",
+        "closed_at",
+        "seller_reported_reason",
+        "logged_by",
+        "created"
+      ],
+      enums: {
+        outcome: [
+          "win",
+          "loss",
+          "no-decision"
+        ],
+        logged_by: [
+          "intel-winloss",
+          "manual"
+        ]
+      },
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: true,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "intel/winloss/INT-W-NNN.yaml"
+      ],
+      format: "yaml",
+      id_from: "filename",
+      lifecycle_fields: [
+        "buyer_evidenced_reason",
+        "claims_generated",
+        "interviews",
+        "last_modified"
+      ]
     },
     "intel:intel/entities": {
       source: "capability:intel",
@@ -33499,6 +33547,46 @@ var registry_default = {
       ],
       format: "any"
     },
+    "intel:intel/winloss": {
+      source: "capability:intel",
+      capability: "intel",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "intel/winloss/**"
+      ],
+      format: "any"
+    },
+    "intel:intel/monitor": {
+      source: "capability:intel",
+      capability: "intel",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "intel/monitor/**"
+      ],
+      format: "any"
+    },
     "intel:agenda.yaml": {
       source: "capability:intel",
       capability: "intel",
@@ -33516,6 +33604,26 @@ var registry_default = {
       doc: null,
       patterns: [
         "intel/agenda.yaml"
+      ],
+      format: "yaml"
+    },
+    "intel:watch.yaml": {
+      source: "capability:intel",
+      capability: "intel",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "intel/watch.yaml"
       ],
       format: "yaml"
     },
@@ -33930,6 +34038,547 @@ var registry_default = {
       doc: null,
       patterns: [
         "state/portfolio.json"
+      ],
+      format: "json"
+    },
+    "research-mandate": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [
+        "id",
+        "status",
+        "iteration",
+        "headline",
+        "questions",
+        "methodology_type",
+        "methodology",
+        "deliverable",
+        "success_criteria",
+        "created"
+      ],
+      enums: {
+        status: [
+          "draft",
+          "locked",
+          "in-progress",
+          "standing",
+          "complete",
+          "closed-negative",
+          "killed"
+        ],
+        methodology_type: [
+          "narrative",
+          "longlist",
+          "comparative",
+          "deep-web-investigation"
+        ],
+        "questions[].state": [
+          "open",
+          "answered",
+          "dropped"
+        ]
+      },
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/mandates/RES-M-NNN.yaml"
+      ],
+      format: "yaml",
+      id_from: "filename"
+    },
+    "research-step": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [
+        "id",
+        "mandate_id",
+        "mode",
+        "description",
+        "status",
+        "started_at"
+      ],
+      enums: {
+        mode: [
+          "consult",
+          "query",
+          "compare",
+          "extract",
+          "validate"
+        ],
+        status: [
+          "in-progress",
+          "complete",
+          "abandoned"
+        ]
+      },
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/steps/RES-S-NNN.yaml"
+      ],
+      format: "yaml",
+      id_from: "filename"
+    },
+    "research-finding": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [
+        "id",
+        "mandate_id",
+        "step_id",
+        "answers",
+        "claim",
+        "evidence",
+        "source_tier",
+        "confidence",
+        "epistemic_status",
+        "independent_sources",
+        "category",
+        "material",
+        "status",
+        "logged_by",
+        "created"
+      ],
+      enums: {
+        source_tier: [
+          "primary",
+          "secondary",
+          "tertiary",
+          "speculative"
+        ],
+        confidence: [
+          "high",
+          "medium",
+          "low",
+          "speculative"
+        ],
+        epistemic_status: [
+          "verified",
+          "reported",
+          "inferred",
+          "hypothesis",
+          "unknown"
+        ],
+        status: [
+          "provisional",
+          "established",
+          "withdrawn"
+        ],
+        logged_by: [
+          "research-step",
+          "research-deepweb",
+          "research-longlist",
+          "research-ingest",
+          "research-walk",
+          "manual"
+        ]
+      },
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: true,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/findings/RES-F-NNN.yaml"
+      ],
+      format: "yaml",
+      id_from: "filename",
+      lifecycle_fields: [
+        "status",
+        "became",
+        "last_modified"
+      ]
+    },
+    "research-challenge": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [
+        "id",
+        "mandate_id",
+        "finding_id",
+        "kind",
+        "argument",
+        "severity",
+        "status",
+        "logged_by",
+        "created"
+      ],
+      enums: {
+        kind: [
+          "single-source",
+          "self-interested-primary",
+          "non-independent-triangulation",
+          "unresolved-contradiction",
+          "inference-gap",
+          "stale-evidence",
+          "off-mandate",
+          "unfalsifiable"
+        ],
+        severity: [
+          "blocking",
+          "material",
+          "minor"
+        ],
+        status: [
+          "open",
+          "accepted",
+          "rejected",
+          "resolved"
+        ]
+      },
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: true,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/challenges/RES-C-NNN.yaml"
+      ],
+      format: "yaml",
+      id_from: "filename",
+      lifecycle_fields: [
+        "status",
+        "resolution",
+        "resolved_by",
+        "resolved_at",
+        "proposed_resolution",
+        "last_modified"
+      ]
+    },
+    "research-candidate": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [
+        "id",
+        "mandate_id",
+        "name",
+        "status"
+      ],
+      enums: {
+        status: [
+          "discovered",
+          "enriched",
+          "scored",
+          "shortlisted",
+          "excluded"
+        ]
+      },
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/candidates/RES-L-NNN.yaml"
+      ],
+      format: "yaml",
+      id_from: "filename"
+    },
+    "research-change": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [
+        "id",
+        "mandate_id",
+        "subject",
+        "detected_at",
+        "before",
+        "after",
+        "significance",
+        "summary",
+        "detected_by"
+      ],
+      enums: {
+        significance: [
+          "material",
+          "notable",
+          "noise"
+        ]
+      },
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: true,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/changes/RES-X-NNN.yaml"
+      ],
+      format: "yaml",
+      id_from: "filename"
+    },
+    "research:research/mandates": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/mandates/**"
+      ],
+      format: "any"
+    },
+    "research:research/steps": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/steps/**"
+      ],
+      format: "any"
+    },
+    "research:research/findings": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/findings/**"
+      ],
+      format: "any"
+    },
+    "research:research/challenges": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/challenges/**"
+      ],
+      format: "any"
+    },
+    "research:research/candidates": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/candidates/**"
+      ],
+      format: "any"
+    },
+    "research:research/changes": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/changes/**"
+      ],
+      format: "any"
+    },
+    "research:research/runs": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/runs/**"
+      ],
+      format: "any"
+    },
+    "research:research/topics": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/topics/**"
+      ],
+      format: "any"
+    },
+    "research:research/reports": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/reports/**"
+      ],
+      format: "any"
+    },
+    "research:research/learned": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/learned/**"
+      ],
+      format: "any"
+    },
+    "research:agenda.yaml": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "research/agenda.yaml"
+      ],
+      format: "yaml"
+    },
+    "research:research.json": {
+      source: "capability:research",
+      capability: "research",
+      entity: false,
+      common: [],
+      required: [],
+      enums: {},
+      strict_enums: false,
+      kind_aliases: [],
+      append_only: false,
+      append_only_log: false,
+      line_requires_one_of: null,
+      history_by_date: null,
+      derived: false,
+      doc: null,
+      patterns: [
+        "state/research.json"
       ],
       format: "json"
     },
@@ -34359,6 +35008,14 @@ var registry_default = {
       "change-order"
     ],
     [
+      "research/candidates/RES-L-NNN.yaml",
+      "research-candidate"
+    ],
+    [
+      "research/challenges/RES-C-NNN.yaml",
+      "research-challenge"
+    ],
+    [
       "increments/INC-NN-<slug>/manifest.yaml",
       "increment"
     ],
@@ -34381,6 +35038,18 @@ var registry_default = {
     [
       "reports/pic-submissions/<slug>.xlsx",
       "claim-form"
+    ],
+    [
+      "research/findings/RES-F-NNN.yaml",
+      "research-finding"
+    ],
+    [
+      "research/mandates/RES-M-NNN.yaml",
+      "research-mandate"
+    ],
+    [
+      "research/changes/RES-X-NNN.yaml",
+      "research-change"
     ],
     [
       "sred/advancements/ADV-NN-<slug>.yaml",
@@ -34411,6 +35080,10 @@ var registry_default = {
       "portfolio-snapshot"
     ],
     [
+      "research/steps/RES-S-NNN.yaml",
+      "research-step"
+    ],
+    [
       "sred/experiments/EX-NN-<slug>.yaml",
       "sred.experiment"
     ],
@@ -34421,6 +35094,10 @@ var registry_default = {
     [
       "intel/signals/INT-S-NNN.yaml",
       "intel-signal"
+    ],
+    [
+      "intel/winloss/INT-W-NNN.yaml",
+      "intel-winloss"
     ],
     [
       "reports/sc-meetings/<slug>.docx",
@@ -34503,8 +35180,16 @@ var registry_default = {
       "weekly-report"
     ],
     [
+      "research/agenda.yaml",
+      "research:agenda.yaml"
+    ],
+    [
       "state/portfolio.json",
       "portfolio:portfolio.json"
+    ],
+    [
+      "state/research.json",
+      "research:research.json"
     ],
     [
       "decisions/YYYY-MM-DD-<slug>.yaml",
@@ -34561,6 +35246,10 @@ var registry_default = {
     [
       "documents/inbox/<id>",
       "inbox-document"
+    ],
+    [
+      "intel/watch.yaml",
+      "intel:watch.yaml"
     ],
     [
       "outbox/queue/<id>.md",
@@ -34655,6 +35344,14 @@ var registry_default = {
       "portfolio:portfolio/snapshots"
     ],
     [
+      "research/candidates/**",
+      "research:research/candidates"
+    ],
+    [
+      "research/challenges/**",
+      "research:research/challenges"
+    ],
+    [
       "portfolio/findings/**",
       "portfolio:portfolio/findings"
     ],
@@ -34683,8 +35380,28 @@ var registry_default = {
       "portfolio:portfolio/reports"
     ],
     [
+      "research/findings/**",
+      "research:research/findings"
+    ],
+    [
+      "research/mandates/**",
+      "research:research/mandates"
+    ],
+    [
       "sred/advancements/**",
       "sred:sred/advancements"
+    ],
+    [
+      "research/changes/**",
+      "research:research/changes"
+    ],
+    [
+      "research/learned/**",
+      "research:research/learned"
+    ],
+    [
+      "research/reports/**",
+      "research:research/reports"
     ],
     [
       "sred/experiments/**",
@@ -34697,6 +35414,10 @@ var registry_default = {
     [
       "portfolio/index/**",
       "portfolio:portfolio/index"
+    ],
+    [
+      "research/topics/**",
+      "research:research/topics"
     ],
     [
       "communications/**",
@@ -34715,12 +35436,20 @@ var registry_default = {
       "intel:intel/profiles"
     ],
     [
+      "research/steps/**",
+      "research:research/steps"
+    ],
+    [
       "intel/answers/**",
       "intel:intel/answers"
     ],
     [
       "intel/changes/**",
       "intel:intel/changes"
+    ],
+    [
+      "intel/monitor/**",
+      "intel:intel/monitor"
     ],
     [
       "intel/network/**",
@@ -34733,6 +35462,14 @@ var registry_default = {
     [
       "intel/signals/**",
       "intel:intel/signals"
+    ],
+    [
+      "intel/winloss/**",
+      "intel:intel/winloss"
+    ],
+    [
+      "research/runs/**",
+      "research:research/runs"
     ],
     [
       "intel/claims/**",
@@ -48287,8 +49024,8 @@ AFTER: update state.json harvest_cursors.calendar to the current ISO timestamp; 
 };
 var system_map_generated_default = {
   schema_version: 1,
-  generated_at: "2026-09-29T03:42:22Z",
-  plugin_version: "5.2.0",
+  generated_at: "2026-09-29T06:14:31Z",
+  plugin_version: "5.3.0",
   columns: [
     {
       id: "sources",
@@ -48610,9 +49347,19 @@ var system_map_generated_default = {
       kind: "substrate",
       column: "substrate",
       label: "intel/ entities \xB7 signals \xB7 claims",
-      desc: "Intel capability state: entities, mandates, append-only signals; from 1.1 append-only claims, change events and the projections built from them (profiles, battlecards, deal briefs).",
+      desc: "Intel capability state: entities, mandates, append-only signals; from 1.1 append-only claims, change events and the projections built from them (profiles, battlecards, deal briefs); from 1.2 the watch list, monitor runs and win-loss records.",
       path: "project-state/intel/",
       capability: "intel",
+      sink: false
+    },
+    {
+      id: "substrate:research",
+      kind: "substrate",
+      column: "substrate",
+      label: "research/ mandates \xB7 findings \xB7 challenges",
+      desc: "Research capability state: mandates (the questions and the contract for answering them), steps, append-only findings graded on tier, confidence, epistemic status and independence, challenges ruled by a person, longlist candidates, change records, walk runs and the learned store.",
+      path: "project-state/research/",
+      capability: "research",
       sink: false
     },
     {
@@ -49202,12 +49949,36 @@ var system_map_generated_default = {
       role: null
     },
     {
+      id: "skill:intel-monitor",
+      kind: "skill",
+      column: "ingest",
+      label: "intel-monitor",
+      desc: "Watch competitors for change \u2014 'run the monitor', 'what changed with our competitors', 'check the watch list', 'set up competitor monitoring'. Re-reads watched sources; writes claims and change events.",
+      path: "capabilities/intel/skills/intel-monitor",
+      tier: "capability",
+      capability: "intel",
+      profile_driven: false,
+      role: null
+    },
+    {
       id: "skill:intel-onboarding",
       kind: "skill",
       column: "ingest",
       label: "intel-onboarding",
       desc: "Set up the intel (competitive intelligence) capability on a project \u2014 'enable intel', 'set up competitive intelligence', 'onboard intel'. Asks for the focus, entity types and staleness threshold.",
       path: "capabilities/intel/skills/intel-onboarding",
+      tier: "capability",
+      capability: "intel",
+      profile_driven: false,
+      role: null
+    },
+    {
+      id: "skill:intel-winloss",
+      kind: "skill",
+      column: "generate",
+      label: "intel-winloss",
+      desc: "Learn from closed deals \u2014 'we lost the X deal', 'record a win', 'why do we lose to X', 'win-loss analysis'. Keeps the seller's and the buyer's reasons apart; every pattern with its sample size.",
+      path: "capabilities/intel/skills/intel-winloss",
       tier: "capability",
       capability: "intel",
       profile_driven: false,
@@ -49246,6 +50017,138 @@ var system_map_generated_default = {
       path: "capabilities/portfolio/skills/portfolio-reviewer",
       tier: "capability",
       capability: "portfolio",
+      profile_driven: false,
+      role: null
+    },
+    {
+      id: "skill:research-ask",
+      kind: "skill",
+      column: "generate",
+      label: "research-ask",
+      desc: "Answer a question from the research findings, with citations \u2014 'what do we know about X', 'what did the research find', 'ask research'. Retrieved findings only, graded and dated; says so when there is no evidence.",
+      path: "capabilities/research/skills/research-ask",
+      tier: "capability",
+      capability: "research",
+      profile_driven: false,
+      role: null
+    },
+    {
+      id: "skill:research-brief",
+      kind: "skill",
+      column: "generate",
+      label: "research-brief",
+      desc: "Compose research results \u2014 'draft the report for RES-M-001', 'write an article on funding', 'weekly delta', 'ship the brief'. Studies, topic articles, deltas; refuses below the evidence gate or with a blocking challenge open.",
+      path: "capabilities/research/skills/research-brief",
+      tier: "capability",
+      capability: "research",
+      profile_driven: false,
+      role: null
+    },
+    {
+      id: "skill:research-deepweb",
+      kind: "skill",
+      column: "ingest",
+      label: "research-deepweb",
+      desc: "Investigate a mandate's questions across the web in waves \u2014 'deep-web RES-M-002', 'dig into Q3', 'search wider on this', 'recursive search'. One fetcher per query, merged, recursing to the mandate's depth cap.",
+      path: "capabilities/research/skills/research-deepweb",
+      tier: "capability",
+      capability: "research",
+      profile_driven: false,
+      role: null
+    },
+    {
+      id: "skill:research-ingest",
+      kind: "skill",
+      column: "ingest",
+      label: "research-ingest",
+      desc: "Drain research documents from the house inbox \u2014 'ingest this report for research', 'process the research docs', 'drain the inbox for RES-M-001'. Registers each, extracts findings, scores relevance onto mandates.",
+      path: "capabilities/research/skills/research-ingest",
+      tier: "capability",
+      capability: "research",
+      profile_driven: false,
+      role: null
+    },
+    {
+      id: "skill:research-longlist",
+      kind: "skill",
+      column: "keep",
+      label: "research-longlist",
+      desc: "Build and score a longlist \u2014 'longlist providers for RES-M-001', 'score the candidates', 'rank the longlist', 'shortlist the top five', 'exclude RES-L-004'. Every score cites findings; weights must sum to 1.0.",
+      path: "capabilities/research/skills/research-longlist",
+      tier: "capability",
+      capability: "research",
+      profile_driven: false,
+      role: null
+    },
+    {
+      id: "skill:research-mandate",
+      kind: "skill",
+      column: "control",
+      label: "research-mandate",
+      desc: "Draft, lock or close a research question \u2014 'draft a mandate', 'lock RES-M-002', 'kill this mandate', 'close it negative', 'make it standing', 'promote RES-F-017 to intel'. Locking runs the checklist; a person decides.",
+      path: "capabilities/research/skills/research-mandate",
+      tier: "capability",
+      capability: "research",
+      profile_driven: false,
+      role: null
+    },
+    {
+      id: "skill:research-onboarding",
+      kind: "skill",
+      column: "ingest",
+      label: "research-onboarding",
+      desc: "Set up the research capability on a project \u2014 'enable research', 'set up research here', 'start a research project', 'migrate our .research-state'. Enables, scaffolds, drafts 1\u20133 mandates to argue with; never locks.",
+      path: "capabilities/research/skills/research-onboarding",
+      tier: "capability",
+      capability: "research",
+      profile_driven: false,
+      role: null
+    },
+    {
+      id: "skill:research-redteam",
+      kind: "skill",
+      column: "control",
+      label: "research-redteam",
+      desc: "Attack research findings before anything ships \u2014 'red team RES-M-002', 'sweep the standing mandates', 'rule on RES-C-003', 'reject this challenge'. Judges mechanical attacks into challenges; only a person rules.",
+      path: "capabilities/research/skills/research-redteam",
+      tier: "capability",
+      capability: "research",
+      profile_driven: false,
+      role: null
+    },
+    {
+      id: "skill:research-retro",
+      kind: "skill",
+      column: "generate",
+      label: "research-retro",
+      desc: "Learn from a finished research mandate \u2014 'run the retro', 'research retrospective', 'what did RES-M-003 teach us'. Records query yield, domain tiers and calibration as data; proposes lessons for a person to keep.",
+      path: "capabilities/research/skills/research-retro",
+      tier: "capability",
+      capability: "research",
+      profile_driven: false,
+      role: null
+    },
+    {
+      id: "skill:research-step",
+      kind: "skill",
+      column: "ingest",
+      label: "research-step",
+      desc: "Run one research action on a locked mandate \u2014 'run a step on RES-M-001', 'validate RES-F-012', 'compare the formats', 'extract prices from these pages', 'confirm RES-F-009'. Writes the step, then append-only findings.",
+      path: "capabilities/research/skills/research-step",
+      tier: "capability",
+      capability: "research",
+      profile_driven: false,
+      role: null
+    },
+    {
+      id: "skill:research-walk",
+      kind: "skill",
+      column: "control",
+      label: "research-walk",
+      desc: "Run the unattended research walk \u2014 'run the research walk', 'nightly walk', 'replan the standing mandate', 're-render research at a glance'. Does only auto actions inside a budget; parks every decision for a person.",
+      path: "capabilities/research/skills/research-walk",
+      tier: "capability",
+      capability: "research",
       profile_driven: false,
       role: null
     },
@@ -49494,6 +50397,30 @@ var system_map_generated_default = {
       capability: "intel"
     },
     {
+      id: "report:intel-winloss",
+      kind: "report",
+      column: "reports",
+      label: "Win-loss analysis",
+      desc: "Closed deals as win-loss records \u2014 the seller's and the buyer's reasons kept apart \u2014 and the quarterly analysis with the sample behind every pattern, segmented before generalised.",
+      capability: "intel"
+    },
+    {
+      id: "report:research-evidence",
+      kind: "report",
+      column: "reports",
+      label: "Research evidence & walk",
+      desc: "The nightly walk's work and its run record, the weekly red-team sweep, and the declared reports \u2014 At a glance and Evidence \u2014 drawn from mandates, findings and challenges.",
+      capability: "research"
+    },
+    {
+      id: "report:research-delta",
+      kind: "report",
+      column: "reports",
+      label: "Research deliverables & deltas",
+      desc: "What a mandate ships \u2014 the deliverable that keeps its evidence, or for a standing mandate the weekly delta (one line when nothing material changed) \u2014 gated on evidence and on blocking challenges.",
+      capability: "research"
+    },
+    {
       id: "report:portfolio-review",
       kind: "report",
       column: "reports",
@@ -49616,7 +50543,7 @@ var system_map_generated_default = {
       column: "control",
       label: "intel capability",
       sub: "bundles intel-default",
-      desc: "Teaches a project to hold its competitive and ecosystem intelligence natively:\nentities (the players), append-only signals (the findings), and mandates\n(engagements with intel context) as first-class substrate kinds \u2014 harvested by\nresearch runs and inbox drains, surfaced through the one daily briefing, scheduled\nby the one reporting matrix. 1.1 adds the competitive layer \u2014 claims as the atom\n(epistemic status, derived freshness, supersession, surfaced conflicts) and the\nseller-facing projections: an implementation of Open Competitive Intelligence v0.1 at\nL1 Grounded (docs/INTEL-CI-SPEC.md). Replaces the standalone intel-state facility shape\nper decision 2026-08-28-intel-capability-only; the org's standing desk is a\nProject with this capability enabled.",
+      desc: "Teaches a project to hold its competitive and ecosystem intelligence natively:\nentities (the players), append-only signals (the findings), and mandates\n(engagements with intel context) as first-class substrate kinds \u2014 harvested by\nresearch runs and inbox drains, surfaced through the one daily briefing, scheduled\nby the one reporting matrix. 1.1 adds the competitive layer \u2014 claims as the atom\n(epistemic status, derived freshness, supersession, surfaced conflicts) and the\nseller-facing projections: an implementation of Open Competitive Intelligence v0.1 at\nL1 Grounded (docs/INTEL-CI-SPEC.md). 1.2 adds the scheduled change monitor and win-loss\nanalysis (L2 Connected), the OCI \xA713 evaluation harness over a golden set (L3), and the\nmigration from a standalone intel-state facility. Replaces the standalone intel-state facility shape\nper decision 2026-08-28-intel-capability-only; the org's standing desk is a\nProject with this capability enabled.",
       path: "capabilities/intel",
       capability: "intel"
     },
@@ -49629,6 +50556,16 @@ var system_map_generated_default = {
       desc: "Teaches an org-level Project to understand a set of member projects from their own\nsubstrates (a canonical registry, dated read-only snapshots, a compiled cross-member\nindex, one understanding page per member), to answer questions across them from the\nindex with citations rather than from memory, and to write down new intelligence as\nappend-only findings with evidence and lineage. Three cheap checks reach the daily\ndigest; everything else is asked for. The portfolio never writes into a member; its\nonly crossing is a proposal dropped into the member's documents/inbox/.",
       path: "capabilities/portfolio",
       capability: "portfolio"
+    },
+    {
+      id: "cap:research",
+      kind: "capability",
+      column: "control",
+      label: "research capability",
+      sub: "bundles research-default",
+      desc: "Teaches a project to hold research natively: mandates (the questions, and the contract\nfor answering them), steps, append-only findings graded on source tier, confidence,\nepistemic status and independence, challenges raised before anything ships, longlist\ncandidates, and change records. Bounded mandates answer and complete; standing mandates\nnever complete and report what changed each run. Pairs with the work-research pack.\nReplaces the standalone deep-research facility per decision\n2026-09-27-research-capability-only.",
+      path: "capabilities/research",
+      capability: "research"
     },
     {
       id: "cap:sred",
@@ -49961,7 +50898,7 @@ var system_map_generated_default = {
       column: "packs",
       label: "intel-default",
       sub: "bundled",
-      desc: "Bundled default pack of the `intel` capability. Carries the reporting-matrix defaults\nthat absorb the standalone suite's intel-runner scheduling \u2014 the overnight longlist and\nthe monthly landscape report as matrix entries compiled to the cadence registry by\nproject-automator \u2014 plus, from 1.1, the weekly claim refresh and the monthly competitive\nbrief of the competitive layer (OCI v0.1 at L1 Grounded).\n\nBehavior only. Entities, skills, templates and the validator ship with the `intel`\ncapability plugin (capabilities/intel/) \u2014 this pack contains no substrate extensions and\nno skills, per CAPABILITY-PLUGINS.md \xA76.\n\nSwappable per project like any pack; coexists with any active project pack, resolution\nbeing per-matrix-entry via the `profile:` field.",
+      desc: "Bundled default pack of the `intel` capability. Carries the reporting-matrix defaults\nthat absorb the standalone suite's intel-runner scheduling \u2014 the overnight longlist and\nthe monthly landscape report as matrix entries compiled to the cadence registry by\nproject-automator \u2014 plus, from 1.1, the weekly claim refresh and the monthly competitive\nbrief of the competitive layer (OCI v0.1 at L1 Grounded), and from 1.2 the weekly change\nmonitor and the quarterly win-loss analysis (L2 Connected; L3 Operated where the evaluation\nharness passes, docs/INTEL-CI-SPEC.md \xA714).\n\nBehavior only. Entities, skills, templates and the validator ship with the `intel`\ncapability plugin (capabilities/intel/) \u2014 this pack contains no substrate extensions and\nno skills, per CAPABILITY-PLUGINS.md \xA76.\n\nSwappable per project like any pack; coexists with any active project pack, resolution\nbeing per-matrix-entry via the `profile:` field.",
       path: "capabilities/intel/packs/intel-default",
       capability: "intel",
       profiles: [],
@@ -49979,6 +50916,21 @@ var system_map_generated_default = {
       desc: "Bundled default pack of the `portfolio` capability. Carries one reporting-matrix default \u2014\nthe weekly collect that snapshots members, compiles the cross-member index, regenerates the\nunderstanding pages and writes the weekly change note \u2014 compiled to the cadence registry by\nproject-automator.\n\nBehavior only. Entities, skills, templates and the validator ship with the `portfolio`\ncapability plugin (capabilities/portfolio/) \u2014 this pack contains no substrate extensions and\nno skills, per CAPABILITY-PLUGINS.md \xA76.\n\nEnabled on an org-level Project whose subject is a set of member projects; it reads each\nmember's own project-state/ and never writes into one. Swappable per portfolio like any\npack; resolution is per-matrix-entry via the `profile:` field.",
       path: "capabilities/portfolio/packs/portfolio-default",
       capability: "portfolio",
+      profiles: [],
+      axis: "capability",
+      listed: false,
+      preset: null,
+      seeds: []
+    },
+    {
+      id: "pack:research-default",
+      kind: "pack",
+      column: "packs",
+      label: "research-default",
+      sub: "bundled",
+      desc: "Bundled default pack of the `research` capability (docs/RESEARCH-CAPABILITY-SPEC.md \xA79). Carries the\nreporting-matrix defaults that schedule the research: the unattended nightly walk, the weekly red-team sweep\nover standing mandates, the weekly delta brief for the steering audience, and the At a glance report after\neach walk \u2014 compiled to the cadence registry by project-automator like every other entry. Scheduling stays in\nthe matrix, never in the capability.\n\nBehaviour only. Kinds, skills, templates, the validator and the views ship with the `research` capability\nplugin (capabilities/research/) \u2014 this pack holds no substrate extensions and no skills.",
+      path: "capabilities/research/packs/research-default",
+      capability: "research",
       profiles: [],
       axis: "capability",
       listed: false,
@@ -51302,6 +52254,11 @@ var system_map_generated_default = {
       target: "skill:intel-harvester"
     },
     {
+      kind: "call",
+      source: "skill:intel-deal-coach",
+      target: "skill:intel-winloss"
+    },
+    {
       kind: "produce",
       source: "skill:intel-deal-coach",
       target: "report:intel-competitive"
@@ -51358,6 +52315,51 @@ var system_map_generated_default = {
     },
     {
       kind: "harvest",
+      source: "source:web",
+      target: "skill:intel-monitor"
+    },
+    {
+      kind: "harvest",
+      source: "source:files",
+      target: "skill:intel-monitor"
+    },
+    {
+      kind: "harvest",
+      source: "source:operator",
+      target: "skill:intel-monitor"
+    },
+    {
+      kind: "read",
+      source: "substrate:manifest",
+      target: "skill:intel-monitor"
+    },
+    {
+      kind: "read",
+      source: "substrate:tenders",
+      target: "skill:intel-monitor"
+    },
+    {
+      kind: "read",
+      source: "substrate:documents",
+      target: "skill:intel-monitor"
+    },
+    {
+      kind: "rw",
+      source: "skill:intel-monitor",
+      target: "substrate:intel"
+    },
+    {
+      kind: "write",
+      source: "skill:intel-monitor",
+      target: "substrate:log"
+    },
+    {
+      kind: "produce",
+      source: "skill:intel-monitor",
+      target: "report:intel-competitive"
+    },
+    {
+      kind: "harvest",
       source: "source:operator",
       target: "skill:intel-onboarding"
     },
@@ -51375,6 +52377,51 @@ var system_map_generated_default = {
       kind: "call",
       source: "skill:intel-onboarding",
       target: "skill:project-state"
+    },
+    {
+      kind: "harvest",
+      source: "source:operator",
+      target: "skill:intel-winloss"
+    },
+    {
+      kind: "harvest",
+      source: "source:files",
+      target: "skill:intel-winloss"
+    },
+    {
+      kind: "read",
+      source: "substrate:tenders",
+      target: "skill:intel-winloss"
+    },
+    {
+      kind: "read",
+      source: "substrate:documents",
+      target: "skill:intel-winloss"
+    },
+    {
+      kind: "read",
+      source: "substrate:manifest",
+      target: "skill:intel-winloss"
+    },
+    {
+      kind: "rw",
+      source: "skill:intel-winloss",
+      target: "substrate:intel"
+    },
+    {
+      kind: "write",
+      source: "skill:intel-winloss",
+      target: "substrate:log"
+    },
+    {
+      kind: "call",
+      source: "skill:intel-winloss",
+      target: "skill:project-state"
+    },
+    {
+      kind: "produce",
+      source: "skill:intel-winloss",
+      target: "report:intel-winloss"
     },
     {
       kind: "harvest",
@@ -51505,6 +52552,606 @@ var system_map_generated_default = {
       kind: "deliver",
       source: "skill:portfolio-reviewer",
       target: "surface:chat"
+    },
+    {
+      kind: "harvest",
+      source: "source:operator",
+      target: "skill:research-ask"
+    },
+    {
+      kind: "read",
+      source: "substrate:manifest",
+      target: "skill:research-ask"
+    },
+    {
+      kind: "read",
+      source: "substrate:documents",
+      target: "skill:research-ask"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-ask",
+      target: "substrate:research"
+    },
+    {
+      kind: "call",
+      source: "skill:research-ask",
+      target: "skill:project-state"
+    },
+    {
+      kind: "call",
+      source: "skill:research-ask",
+      target: "skill:research-step"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-ask",
+      target: "surface:chat"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-ask",
+      target: "surface:files"
+    },
+    {
+      kind: "harvest",
+      source: "source:operator",
+      target: "skill:research-brief"
+    },
+    {
+      kind: "read",
+      source: "substrate:manifest",
+      target: "skill:research-brief"
+    },
+    {
+      kind: "read",
+      source: "substrate:documents",
+      target: "skill:research-brief"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-brief",
+      target: "substrate:research"
+    },
+    {
+      kind: "write",
+      source: "skill:research-brief",
+      target: "substrate:reports"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-brief",
+      target: "substrate:log"
+    },
+    {
+      kind: "call",
+      source: "skill:research-brief",
+      target: "skill:project-state"
+    },
+    {
+      kind: "call",
+      source: "skill:research-brief",
+      target: "skill:research-redteam"
+    },
+    {
+      kind: "call",
+      source: "skill:research-brief",
+      target: "skill:project-notifier"
+    },
+    {
+      kind: "call",
+      source: "skill:research-brief",
+      target: "skill:project-external-comms"
+    },
+    {
+      kind: "produce",
+      source: "skill:research-brief",
+      target: "report:research-delta"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-brief",
+      target: "surface:files"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-brief",
+      target: "surface:chat"
+    },
+    {
+      kind: "harvest",
+      source: "source:web",
+      target: "skill:research-deepweb"
+    },
+    {
+      kind: "harvest",
+      source: "source:operator",
+      target: "skill:research-deepweb"
+    },
+    {
+      kind: "read",
+      source: "substrate:manifest",
+      target: "skill:research-deepweb"
+    },
+    {
+      kind: "read",
+      source: "substrate:documents",
+      target: "skill:research-deepweb"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-deepweb",
+      target: "substrate:research"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-deepweb",
+      target: "substrate:log"
+    },
+    {
+      kind: "call",
+      source: "skill:research-deepweb",
+      target: "skill:project-state"
+    },
+    {
+      kind: "produce",
+      source: "skill:research-deepweb",
+      target: "report:research-evidence"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-deepweb",
+      target: "surface:files"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-deepweb",
+      target: "surface:chat"
+    },
+    {
+      kind: "harvest",
+      source: "source:files",
+      target: "skill:research-ingest"
+    },
+    {
+      kind: "harvest",
+      source: "source:operator",
+      target: "skill:research-ingest"
+    },
+    {
+      kind: "read",
+      source: "substrate:documents",
+      target: "skill:research-ingest"
+    },
+    {
+      kind: "read",
+      source: "substrate:manifest",
+      target: "skill:research-ingest"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-ingest",
+      target: "substrate:research"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-ingest",
+      target: "substrate:log"
+    },
+    {
+      kind: "call",
+      source: "skill:research-ingest",
+      target: "skill:project-state"
+    },
+    {
+      kind: "call",
+      source: "skill:research-ingest",
+      target: "skill:project-document-curator"
+    },
+    {
+      kind: "produce",
+      source: "skill:research-ingest",
+      target: "report:research-evidence"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-ingest",
+      target: "surface:files"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-ingest",
+      target: "surface:chat"
+    },
+    {
+      kind: "harvest",
+      source: "source:operator",
+      target: "skill:research-longlist"
+    },
+    {
+      kind: "harvest",
+      source: "source:web",
+      target: "skill:research-longlist"
+    },
+    {
+      kind: "harvest",
+      source: "source:files",
+      target: "skill:research-longlist"
+    },
+    {
+      kind: "read",
+      source: "substrate:manifest",
+      target: "skill:research-longlist"
+    },
+    {
+      kind: "read",
+      source: "substrate:documents",
+      target: "skill:research-longlist"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-longlist",
+      target: "substrate:research"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-longlist",
+      target: "substrate:log"
+    },
+    {
+      kind: "call",
+      source: "skill:research-longlist",
+      target: "skill:project-state"
+    },
+    {
+      kind: "call",
+      source: "skill:research-longlist",
+      target: "skill:research-step"
+    },
+    {
+      kind: "call",
+      source: "skill:research-longlist",
+      target: "skill:research-deepweb"
+    },
+    {
+      kind: "call",
+      source: "skill:research-longlist",
+      target: "skill:research-brief"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-longlist",
+      target: "surface:files"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-longlist",
+      target: "surface:chat"
+    },
+    {
+      kind: "harvest",
+      source: "source:operator",
+      target: "skill:research-mandate"
+    },
+    {
+      kind: "harvest",
+      source: "source:files",
+      target: "skill:research-mandate"
+    },
+    {
+      kind: "read",
+      source: "substrate:manifest",
+      target: "skill:research-mandate"
+    },
+    {
+      kind: "read",
+      source: "substrate:intel",
+      target: "skill:research-mandate"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-mandate",
+      target: "substrate:research"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-mandate",
+      target: "substrate:documents"
+    },
+    {
+      kind: "write",
+      source: "skill:research-mandate",
+      target: "substrate:log"
+    },
+    {
+      kind: "call",
+      source: "skill:research-mandate",
+      target: "skill:project-state"
+    },
+    {
+      kind: "call",
+      source: "skill:research-mandate",
+      target: "skill:intel-ingest"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-mandate",
+      target: "surface:chat"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-mandate",
+      target: "surface:files"
+    },
+    {
+      kind: "harvest",
+      source: "source:operator",
+      target: "skill:research-onboarding"
+    },
+    {
+      kind: "harvest",
+      source: "source:files",
+      target: "skill:research-onboarding"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-onboarding",
+      target: "substrate:manifest"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-onboarding",
+      target: "substrate:research"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-onboarding",
+      target: "substrate:documents"
+    },
+    {
+      kind: "write",
+      source: "skill:research-onboarding",
+      target: "substrate:people"
+    },
+    {
+      kind: "write",
+      source: "skill:research-onboarding",
+      target: "substrate:lessons"
+    },
+    {
+      kind: "write",
+      source: "skill:research-onboarding",
+      target: "substrate:log"
+    },
+    {
+      kind: "call",
+      source: "skill:research-onboarding",
+      target: "skill:project-state"
+    },
+    {
+      kind: "call",
+      source: "skill:research-onboarding",
+      target: "skill:research-mandate"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-onboarding",
+      target: "surface:chat"
+    },
+    {
+      kind: "harvest",
+      source: "source:operator",
+      target: "skill:research-redteam"
+    },
+    {
+      kind: "read",
+      source: "substrate:manifest",
+      target: "skill:research-redteam"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-redteam",
+      target: "substrate:research"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-redteam",
+      target: "substrate:log"
+    },
+    {
+      kind: "call",
+      source: "skill:research-redteam",
+      target: "skill:project-state"
+    },
+    {
+      kind: "call",
+      source: "skill:research-redteam",
+      target: "skill:research-step"
+    },
+    {
+      kind: "produce",
+      source: "skill:research-redteam",
+      target: "report:research-evidence"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-redteam",
+      target: "surface:files"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-redteam",
+      target: "surface:chat"
+    },
+    {
+      kind: "harvest",
+      source: "source:operator",
+      target: "skill:research-retro"
+    },
+    {
+      kind: "read",
+      source: "substrate:manifest",
+      target: "skill:research-retro"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-retro",
+      target: "substrate:research"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-retro",
+      target: "substrate:lessons"
+    },
+    {
+      kind: "write",
+      source: "skill:research-retro",
+      target: "substrate:log"
+    },
+    {
+      kind: "call",
+      source: "skill:research-retro",
+      target: "skill:project-state"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-retro",
+      target: "surface:chat"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-retro",
+      target: "surface:files"
+    },
+    {
+      kind: "harvest",
+      source: "source:web",
+      target: "skill:research-step"
+    },
+    {
+      kind: "harvest",
+      source: "source:files",
+      target: "skill:research-step"
+    },
+    {
+      kind: "harvest",
+      source: "source:operator",
+      target: "skill:research-step"
+    },
+    {
+      kind: "read",
+      source: "substrate:manifest",
+      target: "skill:research-step"
+    },
+    {
+      kind: "read",
+      source: "substrate:documents",
+      target: "skill:research-step"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-step",
+      target: "substrate:research"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-step",
+      target: "substrate:log"
+    },
+    {
+      kind: "call",
+      source: "skill:research-step",
+      target: "skill:project-state"
+    },
+    {
+      kind: "produce",
+      source: "skill:research-step",
+      target: "report:research-evidence"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-step",
+      target: "surface:files"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-step",
+      target: "surface:chat"
+    },
+    {
+      kind: "harvest",
+      source: "source:operator",
+      target: "skill:research-walk"
+    },
+    {
+      kind: "read",
+      source: "substrate:manifest",
+      target: "skill:research-walk"
+    },
+    {
+      kind: "read",
+      source: "substrate:documents",
+      target: "skill:research-walk"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-walk",
+      target: "substrate:research"
+    },
+    {
+      kind: "rw",
+      source: "skill:research-walk",
+      target: "substrate:log"
+    },
+    {
+      kind: "call",
+      source: "skill:research-walk",
+      target: "skill:project-state"
+    },
+    {
+      kind: "call",
+      source: "skill:research-walk",
+      target: "skill:research-ingest"
+    },
+    {
+      kind: "call",
+      source: "skill:research-walk",
+      target: "skill:research-step"
+    },
+    {
+      kind: "call",
+      source: "skill:research-walk",
+      target: "skill:research-deepweb"
+    },
+    {
+      kind: "call",
+      source: "skill:research-walk",
+      target: "skill:research-longlist"
+    },
+    {
+      kind: "call",
+      source: "skill:research-walk",
+      target: "skill:research-redteam"
+    },
+    {
+      kind: "call",
+      source: "skill:research-walk",
+      target: "skill:research-brief"
+    },
+    {
+      kind: "call",
+      source: "skill:research-walk",
+      target: "skill:research-retro"
+    },
+    {
+      kind: "produce",
+      source: "skill:research-walk",
+      target: "report:research-evidence"
+    },
+    {
+      kind: "deliver",
+      source: "skill:research-walk",
+      target: "surface:files"
     },
     {
       kind: "read",
@@ -51798,6 +53445,36 @@ var system_map_generated_default = {
     },
     {
       kind: "deliver",
+      source: "report:intel-winloss",
+      target: "surface:files"
+    },
+    {
+      kind: "deliver",
+      source: "report:intel-winloss",
+      target: "surface:chat"
+    },
+    {
+      kind: "deliver",
+      source: "report:research-evidence",
+      target: "surface:files"
+    },
+    {
+      kind: "deliver",
+      source: "report:research-evidence",
+      target: "surface:chat"
+    },
+    {
+      kind: "deliver",
+      source: "report:research-delta",
+      target: "surface:files"
+    },
+    {
+      kind: "deliver",
+      source: "report:research-delta",
+      target: "surface:chat"
+    },
+    {
+      kind: "deliver",
       source: "report:portfolio-review",
       target: "surface:files"
     },
@@ -51869,6 +53546,16 @@ var system_map_generated_default = {
     {
       kind: "provide",
       source: "cap:intel",
+      target: "skill:intel-monitor"
+    },
+    {
+      kind: "provide",
+      source: "cap:intel",
+      target: "skill:intel-winloss"
+    },
+    {
+      kind: "provide",
+      source: "cap:intel",
       target: "pack:intel-default"
     },
     {
@@ -51910,6 +53597,77 @@ var system_map_generated_default = {
     {
       kind: "provide",
       source: "cap:portfolio",
+      target: "skill:project-orchestrator",
+      via: "routine.yaml"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
+      target: "skill:research-onboarding"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
+      target: "skill:research-ingest"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
+      target: "skill:research-mandate"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
+      target: "skill:research-step"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
+      target: "skill:research-deepweb"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
+      target: "skill:research-longlist"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
+      target: "skill:research-redteam"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
+      target: "skill:research-brief"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
+      target: "skill:research-retro"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
+      target: "skill:research-walk"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
+      target: "skill:research-ask"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
+      target: "pack:research-default"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
+      target: "substrate:research"
+    },
+    {
+      kind: "provide",
+      source: "cap:research",
       target: "skill:project-orchestrator",
       via: "routine.yaml"
     },
@@ -52319,6 +54077,12 @@ var system_map_generated_default = {
     {
       kind: "write",
       source: "pack:portfolio-default",
+      target: "substrate:reporting-matrix",
+      via: "seeds defaults"
+    },
+    {
+      kind: "write",
+      source: "pack:research-default",
       target: "substrate:reporting-matrix",
       via: "seeds defaults"
     },
@@ -53051,6 +54815,30 @@ var system_map_generated_default = {
       family: "intel-competitive"
     },
     {
+      pack: "intel-default",
+      id: "intel-weekly-monitor",
+      report: "intel-weekly-monitor",
+      stakeholder: "internal",
+      cadence: "weekly",
+      format: "markdown",
+      surface: "intel/monitor/runs/{date}.md",
+      generator: "intel-monitor",
+      profile: null,
+      family: "intel-competitive"
+    },
+    {
+      pack: "intel-default",
+      id: "intel-quarterly-winloss",
+      report: "intel-quarterly-winloss",
+      stakeholder: "internal",
+      cadence: "quarterly",
+      format: "markdown",
+      surface: "intel/reports/winloss-{quarter}.md",
+      generator: "intel-winloss",
+      profile: null,
+      family: "intel-winloss"
+    },
+    {
       pack: "portfolio-default",
       id: "portfolio-weekly-collect",
       report: "portfolio-weekly-collect",
@@ -53061,6 +54849,54 @@ var system_map_generated_default = {
       generator: "portfolio-collector",
       profile: null,
       family: "portfolio-review"
+    },
+    {
+      pack: "research-default",
+      id: "research-nightly-walk",
+      report: "research-nightly-walk",
+      stakeholder: "internal",
+      cadence: "daily",
+      format: "json",
+      surface: "research/runs/RUN-{date}-N.json",
+      generator: "research-walk",
+      profile: null,
+      family: "research-evidence"
+    },
+    {
+      pack: "research-default",
+      id: "research-weekly-sweep",
+      report: "research-weekly-sweep",
+      stakeholder: "internal",
+      cadence: "weekly \xB7 sunday",
+      format: "yaml",
+      surface: "research/challenges/",
+      generator: "research-redteam",
+      profile: null,
+      family: "research-evidence"
+    },
+    {
+      pack: "research-default",
+      id: "research-weekly-delta",
+      report: "research-weekly-delta",
+      stakeholder: "internal",
+      cadence: "weekly \xB7 monday",
+      format: "markdown",
+      surface: "research/reports/{mandate}-delta-{date}.md",
+      generator: "research-brief",
+      profile: null,
+      family: "research-delta"
+    },
+    {
+      pack: "research-default",
+      id: "research-glance",
+      report: "research-glance",
+      stakeholder: "internal",
+      cadence: "ad-hoc \xB7 on research.walk.closed",
+      format: "html",
+      surface: "research/reports/at-a-glance.html",
+      generator: "research-walk",
+      profile: null,
+      family: "research-evidence"
     },
     {
       pack: "sred-canada",
@@ -53378,7 +55214,40 @@ var system_map_generated_default = {
         },
         binding: null
       },
+      "intel-monitor": {
+        requires: [
+          "memory",
+          "python",
+          "connector:web"
+        ],
+        targets: [
+          "local",
+          "runner"
+        ],
+        missing_for: {
+          "claude-ai": [
+            "python"
+          ]
+        },
+        binding: null
+      },
       "intel-onboarding": {
+        requires: [
+          "memory",
+          "python"
+        ],
+        targets: [
+          "local",
+          "runner"
+        ],
+        missing_for: {
+          "claude-ai": [
+            "python"
+          ]
+        },
+        binding: null
+      },
+      "intel-winloss": {
         requires: [
           "memory",
           "python"
@@ -53987,6 +55856,180 @@ var system_map_generated_default = {
         },
         binding: null
       },
+      "research-ask": {
+        requires: [
+          "memory"
+        ],
+        targets: [
+          "local",
+          "claude-ai",
+          "runner"
+        ],
+        missing_for: {},
+        binding: null
+      },
+      "research-brief": {
+        requires: [
+          "memory",
+          "python"
+        ],
+        targets: [
+          "local",
+          "runner"
+        ],
+        missing_for: {
+          "claude-ai": [
+            "python"
+          ]
+        },
+        binding: null
+      },
+      "research-deepweb": {
+        requires: [
+          "memory",
+          "python",
+          "connector:web"
+        ],
+        targets: [
+          "local",
+          "runner"
+        ],
+        missing_for: {
+          "claude-ai": [
+            "python"
+          ]
+        },
+        binding: null
+      },
+      "research-ingest": {
+        requires: [
+          "memory",
+          "python"
+        ],
+        targets: [
+          "local",
+          "runner"
+        ],
+        missing_for: {
+          "claude-ai": [
+            "python"
+          ]
+        },
+        binding: null
+      },
+      "research-longlist": {
+        requires: [
+          "memory",
+          "python"
+        ],
+        targets: [
+          "local",
+          "runner"
+        ],
+        missing_for: {
+          "claude-ai": [
+            "python"
+          ]
+        },
+        binding: null
+      },
+      "research-mandate": {
+        requires: [
+          "memory",
+          "python"
+        ],
+        targets: [
+          "local",
+          "runner"
+        ],
+        missing_for: {
+          "claude-ai": [
+            "python"
+          ]
+        },
+        binding: null
+      },
+      "research-onboarding": {
+        requires: [
+          "memory",
+          "python"
+        ],
+        targets: [
+          "local",
+          "runner"
+        ],
+        missing_for: {
+          "claude-ai": [
+            "python"
+          ]
+        },
+        binding: null
+      },
+      "research-redteam": {
+        requires: [
+          "memory",
+          "python"
+        ],
+        targets: [
+          "local",
+          "runner"
+        ],
+        missing_for: {
+          "claude-ai": [
+            "python"
+          ]
+        },
+        binding: null
+      },
+      "research-retro": {
+        requires: [
+          "memory",
+          "python"
+        ],
+        targets: [
+          "local",
+          "runner"
+        ],
+        missing_for: {
+          "claude-ai": [
+            "python"
+          ]
+        },
+        binding: null
+      },
+      "research-step": {
+        requires: [
+          "memory",
+          "python",
+          "connector:web"
+        ],
+        targets: [
+          "local",
+          "runner"
+        ],
+        missing_for: {
+          "claude-ai": [
+            "python"
+          ]
+        },
+        binding: null
+      },
+      "research-walk": {
+        requires: [
+          "memory",
+          "python"
+        ],
+        targets: [
+          "local",
+          "runner"
+        ],
+        missing_for: {
+          "claude-ai": [
+            "python"
+          ]
+        },
+        binding: null
+      },
       "sred-onboarding": {
         requires: [
           "memory"
@@ -54062,15 +56105,15 @@ var system_map_generated_default = {
     }
   },
   counts: {
-    skills: 55,
-    substrate: 24,
-    reports: 25,
+    skills: 68,
+    substrate: 25,
+    reports: 28,
     surfaces: 11,
     sources: 14,
-    packs: 20,
-    capabilities: 4,
-    matrix_entries: 69,
-    edges: 453
+    packs: 21,
+    capabilities: 5,
+    matrix_entries: 75,
+    edges: 615
   },
   warnings: []
 };
@@ -57114,6 +59157,8 @@ var RUNNERS = {
   sred: { prefixes: ["manifest.yaml", "state/", "sred/", "milestones/"], cmd: (dir, asOf, out) => ["node", [builder("sred/views/build-sred-dashboard.mjs"), dir, "--as-of", asOf, "--out", path30.join(out, "x.html"), "--json", path30.join(out, "data.json")]] },
   intel: { prefixes: ["manifest.yaml", "state/", "intel/"], cmd: (dir, asOf, out) => ["python3", [builder("intel/views/build-intel-glance.py"), dir, "--as-of", asOf, "--out", path30.join(out, "x.html"), "--json", path30.join(out, "data.json")]] },
   "intel-competitive": { prefixes: ["manifest.yaml", "state/", "intel/"], cmd: (dir, asOf, out) => ["python3", [builder("intel/views/build-intel-competitive.py"), dir, "--as-of", asOf, "--out", path30.join(out, "x.html"), "--json", path30.join(out, "data.json")]] },
+  // research reads its records, its runtime state, the research.* slice of the log and the curator's registry (spec §10)
+  research: { prefixes: ["manifest.yaml", "state/", "research/", "logs/activity.ndjson", "documents/index.yaml"], cmd: (dir, asOf, out) => ["python3", [builder("research/views/build-research-glance.py"), dir, "--as-of", asOf, "--out", path30.join(out, "x.html"), "--json", path30.join(out, "data.json")]] },
   tender: { prefixes: ["manifest.yaml", "state/", "tenders/"], cmd: (dir, asOf, out) => ["python3", [builder("tender/views/build-tender-glance.py"), dir, "--as-of", asOf, "--out", path30.join(out, "x.html"), "--json", path30.join(out, "data.json")]] }
 };
 async function materialize(db, project2, prefixes, dir) {
@@ -57233,13 +59278,14 @@ async function portfolio(store2, db, project2, manifest, today) {
     last_collect: state.last_collect || null
   };
 }
-var KIND_DIRS = { sred: { "uncertainties": "sred/uncertainties/", "experiments": "sred/experiments/", "advancements": "sred/advancements/" }, intel: { entities: "intel/entities/", signals: "intel/signals/", claims: "intel/claims/", mandates: "intel/mandates/" }, tender: { tenders: "tenders/t-", profiles: "tenders/profiles/" }, portfolio: { members: "portfolio/members/", snapshots: "portfolio/snapshots/", findings: "portfolio/findings/" } };
-var LABEL = { sred: "SR&ED", intel: "Competitive intelligence", tender: "Tenders", portfolio: "Portfolio" };
+var KIND_DIRS = { sred: { "uncertainties": "sred/uncertainties/", "experiments": "sred/experiments/", "advancements": "sred/advancements/" }, intel: { entities: "intel/entities/", signals: "intel/signals/", claims: "intel/claims/", mandates: "intel/mandates/" }, tender: { tenders: "tenders/t-", profiles: "tenders/profiles/" }, portfolio: { members: "portfolio/members/", snapshots: "portfolio/snapshots/", findings: "portfolio/findings/" }, research: { mandates: "research/mandates/", findings: "research/findings/", challenges: "research/challenges/", changes: "research/changes/" } };
+var LABEL = { sred: "SR&ED", intel: "Competitive intelligence", tender: "Tenders", portfolio: "Portfolio", research: "Research" };
 var ABOUT = {
   sred: "Captures SR&ED evidence as the work happens: uncertainties, experiments, advancements and the evidence log, with the filing window and an advisor handoff checklist.",
   intel: "Keeps a desk of entities, signals, claims and mandates, with freshness from half-lives and a tiered research agenda.",
   tender: "Finds, qualifies and tracks public tenders from harvest to bid or no-bid, with connector health and closing dates.",
-  portfolio: "Reads member projects into dated snapshots and answers across them, never writing into a member."
+  portfolio: "Reads member projects into dated snapshots and answers across them, never writing into a member.",
+  research: "Questions answered with graded evidence: append-only findings on tier, confidence, epistemic status and independence, attacked by a red team before anything ships."
 };
 async function viewCapabilities(store2, ref) {
   const { project: project2, db } = store2.resolve(ref);
@@ -58300,7 +60346,7 @@ function buildServer(store2, { audit, control, principal: principal2, transfer, 
       }
       return { project: ref, path: p, as_of: await store2.lastRun(db, project2), exists: !!e, last_modified: e?.data?.last_modified ?? null, last_modified_by: e?.data?.last_modified_by ?? null, revisions, events };
     }],
-    ["view_capability", "Capability glance", "A capability's at-a-glance data, computed by the capability's own builder: sred, intel, intel-competitive, tender or portfolio.", { project: PROJECT2, capability: external_exports.enum(["sred", "intel", "intel-competitive", "tender", "portfolio"]), today: TODAY }, ({ project: project2, capability, today }) => capabilityGlance(store2, project2, capability, today)]
+    ["view_capability", "Capability glance", "A capability's at-a-glance data, computed by the capability's own builder: sred, intel, intel-competitive, tender, portfolio or research.", { project: PROJECT2, capability: external_exports.enum(["sred", "intel", "intel-competitive", "tender", "portfolio", "research"]), today: TODAY }, ({ project: project2, capability, today }) => capabilityGlance(store2, project2, capability, today)]
   ];
   for (const [name, title, description, inputSchema, fn] of more) server2.registerTool(name, { title, description, inputSchema: { ...inputSchema, rev: REV }, annotations: READ }, wrap2(name, fn));
   registerWriteTools(server2, { store: store2, control, principal: principal2, wrap: wrap2 });

@@ -1,0 +1,38 @@
+# research.* event vocabulary — appended to the host activity log by the memory layer. Spec §4.10.
+schema_version: 1
+capability: research
+events:
+  - research.mandate.drafted
+  - research.mandate.iterated
+  - research.mandate.locked
+  - research.mandate.started
+  - research.mandate.made-standing
+  - research.mandate.completed
+  - research.mandate.closed-negative
+  - research.mandate.killed
+  - research.question.answered
+  - research.question.reopened
+  - research.step.started
+  - research.step.completed       # payload: findings produced (0 = barren)
+  - research.step.abandoned
+  - research.finding.logged
+  - research.finding.established
+  - research.finding.superseded   # payload: old id, new id
+  - research.finding.withdrawn
+  - research.challenge.raised
+  - research.challenge.ruled      # the human gate: ruling, by whom
+  - research.change.detected      # payload: change id, significance
+  - research.candidate.discovered
+  - research.candidate.scored
+  - research.candidate.ranked
+  - research.deliverable.shipped
+  - research.brief.generated      # payload: mandate, material changes (may be 0)
+  - research.article.compiled     # payload: topic slug, mandates, findings cited (research-brief article)
+  - research.walk.opened
+  - research.walk.gated           # payload: the decision parked for a person
+  - research.walk.closed
+  - research.walk.abandoned
+  - research.retro.recorded
+  - research.inbox.drained
+  - research.promotion.proposed   # payload: finding id, target capability
+  - research.approval.logged
