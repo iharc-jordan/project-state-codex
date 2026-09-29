@@ -812,7 +812,12 @@ def week_note(run: Run, members: list[dict], latest: dict, prevs: dict, checks: 
         ms = s["milestones"]
         L.append(f"**{m['id']}** · {n(s['project']['current_phase'])} · {ms['complete']}/{ms['total']} · {s['activity']['events_7d']} events")
         bits = []
-        if prev:
+        if prev and "_unchanged_since" in prev:
+            # an unchanged member with one snapshot in its history: the collect keeps a marker, not a snapshot, as the
+            # previous (collect_member). Found 2026-09-29 by the cloud scheduler's second weekly collect: this read
+            # prev["milestones"] from the marker and the whole collect failed.
+            bits.append(f"- unchanged since {str(prev['_unchanged_since'])[:10]}")
+        elif prev:
             pm = {x["id"]: x for x in prev["milestones"]["next_due"]}
             for x in ms["next_due"]:
                 q = pm.get(x["id"])

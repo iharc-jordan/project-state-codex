@@ -44618,6 +44618,7 @@ __export(kanban_lib_exports, {
   listOutputs: () => listOutputs,
   listReportFiles: () => listReportFiles,
   moveEvent: () => moveEvent,
+  periodAnchor: () => periodAnchor,
   readArtifact: () => readArtifact,
   readBacklinks: () => readBacklinks,
   readBlindspots: () => readBlindspots,
@@ -49024,8 +49025,8 @@ AFTER: update state.json harvest_cursors.calendar to the current ISO timestamp; 
 };
 var system_map_generated_default = {
   schema_version: 1,
-  generated_at: "2026-09-29T06:36:02Z",
-  plugin_version: "5.4.0",
+  generated_at: "2026-09-29T14:12:17Z",
+  plugin_version: "5.4.2",
   columns: [
     {
       id: "sources",
@@ -58994,6 +58995,90 @@ async function deleteKpi(stateDir, id, actor2) {
   if (ok) appendLog4(stateDir, "kpi.deleted", { id }, actor2);
   return ok;
 }
+init_registry();
+var DOW = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+var DAY_MS = 864e5;
+function biweekParityOk(fireMs, start) {
+  const refMs = start ? Date.parse(`${start}T00:00:00`) : 0;
+  if (Number.isNaN(refMs)) return true;
+  const weeks = Math.floor(Math.round((fireMs - refMs) / DAY_MS) / 7);
+  return (weeks % 2 + 2) % 2 === 0;
+}
+function periodAnchor(cadence, now, opts) {
+  const k = cadence?.kind;
+  const hour = Math.min(23, Math.max(0, cadence?.hour ?? 0));
+  const minute = cadence?.minute === 30 ? 30 : 0;
+  if (k === "once") {
+    if (!cadence?.start) return null;
+    const d = /* @__PURE__ */ new Date(`${cadence.start}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return null;
+    d.setHours(hour, minute, 0, 0);
+    return d.getTime();
+  }
+  if (k === "daily") {
+    const d = new Date(now);
+    d.setHours(hour, minute, 0, 0);
+    if (d.getTime() > now.getTime()) d.setDate(d.getDate() - 1);
+    return d.getTime();
+  }
+  if (k === "weekly") {
+    const t = DOW.indexOf((cadence?.day || "monday").toLowerCase());
+    if (t < 0) return null;
+    const back = (now.getDay() - t + 7) % 7;
+    const d = new Date(now);
+    d.setDate(now.getDate() - back);
+    d.setHours(hour, minute, 0, 0);
+    if (d.getTime() > now.getTime()) d.setDate(d.getDate() - 7);
+    return d.getTime();
+  }
+  if (k === "monthly") {
+    const dom = Math.min(28, Math.max(1, cadence?.dom ?? 1));
+    const d = new Date(now.getFullYear(), now.getMonth(), dom, hour, minute, 0, 0);
+    if (d.getTime() > now.getTime()) d.setMonth(d.getMonth() - 1);
+    return d.getTime();
+  }
+  if (k === "bi-weekly") {
+    const t = DOW.indexOf((cadence?.day || "monday").toLowerCase());
+    if (t < 0) return null;
+    const back = (now.getDay() - t + 7) % 7;
+    const d = new Date(now);
+    d.setDate(now.getDate() - back);
+    d.setHours(hour, minute, 0, 0);
+    if (d.getTime() > now.getTime()) d.setDate(d.getDate() - 7);
+    if (!biweekParityOk(d.getTime(), cadence?.start)) d.setDate(d.getDate() - 7);
+    return d.getTime();
+  }
+  if (k === "quarterly") {
+    const dom = Math.min(28, Math.max(1, cadence?.dom ?? 1));
+    const qMonth = Math.floor(now.getMonth() / 3) * 3;
+    const d = new Date(now.getFullYear(), qMonth, dom, hour, minute, 0, 0);
+    if (d.getTime() > now.getTime()) d.setMonth(d.getMonth() - 3);
+    return d.getTime();
+  }
+  if (k === "annual") {
+    const dom = Math.min(28, Math.max(1, cadence?.dom ?? 1));
+    const mo = Math.min(11, Math.max(0, (cadence?.month ?? 1) - 1));
+    const d = new Date(now.getFullYear(), mo, dom, hour, minute, 0, 0);
+    if (d.getTime() > now.getTime()) d.setFullYear(d.getFullYear() - 1);
+    return d.getTime();
+  }
+  if (k === "sprint-aligned") {
+    const sc = opts?.sprint;
+    if (!sc) return null;
+    const a = Date.parse(`${sc.anchor}T00:00:00`);
+    if (Number.isNaN(a)) return null;
+    const len = sc.length_days * DAY_MS;
+    const i22 = Math.floor((now.getTime() - a) / len);
+    if (i22 < 0) return null;
+    for (let j = i22; j >= 0; j--) {
+      const fire = a + (j + 1) * len - DAY_MS + hour * 36e5 + minute * 6e4;
+      if (fire <= now.getTime()) return fire;
+    }
+    return null;
+  }
+  return null;
+}
+var LOG_READ_MAX = 512 * 1024;
 
 // services/state-mcp/src/kanban.mjs
 var CACHE_ROOT = null;
@@ -59515,7 +59600,7 @@ function commitToDisk(root, workDir, changes, before, after, { result: result2, 
   return { result: result2, as_of: (/* @__PURE__ */ new Date()).toISOString(), changed: changes.map((c) => ({ path: c.rel, op: c.op })), ...warnings.length ? { warnings: warnings.slice(0, 20) } : {} };
 }
 var DROP = /^documents\/inbox\/portfolio-proposal-[A-Za-z0-9-]+\.md$/;
-async function write(store2, ref, { email: email3, control, label, L, drop }, fn) {
+async function write(store2, ref, { email: email3, control, label, L, drop, outsideLock }, fn) {
   const { org, project: project2, db, access, root } = store2.resolve(ref);
   const fence = await store2.fence(db, project2);
   const local = store2.driver === "fs";
@@ -59527,12 +59612,12 @@ async function write(store2, ref, { email: email3, control, label, L, drop }, fn
   );
   if (access !== "editor" && !(drop && access === "viewer")) throw new WriteRefused(`you have ${access} access to ${ref}; changing it needs editor access`);
   if (!email3) throw new WriteRefused("writes need a signed-in person to attribute them to");
+  const ctx = { store: store2, ref, org, project: project2, db, local, root, email: email3, control, label, drop };
+  if (outsideLock && !local) return writeOutsideLock(ctx, { L }, fn);
   return serialize(async () => {
     const baseDir = local ? root : await substrateDir(store2, ref);
     const workDir = local ? path33.join(tmpRoot(), "project-state") : path33.join(cacheBase(ref), `.write-${process.pid}-${Date.now()}`, "project-state");
-    fs28.mkdirSync(path33.dirname(workDir), { recursive: true });
-    fs28.cpSync(baseDir, workDir, { recursive: true, preserveTimestamps: true, filter: (src) => src === baseDir || !(EXCLUDE_DIRS.has(path33.basename(src)) || isNoise(path33.basename(src))) });
-    fs28.rmSync(path33.join(workDir, ".complete"), { force: true });
+    privateCopy(baseDir, workDir);
     const before = walk2(baseDir);
     let result2;
     try {
@@ -59542,6 +59627,81 @@ async function write(store2, ref, { email: email3, control, label, L, drop }, fn
       fs28.rmSync(path33.dirname(workDir), { recursive: true, force: true });
       throw err;
     }
+    return commit(ctx, { baseDir, workDir, before, result: result2 });
+  });
+}
+function privateCopy(from, to) {
+  fs28.mkdirSync(path33.dirname(to), { recursive: true });
+  fs28.cpSync(from, to, { recursive: true, preserveTimestamps: true, filter: (src) => src === from || !(EXCLUDE_DIRS.has(path33.basename(src)) || isNoise(path33.basename(src))) });
+  fs28.rmSync(path33.join(to, ".complete"), { force: true });
+}
+var sameBytes = (a, b) => {
+  const ea = fs28.existsSync(a), eb = fs28.existsSync(b);
+  return ea === eb && (!ea || fs28.readFileSync(a).equals(fs28.readFileSync(b)));
+};
+async function writeOutsideLock(ctx, { L }, fn) {
+  const { store: store2, ref, db, project: project2, email: email3 } = ctx;
+  const scratch = `${cacheBase(ref)}.long-${process.pid}-${Date.now()}`;
+  const snapDir = path33.join(scratch, "base", "project-state"), jobDir = path33.join(scratch, "job", "project-state");
+  let result2, own2;
+  try {
+    const startDir = await substrateDir(store2, ref);
+    privateCopy(startDir, snapDir);
+    privateCopy(startDir, jobDir);
+    result2 = L ? await L.substrateStorage.run(jobDir, () => fn(jobDir)) : await fn(jobDir);
+    if (!fs28.existsSync(path33.join(jobDir, "manifest.yaml")) || !fs28.existsSync(path33.join(snapDir, "manifest.yaml"))) throw new WriteRefused("refused: the private copy this job worked on disappeared before it finished; run it again");
+    attribute(jobDir, snapDir, email3);
+    own2 = diff(walk2(snapDir), walk2(jobDir));
+  } catch (err) {
+    fs28.rmSync(scratch, { recursive: true, force: true });
+    throw err;
+  }
+  if (!own2.length) {
+    fs28.rmSync(scratch, { recursive: true, force: true });
+    return { result: result2, as_of: await store2.lastRun(db, project2), changed: [] };
+  }
+  return serialize(async () => {
+    const baseDir = await substrateDir(store2, ref);
+    const workDir = path33.join(cacheBase(ref), `.write-${process.pid}-${Date.now()}`, "project-state");
+    try {
+      privateCopy(baseDir, workDir);
+      const conflicts = [];
+      for (const c of own2) {
+        const cur = path33.join(baseDir, c.rel), snap = path33.join(snapDir, c.rel), mine = path33.join(jobDir, c.rel), dst = path33.join(workDir, c.rel);
+        if (sameBytes(cur, snap)) {
+          if (c.op === "remove") {
+            fs28.rmSync(dst, { force: true });
+            continue;
+          }
+          fs28.mkdirSync(path33.dirname(dst), { recursive: true });
+          fs28.copyFileSync(mine, dst);
+          const t = fs28.statSync(mine).mtime;
+          fs28.utimesSync(dst, t, t);
+          continue;
+        }
+        if (c.op === "touch") continue;
+        if (c.op === "change" && c.rel.endsWith(".ndjson") && fs28.existsSync(cur)) {
+          const was = fs28.readFileSync(snap, "utf8"), job = fs28.readFileSync(mine, "utf8"), now = fs28.readFileSync(cur, "utf8");
+          if (job.startsWith(was) && now.startsWith(was)) {
+            const tail = job.slice(was.length);
+            fs28.writeFileSync(dst, now + (now === "" || now.endsWith("\n") || tail.startsWith("\n") ? "" : "\n") + tail);
+            continue;
+          }
+        }
+        conflicts.push(c.rel);
+      }
+      if (conflicts.length) throw new WriteRefused(`refused: ${conflicts.slice(0, 8).join(", ")}${conflicts.length > 8 ? ` and ${conflicts.length - 8} more` : ""} changed while this ran; run it again`);
+    } catch (err) {
+      fs28.rmSync(path33.dirname(workDir), { recursive: true, force: true });
+      fs28.rmSync(scratch, { recursive: true, force: true });
+      throw err;
+    }
+    fs28.rmSync(scratch, { recursive: true, force: true });
+    return commit(ctx, { baseDir, workDir, before: walk2(baseDir), result: result2 });
+  });
+}
+async function commit({ store: store2, ref, org, project: project2, db, local, root, email: email3, control, label, drop }, { baseDir, workDir, before, result: result2 }) {
+  {
     const after = walk2(workDir);
     const changes = diff(before, after);
     if (drop) {
@@ -59644,7 +59804,7 @@ async function write(store2, ref, { email: email3, control, label, L, drop }, fn
     const changed = changes.map((c) => ({ path: c.rel, op: c.op }));
     await control?.audit(email3, "substrate.write", { org, project: project2, detail: { label, changed: changed.slice(0, 50) } });
     return { result: result2, as_of: at, changed, ...checked.warnings.length ? { warnings: checked.warnings.slice(0, 20) } : {} };
-  });
+  }
 }
 
 // services/state-mcp/src/yaml-patch.mjs
@@ -60130,7 +60290,7 @@ function summary(e) {
   for (const f of ["owner", "severity", "likelihood", "impact", "percent_complete", "phase"]) if (d[f] != null && typeof d[f] !== "object") out[f] = d[f];
   return out;
 }
-function buildServer(store2, { audit, control, principal: principal2, transfer, registrars = [], readOnly: readOnly2 = false } = {}) {
+function buildServer(store2, { audit, control, principal: principal2, transfer, registrars = [], readOnly: readOnly2 = false, onlyTools = null } = {}) {
   const server2 = new McpServer({ name: "project-state", version: "0.1.0" }, {
     // The local server (the plugin's, over folders on this machine) and the cloud one share every tool but not their
     // rules: until 2026-09-28 the local one sent the cloud's text, telling Claude that only projects whose home is
@@ -60150,16 +60310,20 @@ function buildServer(store2, { audit, control, principal: principal2, transfer, 
     const register = server2.registerTool.bind(server2);
     server2.registerTool = (name, def, fn) => def?.annotations?.readOnlyHint === true ? register(name, def, fn) : void 0;
   }
+  if (onlyTools) {
+    const allowed = new Set(onlyTools), register = server2.registerTool.bind(server2);
+    server2.registerTool = (name, def, fn) => allowed.has(name) ? register(name, def, fn) : void 0;
+  }
   const brief = (args) => Object.fromEntries(Object.entries(args || {}).map(([k, v3]) => [k, typeof v3 === "string" && v3.length > 200 ? `(${v3.length} chars)` : v3]));
   const wrap2 = (name, fn) => async (args, extra) => {
     args = args || {};
     const t0 = Date.now();
     try {
       const r = await fn(args);
-      audit?.({ tool: name, args: brief(args), ok: true, ms: Date.now() - t0, email: extra?.authInfo?.extra?.email });
+      audit?.({ tool: name, args: brief(args), ok: true, ms: Date.now() - t0, email: extra?.authInfo?.extra?.email || principal2?.email, ...principal2?.service ? { token: principal2.service.id } : {} });
       return result(r);
     } catch (err) {
-      audit?.({ tool: name, args: brief(args), ok: false, error: String(err?.message || err), email: extra?.authInfo?.extra?.email });
+      audit?.({ tool: name, args: brief(args), ok: false, error: String(err?.message || err), email: extra?.authInfo?.extra?.email || principal2?.email, ...principal2?.service ? { token: principal2.service.id } : {} });
       return fail(err);
     }
   };
@@ -60543,13 +60707,21 @@ function registerPortfolioTools(server2, { store: store2, control, principal: pr
     fs30.writeFileSync(reg, JSON.stringify({ projects: [], cloud: { ok: true, projects: rows } }));
     const core3 = !!await paid(org);
     try {
-      const done = await write(store2, ref, { email: email3, label: "portfolio collect" }, async (dir) => {
+      const run2 = () => write(store2, ref, { email: email3, control, label: "portfolio collect", outsideLock: true }, async (dir) => {
         const out = await python(
           [collector(), "--portfolio", dir, "all", "--json", "--transport", "files", ...core3 ? ["--core"] : [], ...week ? ["--week"] : [], ...force ? ["--force"] : [], ...as_of ? ["--as-of", as_of] : []],
           { PORTFOLIO_CLOUD_FOLDERS: JSON.stringify(folders), PROJECT_STATE_REGISTRY: reg, PS_MCP_URL: "", PS_MCP_TOKEN: "" }
         );
+        if (process.env.PS_TEST_COLLECT_DELAY_MS && process.env.PS_MCP_DATA_DIR?.includes("state-mcp-dev")) await new Promise((r2) => setTimeout(r2, Number(process.env.PS_TEST_COLLECT_DELAY_MS)));
         return JSON.parse(out);
       });
+      let done;
+      try {
+        done = await run2();
+      } catch (err) {
+        if (!/changed while this ran/.test(err?.message || "")) throw err;
+        done = await run2();
+      }
       const r = done.result || {};
       return { project: ref, as_of: done.as_of, core: core3, ...core3 ? { skipped: r.skipped } : {}, members: r.members, checks: r.checks, index: r.index, discovered: r.discovered, changed: done.changed.length, ...done.warnings ? { warnings: done.warnings } : {} };
     } finally {
