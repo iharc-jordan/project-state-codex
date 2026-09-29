@@ -48287,8 +48287,8 @@ AFTER: update state.json harvest_cursors.calendar to the current ISO timestamp; 
 };
 var system_map_generated_default = {
   schema_version: 1,
-  generated_at: "2026-09-26T21:14:39Z",
-  plugin_version: "5.0.0",
+  generated_at: "2026-09-29T03:42:22Z",
+  plugin_version: "5.2.0",
   columns: [
     {
       id: "sources",
@@ -48743,6 +48743,18 @@ var system_map_generated_default = {
       tier: "P3",
       capability: null,
       profile_driven: true,
+      role: null
+    },
+    {
+      id: "skill:project-artifacts",
+      kind: "skill",
+      column: "generate",
+      label: "project-artifacts",
+      desc: "Show a project as a Claude artifact \u2014 'make me a snapshot of the project', 'refresh my snapshot', 'publish the project as an artifact'. Records a read-only page from the local folder; publishes it privately.",
+      path: "skills/project-artifacts",
+      tier: "P2",
+      capability: null,
+      profile_driven: false,
       role: null
     },
     {
@@ -49585,6 +49597,13 @@ var system_map_generated_default = {
       desc: "docx, xlsx, md and html written under reports/ for review."
     },
     {
+      id: "surface:artifact",
+      kind: "surface",
+      column: "surfaces",
+      label: "Claude artifact",
+      desc: "A private claude.ai page: the Project State Console filled with a local project's data (a read-only snapshot), refreshed by republishing to the same URL."
+    },
+    {
       id: "surface:chat",
       kind: "surface",
       column: "surfaces",
@@ -50136,6 +50155,66 @@ var system_map_generated_default = {
       kind: "produce",
       source: "skill:project-archive",
       target: "report:closeout"
+    },
+    {
+      kind: "read",
+      source: "substrate:manifest",
+      target: "skill:project-artifacts"
+    },
+    {
+      kind: "read",
+      source: "substrate:state",
+      target: "skill:project-artifacts"
+    },
+    {
+      kind: "read",
+      source: "substrate:milestones",
+      target: "skill:project-artifacts"
+    },
+    {
+      kind: "read",
+      source: "substrate:objectives",
+      target: "skill:project-artifacts"
+    },
+    {
+      kind: "read",
+      source: "substrate:risks",
+      target: "skill:project-artifacts"
+    },
+    {
+      kind: "read",
+      source: "substrate:decisions",
+      target: "skill:project-artifacts"
+    },
+    {
+      kind: "read",
+      source: "substrate:documents",
+      target: "skill:project-artifacts"
+    },
+    {
+      kind: "read",
+      source: "substrate:references",
+      target: "skill:project-artifacts"
+    },
+    {
+      kind: "read",
+      source: "substrate:log",
+      target: "skill:project-artifacts"
+    },
+    {
+      kind: "read",
+      source: "substrate:reporting-matrix",
+      target: "skill:project-artifacts"
+    },
+    {
+      kind: "deliver",
+      source: "skill:project-artifacts",
+      target: "surface:artifact"
+    },
+    {
+      kind: "deliver",
+      source: "skill:project-artifacts",
+      target: "surface:chat"
     },
     {
       kind: "read",
@@ -53423,6 +53502,26 @@ var system_map_generated_default = {
         missing_for: {},
         binding: null
       },
+      "project-artifacts": {
+        requires: [
+          "memory",
+          "shell",
+          "local-fs"
+        ],
+        targets: [
+          "local"
+        ],
+        missing_for: {
+          "claude-ai": [
+            "local-fs",
+            "shell"
+          ],
+          runner: [
+            "local-fs"
+          ]
+        },
+        binding: null
+      },
       "project-automator": {
         requires: [
           "memory"
@@ -53963,15 +54062,15 @@ var system_map_generated_default = {
     }
   },
   counts: {
-    skills: 54,
+    skills: 55,
     substrate: 24,
     reports: 25,
-    surfaces: 10,
+    surfaces: 11,
     sources: 14,
     packs: 20,
     capabilities: 4,
     matrix_entries: 69,
-    edges: 441
+    edges: 453
   },
   warnings: []
 };
