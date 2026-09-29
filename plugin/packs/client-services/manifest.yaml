@@ -2,7 +2,7 @@ pack:
   id: "client-services"
   name: "Client Services Engagement"
   version: "0.1.0-starter"
-  compatible_core: ">=4.0,<5.0"
+  compatible_core: ">=4.0,<6.0"
   description: |
     Pack for consulting/client-engagement projects. Configures the suite to handle
     Statements of Work, milestone-based customer billing, customer change orders

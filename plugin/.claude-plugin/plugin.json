@@ -1,7 +1,7 @@
 {
   "name": "project-state",
   "displayName": "Project State",
-  "version": "5.1.3",
+  "version": "5.2.0",
   "description": "Turn any multi-stakeholder project into a system where routine reporting is a byproduct of normal work. Skills for milestones, objectives and KPIs, phase gates, documents, status reports, feedback and funder compliance, shaped by swappable packs and capability plugins: SR&ED, Tender, Intel and Portfolio. Ships a local project-state server, so Claude reads and writes your project's state through checked, attributed tools.",
   "author": {
     "name": "Atomic 47 Labs",

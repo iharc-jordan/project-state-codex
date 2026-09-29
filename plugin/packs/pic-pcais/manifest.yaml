@@ -10,7 +10,7 @@ pack:
   id: "pic-pcais"
   name: "Protein Industries Canada — PCAIS"
   version: "1.0.0"
-  compatible_core: ">=4.0,<5.0"
+  compatible_core: ">=4.0,<6.0"
   description: |
     Funder pack for Protein Industries Canada PCAIS-funded consortium projects.
     Encodes PIC PM Guide requirements: quarterly claim cadence (Apr/Jul/Oct/Jan 20),

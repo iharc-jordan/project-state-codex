@@ -2,7 +2,7 @@ pack:
   id: "work-partnership"
   name: "Partnership or Collaboration"
   version: "0.1.0"
-  compatible_core: ">=4.0,<5.0"
+  compatible_core: ">=4.0,<6.0"
   description: |
     Work type for establishing a partnership, alliance or cross-organisation collaboration: agree
     shared goals, sign the agreement, build a joint plan, deliver something together, then review.
