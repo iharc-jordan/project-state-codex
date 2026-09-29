@@ -49024,8 +49024,8 @@ AFTER: update state.json harvest_cursors.calendar to the current ISO timestamp; 
 };
 var system_map_generated_default = {
   schema_version: 1,
-  generated_at: "2026-09-29T06:14:31Z",
-  plugin_version: "5.3.0",
+  generated_at: "2026-09-29T06:36:02Z",
+  plugin_version: "5.4.0",
   columns: [
     {
       id: "sources",
@@ -57212,7 +57212,8 @@ function extract(page, resolve) {
   });
 }
 var idxAbs = (stateDir) => path14.join(stateDir, INDEX_DIR);
-function buildIndex(stateDir) {
+var inMemory = /* @__PURE__ */ new Map();
+function buildIndex(stateDir, { persist = true } = {}) {
   const pages = readPages(stateDir);
   const entities = readEntities2(stateDir);
   const idx = buildIndexes(pages, entities);
@@ -57274,6 +57275,8 @@ function buildIndex(stateDir) {
     )
   };
   void inbound;
+  inMemory.set(stateDir, { health, backlinks });
+  if (!persist) return health;
   const dir = idxAbs(stateDir);
   fs11.mkdirSync(dir, { recursive: true });
   fs11.writeFileSync(
@@ -57300,18 +57303,20 @@ function readJson2(stateDir, file2) {
     return null;
   }
 }
-function ensureIndex(stateDir) {
-  if (!fs11.existsSync(path14.join(idxAbs(stateDir), "backlinks.json"))) buildIndex(stateDir);
+function ensureIndex(stateDir, persist = true) {
+  if (fs11.existsSync(path14.join(idxAbs(stateDir), "backlinks.json"))) return true;
+  buildIndex(stateDir, { persist });
+  return persist;
 }
-function readBacklinks(stateDir) {
-  ensureIndex(stateDir);
+function readBacklinks(stateDir, { persist = true } = {}) {
+  if (!ensureIndex(stateDir, persist)) return inMemory.get(stateDir)?.backlinks || {};
   return readJson2(stateDir, "backlinks.json") || {};
 }
-function backlinksFor(stateDir, key) {
-  return readBacklinks(stateDir)[key] || [];
+function backlinksFor(stateDir, key, opts = {}) {
+  return readBacklinks(stateDir, opts)[key] || [];
 }
-function readHealth(stateDir) {
-  ensureIndex(stateDir);
+function readHealth(stateDir, { persist = true } = {}) {
+  if (!ensureIndex(stateDir, persist)) return inMemory.get(stateDir)?.health || null;
   return readJson2(stateDir, "health.json");
 }
 var LOCK_TTL_MS = 3e5;
@@ -59068,12 +59073,12 @@ var viewScoreboard = (store2, ref, days2 = 90) => wrap(store2, ref, (dir) => ({ 
 var viewTeam = (store2, ref) => wrap(store2, ref, (dir) => ({ team: readTeam(dir) }));
 var viewWiki = (store2, ref) => wrap(store2, ref, (dir) => {
   const pages = readPages(dir).map((p) => ({ slug: p.slug ?? p.id, title: p.title, tags: p.tags || [], parent: p.parent || null, aliases: p.aliases || [], confidence: p.confidence ?? null, last_modified: p.last_modified ?? null, excerpt: String(p.body || "").replace(/\s+/g, " ").slice(0, 180) }));
-  return { pages, health: readHealth(dir) };
+  return { pages, health: readHealth(dir, { persist: false }) };
 });
 var viewWikiPage = (store2, ref, slug) => wrap(store2, ref, (dir) => {
   const p = readPage(dir, slug);
   if (!p) throw new Error(`no wiki page "${slug}"`);
-  return { page: { ...p, body: String(p.body || "") }, backlinks: backlinksFor(dir, slug) };
+  return { page: { ...p, body: String(p.body || "") }, backlinks: backlinksFor(dir, slug, { persist: false }) };
 });
 var viewTechReports = (store2, ref) => wrap(store2, ref, () => ({ tech: readTechState() }));
 var viewDocuments = (store2, ref) => wrap(store2, ref, (dir) => {
