@@ -89,9 +89,12 @@ facts as current without saying which copy and how old.
 1. **Resolve the location.** `local` → must resolve inside `workspace_root` (outside →
    `unreachable: permission`, never read). `registry` → the workspace registry's `ref`
    (`org/project`) resolved to its folder, then as `local`. `server` → the cloud project `ref`,
-   read through the cloud server with `$PS_MCP_URL` and a bearer token (`$PS_MCP_TOKEN`, else
-   `~/.config/project-state/mcp-token`); none configured or refused → `unreachable: remote`,
-   with the reason in the event; never sign in or ask. `hub` → the local clone `project-admin pull`
+   read through the cloud server with its org's service token from
+   `~/.config/project-state/mcp-tokens.json` (`{org: "ksm_…"}`, 0600; a viewer token a superadmin mints for
+   the portfolio, scoped to its members), else `$PS_MCP_TOKEN` or `~/.config/project-state/mcp-token`; the URL
+   is `$PS_MCP_URL`, else `~/.config/project-state/mcp-url`, else the cloud's own. This is how a portfolio on
+   disk reads cloud members unattended. None configured, a token file others can read, or refused →
+   `unreachable: remote`, with the reason in the event; never sign in or ask. `hub` → the local clone `project-admin pull`
    recorded; no clone → `unreachable: remote`; never clone here. `appliance` → the read API
    when configured. Missing directory or manifest → `missing`; unparseable → `malformed`.
    Unreachable: write the cursor, log `portfolio.member.unreachable`, continue.

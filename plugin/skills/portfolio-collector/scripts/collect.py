@@ -27,7 +27,7 @@ USAGE
 
 Members are located by portfolio/members/<id>.yaml location.type: local (a path under workspace_root),
 registry (a workspace-registry "org/project", resolved to its folder; the reach still applies), server
-(an "org/project" in the cloud, read with $PS_MCP_URL and a bearer token), hub or appliance (a local
+(an "org/project" in the cloud, read with its org's token from ~/.config/project-state/mcp-tokens.json, or $PS_MCP_URL and a bearer token), hub or appliance (a local
 clone recorded on the row). Every snapshot records how it was read in read_via.
 
 Requires PyYAML (already required by the other guards). Stdlib otherwise.
@@ -52,7 +52,7 @@ except ImportError:  # pragma: no cover
     sys.exit(2)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from member_source import (FileSource, McpClient, McpError, McpSource, cloud_endpoint,  # noqa: E402
+from member_source import (FileSource, McpClient, McpError, McpSource, cloud_tokens,  # noqa: E402
                            cloud_folders, entitlement_status, local_server_cmd, parse_yaml, registry_cloud_rows, registry_folder, registry_rows)
 
 ACTOR_DEFAULT = "portfolio-collector"
@@ -181,7 +181,8 @@ class Run:
         self.events: list[dict] = []
         self.summary: list[dict] = []
         self.writes: list[str] = []
-        self._local = self._cloud = None      # MCP clients, started on first use
+        self._local = None                    # MCP clients, started on first use
+        self._clouds: dict[str, McpClient | bool] = {}   # token → a cloud client (a service token per org, or one for all)
         self._local_refs: dict[str, str] = {}  # member folder → the local server's "org/project"
         self.cloud_error: str | None = None
 
@@ -202,37 +203,49 @@ class Run:
                 self._local = False
         return self._local or None
 
-    def cloud(self) -> McpClient | None:
-        if self._cloud is None:
-            url, tok = cloud_endpoint()
-            self._cloud = False
-            if url and tok:
-                try:
-                    self._cloud = McpClient(url=url, token=tok)
-                except McpError as e:
-                    self.cloud_error = str(e)
-            else:
-                self.cloud_error = "no cloud server configured ($PS_MCP_URL and a token)"
-        return self._cloud or None
+    # The cloud client for one org's projects: that org's service token (mcp-tokens.json), else the any-org token.
+    # A portfolio on this disk reads its cloud members unattended this way, each with its own org's token.
+    def cloud(self, org: str | None = None) -> McpClient | None:
+        url, by_org, default = cloud_tokens()
+        tok = by_org.get(org) if org else None
+        tok = tok or default or (None if org else next(iter(by_org.values()), None))
+        if not (url and tok):
+            self.cloud_error = f"no cloud token for {org}" if org and by_org else "no cloud server configured (a token in ~/.config/project-state/mcp-tokens.json, or $PS_MCP_URL and a token)"
+            return None
+        if tok not in self._clouds:
+            try:
+                self._clouds[tok] = McpClient(url=url, token=tok)
+            except McpError as e:
+                self._clouds[tok] = False
+                self.cloud_error = str(e)
+        return self._clouds[tok] or None
+
+    def cloud_clients(self) -> list[McpClient]:
+        """One client per token configured: each lists the projects its org's token can see."""
+        url, by_org, default = cloud_tokens()
+        orgs = list(by_org) + ([None] if default else [])
+        return [c for c in (self.cloud(o) for o in orgs) if c] if url else []
 
     # ref → the cloud's own word on where that project's home is (server, or local for a Published mirror),
     # else the registry's last reading of it
     def cloud_home(self, ref: str) -> str | None:
         if not hasattr(self, "_cloud_homes"):
             self._cloud_homes = {str(r.get("ref")): r.get("home") for r in registry_cloud_rows()}
-            if self.args.transport != "files" and self.cloud():
-                try:
-                    self._cloud_homes.update({r["project"]: r.get("home") for r in self._cloud.call("project_list", {}).get("projects", [])})
-                except McpError:
-                    pass
+            if self.args.transport != "files":
+                for c in self.cloud_clients():
+                    try:
+                        self._cloud_homes.update({r["project"]: r.get("home") for r in c.call("project_list", {}).get("projects", [])})
+                    except McpError:
+                        pass
         return self._cloud_homes.get(ref)
 
     def cloud_source(self, ref: str):
         if ref in self.cloud_folders:  # the cloud server's own collect: a copy it materialized for this caller
             return FileSource(self.cloud_folders[ref], via="cloud"), None
-        if self.server_side or self.args.transport == "files" or not self.cloud():
+        client = None if self.server_side or self.args.transport == "files" else self.cloud(ref.split("/")[0])
+        if not client:
             return None, "remote"
-        return McpSource(self._cloud, ref, "cloud"), None
+        return McpSource(client, ref, "cloud"), None
 
     # a member folder on this disk → how to read it (auto: through the local server when it serves it)
     def source_for(self, p: Path):
@@ -245,7 +258,7 @@ class Run:
         return FileSource(p), None
 
     def close(self):
-        for c in (self._local, self._cloud):
+        for c in (self._local, *self._clouds.values()):
             if c:
                 c.close()
 

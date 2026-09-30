@@ -450,7 +450,7 @@ PS.NAV = [
   { id: 'report', label: 'Report', icon: 'chart', tagline: 'what goes out?', items: [['matrix'], ['outputs'], ['tech'], ['queue'], ['gaps']] },
   { id: 'run', label: 'Run', icon: 'bolt', tagline: 'how does the machine run?', items: [['processing'], ['automation'], ['costing'], ['substrate'], ['activity']] },
   { id: 'learn', label: 'Learn', icon: 'info', tagline: 'how does it all work?', items: [['scoreboard'], ['wiki']] },
-  { id: 'admin', label: 'Admin', icon: 'shield', tagline: 'who can see and change what?', items: [['admin']] },
+  { id: 'admin', label: 'Admin', icon: 'shield', tagline: 'who can see and change what?', items: [['admin'], ['runs']] },
 ]
 
 // ── themes (kanban/src/lib/themes.ts) ───────────────────────────────────────
@@ -524,7 +524,7 @@ function snapshotMcp(snap) {
 // ── boot ────────────────────────────────────────────────────────────────────
 PS.boot = async function boot({ viewIds, single, title }) {
   const root = document.getElementById('app')
-  if (PS.snapshot) viewIds = viewIds.filter((v) => v !== 'admin') // org administration has no meaning for a folder on disk
+  if (PS.snapshot) viewIds = viewIds.filter((v) => v !== 'admin' && v !== 'runs') // org administration and the cloud scheduler have no meaning for a folder on disk
   const mcp = PS.snapshot ? snapshotMcp(PS.snapshot) : window.claude?.use ? await window.claude.use('mcp').catch(() => null) : null
   applyTheme(null)
   if (!mcp) { root.replaceChildren(noConnector('This page reads your projects through the Project State connector, which isn\'t available in this view.')); return }
@@ -533,10 +533,10 @@ PS.boot = async function boot({ viewIds, single, title }) {
   let projects
   try { projects = (await mcp.callTool(PS.SERVER, 'project_list', null, { cache: { staleTime: 60000 } })).payload?.projects || [] }
   catch (err) { root.replaceChildren(DENIALS.has(err?.code) ? noConnector(explain(err)) : errorState('Couldn\'t load your projects', explain(err))); return }
-  if (viewIds.includes('admin') && !PS.snapshot) PS.me = (await mcp.callTool(PS.SERVER, 'whoami', null, { cache: { staleTime: 60000 } }).catch(() => null))?.payload || null
+  if ((viewIds.includes('admin') || viewIds.includes('runs')) && !PS.snapshot) PS.me = (await mcp.callTool(PS.SERVER, 'whoami', null, { cache: { staleTime: 60000 } }).catch(() => null))?.payload || null
   const isAdmin = !!(PS.me && (PS.me.superadmin || PS.me.orgs?.some((o) => o.role === 'admin')))
   if (!projects.length && !isAdmin) { root.replaceChildren(h('main', { class: 'page' }, h('div', { class: 'panel state' }, h('strong', {}, 'No projects yet'), 'Your account can sign in but has no projects allocated. Ask an org admin to give you access.'))); return }
-  if (!projects.length) viewIds = ['admin']
+  if (!projects.length) viewIds = viewIds.filter((v) => v === 'admin' || v === 'runs') // an admin with no projects of their own
 
   const saved = store.get('ps.project')
   PS.projects = projects
@@ -804,7 +804,8 @@ PS.guide = (title, r) => new Promise((resolve) => {
 // stamps who and when, and logs it. On success the page's reads refresh.
 PS.act = async (tool, args, { confirm, done, quiet } = {}) => {
   if (PS.snapshot) { PS.toast(explain({ code: 'snapshot_read_only' }), 'err'); return null }
-  if (confirm && !window.confirm(confirm)) return null
+  // the artifact viewer never shows window.confirm (it returns false at once), so ask in the page itself
+  if (confirm && !(await PS.dialog({ title: 'Are you sure?', intro: confirm, submit: 'Confirm', danger: /delete|remove|disable|stop|revoke|return .* to the cloud|writable/i.test(confirm) }))) return null
   try {
     const r = await PS.mcp.callTool(PS.SERVER, tool, { project: PS.project, ...args })
     const payload = r?.payload
@@ -2423,7 +2424,7 @@ PS.views.automation = {
         h('span', { class: 'when' }, PS.chip(t.target?.kind || 'task')), h('span', { class: 'what' }, h('div', { class: 'title' }, t.title || m?.report || t.target?.ref || t.id), h('div', { class: 'sub' }, [cad(t.cadence || m?.cadence), m?.generator, m?.surface].filter(Boolean).join(' · '))),
         t.status === 'proposed' ? PS.chip('proposed', 'warn') : t.enabled === false ? PS.chip('off') : PS.chip('on', 'good')) }
       wrap.replaceChildren(
-        PS.head({ section: 'Automation', title: h('span', {}, `${on.length} `, h('em', {}, 'scheduled'), ` · ${proposed.length} proposed`), lede: 'Tasks the scheduler runs, compiled from the reporting matrix plus holds proposed by the orchestrator. Scheduling on the cloud tier arrives with the server runner; today these run where the project lives.', stats: [[v.matrix.length, 'matrix entries']] }),
+        PS.head({ section: 'Automation', title: h('span', {}, `${on.length} `, h('em', {}, 'scheduled'), ` · ${proposed.length} proposed`), lede: 'Tasks the scheduler runs, compiled from the reporting matrix plus holds proposed by the orchestrator. A project on a computer is run there; a cloud project is run by the cloud scheduler (Admin → Runs).', stats: [[v.matrix.length, 'matrix entries']] }),
         (() => { const s = PS.section('Scheduled'); s.body.replaceChildren(on.length ? h('ul', { class: 'rows' }, on.map(row)) : PS.empty('Nothing scheduled.')); return s.el })(),
         proposed.length ? (() => { const s = PS.section('Proposed', h('span', { class: 'sub' }, 'waiting for someone to accept')); s.body.replaceChildren(h('ul', { class: 'rows' }, proposed.map(row))); return s.el })() : null)
     })
@@ -2527,5 +2528,127 @@ PS.views.admin = {
   },
 }
 
-PS.boot({ viewIds: ["today","dashboard","board","capabilities","calendar","goals","milestones","inputs","decisions","risks","changes","lessons","documents","team","feedback","matrix","outputs","tech","queue","gaps","processing","automation","costing","substrate","activity","scoreboard","wiki","admin","cap-sred","cap-intel","cap-tender","cap-portfolio","cap-research"], single: false, title: "Project State Console" })
+// Runs — the cloud scheduler for an org (M49; services/state-mcp/src/tools-scheduler.mjs, scheduler_admin). What ran for
+// each cloud project, what is queued, and the controls: run now, cancel, pause, resume, and which phases the org runs.
+// Org admins and superadmins; every control is audited server-side.
+PS.views.runs = {
+  tab: 'Runs', title: 'Runs', icon: 'clock', desc: 'The cloud scheduler: what ran, what is queued, and its controls', tools: ['admin_overview', 'scheduler_admin', 'admin_token'],
+  mount(el, { watch }) {
+    const { h, fmt } = PS
+    const wrap = h('div', { class: 'page' }); el.append(wrap)
+    let org = PS.store.get('ps.runs.org') || PS.store.get('ps.admin.org')
+    const PHASES = [['harvest', 'Harvest'], ['tick', 'Tick'], ['digest', 'Digest']]
+    const COST = { harvest: 'model time', tick: 'about $0.50', digest: 'about $0.60' }
+    const cls = (s) => ({ ok: 'good', quiet: '', failed: 'crit', running: 'accent', cancelled: 'warn', skipped: '', pending: 'accent', taken: 'accent', done: 'good', refused: 'warn' })[s] ?? ''
+    const jobLabel = (j) => j.startsWith('phase:') ? j.slice(6).replace(/^./, (c) => c.toUpperCase()) : j === 'matrix:portfolio-weekly-collect' ? 'Weekly collect' : fmt.label(j.replace(/^matrix:/, ''))
+    const act = (args, done, confirm) => PS.act('scheduler_admin', { org, ...args }, { done, confirm })
+
+    watch(wrap, 'admin_overview', {}, (list) => {
+      const orgs = list.orgs || []
+      if (!orgs.length) { wrap.replaceChildren(PS.head({ section: 'Admin', title: 'Nothing to run' }), PS.empty('You are not an admin of any org.')); return }
+      if (!orgs.some((o) => o.org === org)) org = (orgs.find((o) => o.org === String(PS.project || '').split('/')[0]) || orgs[0]).org
+      const pick = h('select', { class: 'inline-sel', 'aria-label': 'Org', onchange: (e) => { org = e.target.value; PS.store.set('ps.runs.org', org); PS.reload() } }, orgs.map((o) => h('option', { value: o.org, selected: o.org === org }, o.name || o.org)))
+      const body = h('div', {}); wrap.replaceChildren(body)
+      watch(body, 'scheduler_admin', { action: 'status', org }, (d) => body.replaceChildren(...page(d, pick, orgs.find((o) => o.org === org))))
+    })
+
+    function page(d, pick, o) {
+      const hb = d.heartbeat, b = hb?.budget || {}
+      const stale = !hb || Date.now() - Date.parse(hb.at) > 15 * 60_000
+      const cap = b.daily_usd ?? null
+      return [
+        PS.head({ section: h('span', {}, 'Admin · ', pick), title: h('span', {}, o?.name || org, ' ', h('em', {}, 'cloud scheduler')),
+          lede: 'Automation for projects whose home is the cloud. The scheduler checks every two minutes; each job runs once per period and retries a failure up to three times. Harvest, tick and digest are model runs and cost money; a portfolio\'s weekly collect does not.',
+          stats: [[d.today.runs, 'runs today'], [d.today.failed, 'failed', d.today.failed > 0], [d.today.running, 'running now'], [`$${(b.spent_usd >= 0 ? b.spent_usd : d.today.cost_usd).toFixed(2)}`, cap != null ? `spent of $${cap}` : 'spent today'], [hb ? fmt.ago(hb.at) : 'never', 'last check-in', stale]] }),
+        stale ? h('div', { class: 'callout warn', style: 'font-size:12.5px' }, hb ? `The scheduler has not checked in since ${fmt.stamp(hb.at)}. Nothing runs until it does; see deploy/cloud/README.md.` : 'The scheduler has never checked in for this org: it has no service token for it yet.') : null,
+        phases(d, hb), projects(d), queue(d), recent(d), tokens(d),
+      ].filter(Boolean)
+    }
+
+    function phases(d, hb) {
+      const on = new Set(d.phases ?? []), times = hb?.times || {}
+      const set = (k) => {
+        const next = on.has(k) ? [...on].filter((x) => x !== k) : [...on, k]
+        act({ action: 'set_phases', phases: next }, `${fmt.label(k)} ${on.has(k) ? 'off' : 'on'} for ${org}`, on.has(k) ? null : `Turn ${k} on for every cloud project in ${org}? It runs daily at ${times[k] || 'its time'} and uses model time (${COST[k]} a project).`)
+      }
+      const s = PS.section('Phases', h('span', { class: 'sub' }, d.phases == null ? 'the host\'s default — change one to set them here' : `set by ${d.phases_by} ${fmt.ago(d.phases_at)}`))
+      s.body.replaceChildren(h('ul', { class: 'rows' }, PHASES.map(([k, l]) => h('li', { class: 'row' },
+        h('span', { class: 'when' }, on.has(k) ? PS.chip('on', 'good') : PS.chip('off')),
+        h('span', { class: 'what' }, h('div', { class: 'title' }, l), h('div', { class: 'sub' }, [`daily at ${times[k] || '—'} ${hb?.tz || ''}`, k === 'harvest' ? 'needs connectors on the server (not yet available)' : COST[k] + ' a project'].join(' · '))),
+        h('span', { class: 'acts' }, PS.actBtn(on.has(k) ? 'Turn off' : 'Turn on', () => set(k), { cls: on.has(k) ? 'ghost' : '' }))))))
+      return s.el
+    }
+
+    function projects(d) {
+      const cloud = d.projects.filter((p) => p.home === 'server'), other = d.projects.filter((p) => p.home !== 'server')
+      const matrixJobs = [...new Set(cloud.flatMap((p) => p.jobs.map((j) => j.job)).filter((j) => j.startsWith('matrix:')))]
+      const cols = [...PHASES.map(([k]) => `phase:${k}`), ...matrixJobs]
+      const cell = (p, job) => {
+        const r = p.jobs.find((j) => j.job === job), paused = p.paused.find((x) => x.job === job)
+        const run = () => act({ action: 'run_now', project: p.project, job }, `${jobLabel(job)} queued for ${p.project}`, job.startsWith('phase:') ? `Run ${jobLabel(job).toLowerCase()} for ${p.project} now? It starts within two minutes and uses model time.` : `Run ${jobLabel(job).toLowerCase()} for ${p.project} now?`)
+        const pause = () => act({ action: paused ? 'resume' : 'pause', project: p.project, job }, `${jobLabel(job)} ${paused ? 'resumed' : 'paused'} for ${p.project}`)
+        return h('td', {},
+          h('div', {}, r ? PS.chip(r.status === 'failed' ? `failed #${r.attempt}` : r.status, cls(r.status)) : h('span', { class: 'faint' }, 'not run'), paused ? PS.chip('paused', 'warn') : null),
+          r ? h('div', { class: 'faint', style: 'font-size:11px', title: r.summary || '' }, [fmt.ago(r.finished_at || r.ts), r.duration_s != null ? `${Math.round(r.duration_s)}s` : null, r.cost_usd ? `$${r.cost_usd.toFixed(2)}` : null].filter(Boolean).join(' · ')) : null,
+          h('div', { class: 'acts', style: 'margin-top:4px' }, PS.actBtn('Run now', run, { cls: 'ghost', icon: 'bolt' }), PS.actBtn(paused ? 'Resume' : 'Pause', pause, { cls: 'ghost' })))
+      }
+      const s = PS.section('Cloud projects', h('span', { class: 'sub' }, `${cloud.length}`))
+      s.body.replaceChildren(cloud.length ? h('div', { style: 'overflow-x:auto' }, h('table', { class: 't' },
+        h('thead', {}, h('tr', {}, h('th', {}, 'Project'), cols.map((c) => h('th', {}, jobLabel(c))))),
+        h('tbody', {}, cloud.map((p) => h('tr', {}, h('td', {}, h('div', { class: 'title' }, p.project)), cols.map((c) => cell(p, c))))))) : PS.empty(`${org} has no projects whose home is the cloud yet. Mirrors and checked-out projects are run where they live.`),
+        ...(other.length ? [h('div', { class: 'faint', style: 'font-size:12px; padding:8px 18px' }, `Run where they live, not here: ${other.map((p) => `${p.project} (${p.home === 'mirror' ? 'mirror' : p.state})`).join(', ')}.`)] : []))
+      return s.el
+    }
+
+    function queue(d) {
+      const waiting = d.queue.filter((q) => q.status === 'pending' || q.status === 'taken'), running = d.recent.filter((r) => r.status === 'running')
+      const s = PS.section('Queue', h('span', { class: 'sub' }, `${waiting.length} requested · ${running.length} running`))
+      const rows = [
+        ...waiting.map((q) => h('li', { class: 'row' }, h('span', { class: 'when' }, PS.chip(q.status === 'pending' ? 'waiting' : 'running', 'accent')),
+          h('span', { class: 'what' }, h('div', { class: 'title' }, `${jobLabel(q.job)} · ${q.project}`), h('div', { class: 'sub' }, `run now by ${q.by} ${fmt.ago(q.at)}`)),
+          h('span', { class: 'acts' }, PS.actBtn(q.status === 'pending' ? 'Cancel' : 'Stop', () => act({ action: 'cancel', id: q.id }, q.status === 'pending' ? 'Request cancelled' : 'Stopping the run', q.status === 'pending' ? null : `Stop ${jobLabel(q.job).toLowerCase()} for ${q.project}? The worker is stopped within about 15 seconds.`), { cls: 'danger' })))),
+        ...running.filter((r) => !waiting.some((q) => q.run_id === r.id)).map((r) => h('li', { class: 'row' }, h('span', { class: 'when' }, PS.chip('running', 'accent')),
+          h('span', { class: 'what' }, h('div', { class: 'title' }, `${jobLabel(r.job)} · ${r.project}`), h('div', { class: 'sub' }, `attempt ${r.attempt} · started ${fmt.ago(r.ts)}${r.cancel_requested_at ? ` · stopping (${r.cancel_requested_by})` : ''}`)),
+          h('span', { class: 'acts' }, r.phase === 'collect' ? h('span', { class: 'faint' }, 'finishes on its own') : r.cancel_requested_at ? null : PS.actBtn('Stop', () => act({ action: 'cancel', id: r.id }, 'Stopping the run', `Stop ${jobLabel(r.job).toLowerCase()} for ${r.project}? It is not retried this period unless someone runs it again.`), { cls: 'danger' })))),
+      ]
+      const done = d.queue.filter((q) => ['refused', 'cancelled'].includes(q.status)).slice(0, 5)
+      s.body.replaceChildren(rows.length ? h('ul', { class: 'rows' }, rows) : PS.empty('Nothing queued or running.'),
+        ...(done.length ? [h('div', { class: 'faint', style: 'font-size:12px; padding:6px 18px 10px' }, done.map((q) => `${jobLabel(q.job)} · ${q.project}: ${q.status}${q.reason ? ` — ${q.reason}` : ''}`).join(' · '))] : []))
+      return s.el
+    }
+
+    function recent(d) {
+      const s = PS.section('Recent runs', h('span', { class: 'sub' }, `${d.recent.length}`))
+      s.body.replaceChildren(d.recent.length ? h('ul', { class: 'rows' }, d.recent.slice(0, 30).map((r) => h('li', { class: 'row clickable', onclick: () => detail(r) },
+        h('span', { class: 'when' }, fmt.short(r.ts)),
+        h('span', { class: 'what' }, h('div', { class: 'title' }, `${jobLabel(r.job)} · ${r.project}`), h('div', { class: 'sub' }, String(r.summary || '').slice(0, 160))),
+        h('span', { class: 'acts' }, r.request_id ? PS.chip('run now') : null, PS.chip(r.status === 'failed' ? `failed #${r.attempt}` : r.status, cls(r.status)))))) : PS.empty('Nothing has run yet.'))
+      return s.el
+    }
+
+    function tokens(d) {
+      const s = PS.section('Service tokens', h('span', { class: 'sub' }, 'the identities the scheduler runs as; minted by a superadmin'))
+      s.body.replaceChildren(d.tokens.length ? h('ul', { class: 'rows' }, d.tokens.map((t) => h('li', { class: 'row' }, h('span', { class: 'when' }, PS.chip(t.state, t.state === 'active' ? 'good' : 'warn')),
+        h('span', { class: 'what' }, h('div', { class: 'title' }, `${t.label} · ${t.access} on ${t.projects.join(', ')}`), h('div', { class: 'sub mono' }, `${t.id} · last used ${t.last_used_at ? fmt.ago(t.last_used_at) : 'never'} · until ${String(t.expires_at).slice(0, 10)}`)),
+        h('span', { class: 'acts' }, t.state === 'active' ? PS.actBtn('Revoke', () => PS.act('admin_token', { action: 'revoke', id: t.id }, { done: `${t.id} revoked`, confirm: `Revoke ${t.label} (${t.id})? The scheduler stops for ${org} at its next call until a superadmin mints a new one.` }), { cls: 'danger' }) : null)))) : PS.empty(`No tokens: the scheduler cannot run ${org}'s projects until a superadmin mints one.`))
+      return s.el
+    }
+
+    function detail(r) {
+      const close = () => { back.remove(); dr.remove(); document.removeEventListener('keydown', onKey) }
+      const onKey = (e) => { if (e.key === 'Escape') close() }
+      const back = h('div', { class: 'drawer-back', onclick: close })
+      const kv = [['Status', r.status], ['Project', r.project], ['Job', jobLabel(r.job)], ['Period', fmt.stamp(r.period)], ['Attempt', r.attempt], ['Started', fmt.stamp(r.ts)], ['Finished', r.finished_at ? fmt.stamp(r.finished_at) : null], ['Duration', r.duration_s != null ? `${Math.round(r.duration_s)} s` : null], ['Cost', r.cost_usd ? `$${r.cost_usd.toFixed(2)}` : null], ['Tokens', r.tokens || null], ['Claimed by', r.actor], ['Run now by', r.requested_by], ['Cancelled by', r.cancelled_by || r.cancel_requested_by]].filter(([, v]) => v != null && v !== '')
+      const dr = h('aside', { class: 'drawer', role: 'dialog', 'aria-label': 'Run' }, h('div', { class: 'drawer-head' }, h('h2', {}, `${jobLabel(r.job)} · ${r.project}`), h('button', { class: 'close', onclick: close }, 'Close')),
+        h('div', { class: 'drawer-body' }, h('div', { class: 'mono muted' }, r.id),
+          h('dl', { class: 'kv' }, kv.flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, String(v))])),
+          r.summary ? h('div', { class: 'prose' }, h('p', {}, r.summary)) : null,
+          r.lines?.length ? h('ul', { class: 'rows' }, r.lines.map((l) => h('li', { class: 'row', style: 'grid-template-columns:1fr' }, h('span', {}, l)))) : null,
+          h('div', { class: 'chips', style: 'margin-top:12px' }, r.status !== 'running' ? PS.actBtn('Run again now', () => { close(); act({ action: 'run_now', project: r.project, job: r.job }, `${jobLabel(r.job)} queued for ${r.project}`, r.phase === 'collect' ? null : 'Run it again now? It uses model time.') }, { icon: 'bolt' }) : null)))
+      document.body.append(back, dr); document.addEventListener('keydown', onKey); dr.querySelector('.close').focus()
+    }
+  },
+}
+
+PS.boot({ viewIds: ["today","dashboard","board","capabilities","calendar","goals","milestones","inputs","decisions","risks","changes","lessons","documents","team","feedback","matrix","outputs","tech","queue","gaps","processing","automation","costing","substrate","activity","scoreboard","wiki","admin","runs","cap-sred","cap-intel","cap-tender","cap-portfolio","cap-research"], single: false, title: "Project State Console" })
 </script>

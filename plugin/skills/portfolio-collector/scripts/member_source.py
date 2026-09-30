@@ -25,6 +25,7 @@ import os
 import queue
 import shutil
 import subprocess
+import sys
 import threading
 import urllib.error
 import urllib.request
@@ -340,15 +341,53 @@ def entitlement_status(capability: str, script: Path, today: str) -> dict:
             "reason": f"no valid entitlement on this install unlocks {capability}; activate it through the Project State connector"}
 
 
+CLOUD_URL = "https://cloud.project-state.app/mcp"
+CONFIG_DIR = Path(os.environ.get("PROJECT_STATE_CONFIG_DIR") or Path.home() / ".config" / "project-state")  # tests point it elsewhere
+
+
+def _secret_file(f: Path) -> str | None:
+    """A token file's text, or None when it is missing or other people on this machine can read it (a token lets
+    whoever holds it read the org's projects; the file must be 0600, as `psctl token mint --into` writes it)."""
+    if not f.exists():
+        return None
+    if os.name != "nt" and f.stat().st_mode & 0o077:
+        print(f"warn: {f} is readable by others; chmod 600 it — not using it", file=sys.stderr)
+        return None
+    return f.read_text(encoding="utf-8")
+
+
+def cloud_tokens() -> tuple[str | None, dict[str, str], str | None]:
+    """The cloud server's /mcp URL, the bearer token for each org, and a token for any org.
+
+    Tokens, any combination:
+      ~/.config/project-state/mcp-tokens.json   {"<org>": "ksm_…"}: service tokens, one per org, minted by a superadmin
+                                                (`psctl token mint --org <org> --label portfolio --access viewer
+                                                --projects a,b --into ~/.config/project-state/mcp-tokens.json`, or
+                                                `admin_token` in Claude). This is what lets a portfolio on this disk
+                                                read its cloud members unattended, with nobody signed in.
+      $PS_MCP_TOKEN, else ~/.config/project-state/mcp-token    one token for every org
+    URL: $PS_MCP_URL, else ~/.config/project-state/mcp-url, else the cloud's own address once a token is configured.
+    The collector never signs in or asks: no token, no cloud read."""
+    by_org: dict[str, str] = {}
+    raw = _secret_file(CONFIG_DIR / "mcp-tokens.json")
+    if raw:
+        try:
+            by_org = {str(k): str(v).strip() for k, v in (json.loads(raw) or {}).items() if v}
+        except (ValueError, AttributeError):
+            print(f"warn: {CONFIG_DIR / 'mcp-tokens.json'} is not a JSON object of org → token; not using it", file=sys.stderr)
+    default = os.environ.get("PS_MCP_TOKEN") or ((_secret_file(CONFIG_DIR / "mcp-token") or "").strip() or None)
+    url = os.environ.get("PS_MCP_URL") or ((CONFIG_DIR / "mcp-url").read_text(encoding="utf-8").strip() if (CONFIG_DIR / "mcp-url").exists() else "") or None
+    if not url and (by_org or default):
+        url = CLOUD_URL
+    return url, by_org, default
+
+
 def cloud_endpoint() -> tuple[str | None, str | None]:
-    """The cloud server's /mcp URL ($PS_MCP_URL) and a bearer token ($PS_MCP_TOKEN, else
-    ~/.config/project-state/mcp-token). The collector never signs in or asks: no token, no cloud read."""
-    url = os.environ.get("PS_MCP_URL") or None
-    tok = os.environ.get("PS_MCP_TOKEN")
-    if not tok:
-        f = Path.home() / ".config" / "project-state" / "mcp-token"
-        tok = f.read_text(encoding="utf-8").strip() if f.exists() else None
-    return url, tok or None
+    """The cloud server's URL and one token (the any-org token, else the only per-org one) — for callers that read
+    a single org; the collector itself uses cloud_tokens and a client per org."""
+    url, by_org, default = cloud_tokens()
+    tok = default or (next(iter(by_org.values())) if len(by_org) == 1 else None)
+    return url, tok
 
 
 def registry_rows() -> list[dict]:

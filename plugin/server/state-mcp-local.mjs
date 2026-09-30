@@ -49025,8 +49025,8 @@ AFTER: update state.json harvest_cursors.calendar to the current ISO timestamp; 
 };
 var system_map_generated_default = {
   schema_version: 1,
-  generated_at: "2026-09-29T14:12:17Z",
-  plugin_version: "5.4.2",
+  generated_at: "2026-09-30T00:29:04Z",
+  plugin_version: "5.4.3",
   columns: [
     {
       id: "sources",
@@ -60589,7 +60589,7 @@ function registerPortfolioTools(server2, { store: store2, control, principal: pr
     const s = localStatus("portfolio");
     return s.entitled ? null : s.reason;
   };
-  server2.registerTool("portfolio_promote", {
+  if (!principal2?.service) server2.registerTool("portfolio_promote", {
     title: "Drop a portfolio proposal into a member's inbox",
     description: "The portfolio's one write toward a member (portfolio-reviewer's promote verb): render the finding as a proposal and place it at documents/inbox/portfolio-proposal-<finding>.md in that member, for the member's own people to triage. Nothing else in the member is touched. The finding is marked promoted with a became edge, and portfolio.finding.promoted is logged in the portfolio. Only after the person has approved this specific drop in the conversation: never unattended. Refused for a finding that is resolved or dismissed, a member the finding does not concern, a finding already dropped to that member, or a member whose home is not on this server.",
     inputSchema: {
@@ -60602,6 +60602,7 @@ function registerPortfolioTools(server2, { store: store2, control, principal: pr
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false }
   }, wrap2("portfolio_promote", async ({ project: ref, finding: fid, member: mid, as, proposal }) => {
+    if (principal2?.service) throw new Error("promote needs a person who approved this drop; a service token (unattended work) cannot promote");
     const { org, project: project2, db, access, root: pfRoot } = store2.resolve(ref);
     if (!cloud && pfRoot !== store2.root) throw new Error(`${ref} is not this session's project; promote from a session opened in the portfolio project`);
     const manifest = (await store2.entity(db, project2, "manifest.yaml"))?.data || {};
