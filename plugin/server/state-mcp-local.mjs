@@ -47494,7 +47494,11 @@ var ALLOWED_GENERATOR_SKILLS = /* @__PURE__ */ new Set([
   "project-funder-reporting",
   "project-blog-publisher",
   "project-doc-suite-generator",
-  "project-tech-reports"
+  "project-tech-reports",
+  // The sred capability's generators (capabilities/sred/packs/sred-canada): capture digests,
+  // the quarterly review and the T661 review. Draft-only into the substrate, like the rest.
+  "project-sred-tracker",
+  "project-sred-reviewer"
   // project-website-publisher intentionally excluded — deploys are manual only.
 ]);
 var MATRIX_ACTION_PREFIX = "matrix:";
@@ -49025,8 +49029,8 @@ AFTER: update state.json harvest_cursors.calendar to the current ISO timestamp; 
 };
 var system_map_generated_default = {
   schema_version: 1,
-  generated_at: "2026-09-30T00:29:04Z",
-  plugin_version: "5.4.3",
+  generated_at: "2026-09-30T02:10:13Z",
+  plugin_version: "5.4.4",
   columns: [
     {
       id: "sources",
@@ -60390,10 +60394,10 @@ function buildServer(store2, { audit, control, principal: principal2, transfer, 
   }));
   server2.registerTool("get_entity", {
     title: "Read one entity",
-    description: 'Read one substrate file by its path (as returned by other tools), e.g. "milestones/M03-foo.yaml", or by kind and id (e.g. kind "decision", id "2026-09-26-pricing"). Returns the raw text, the parsed fields and the sha256 to pass when replacing it. An NDJSON log (logs/activity.ndjson) comes back as its lines; pass since to get only the lines from that time on.',
-    inputSchema: { project: PROJECT2, path: external_exports.string().optional().describe("Path relative to project-state/"), kind: external_exports.string().optional().describe("instead of path: the entity kind"), id: external_exports.string().optional().describe("with kind: the entity id"), since: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}/).optional().describe("for an NDJSON log: only lines whose ts is at or after this date or time"), rev: REV },
+    description: 'Read one substrate file by its path (as returned by other tools), e.g. "milestones/M03-foo.yaml", or by kind and id (e.g. kind "decision", id "2026-09-26-pricing"). Returns the raw text, the parsed fields and the sha256 to pass when replacing it. A file over 60,000 characters comes back in pieces: truncated is true and next_offset says where the next piece starts; pass it as offset to read on. An NDJSON log (logs/activity.ndjson) comes back as its lines; pass since to get only the lines from that time on.',
+    inputSchema: { project: PROJECT2, path: external_exports.string().optional().describe("Path relative to project-state/"), kind: external_exports.string().optional().describe("instead of path: the entity kind"), id: external_exports.string().optional().describe("with kind: the entity id"), since: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}/).optional().describe("for an NDJSON log: only lines whose ts is at or after this date or time"), offset: external_exports.number().int().min(0).optional().describe("for a file over 60,000 characters: where to start (next_offset from the previous piece)"), rev: REV },
     annotations: READ
-  }, wrap2("get_entity", async ({ project: ref, path: p, kind, id, since }) => {
+  }, wrap2("get_entity", async ({ project: ref, path: p, kind, id, since, offset = 0 }) => {
     const { project: project2, db } = store2.resolve(ref);
     let path37 = p;
     if (!path37) {
@@ -60404,8 +60408,11 @@ function buildServer(store2, { audit, control, principal: principal2, transfer, 
     const e = await store2.entity(db, project2, path37);
     if (!e) throw new Error(`no entity at ${path37}`);
     if (e.kind === "log-stream") return logStream(ref, db, project2, e, since);
-    const truncated = (e.raw || "").length > MAX_RAW;
-    return { project: ref, path: path37, kind: e.kind, as_of: await store2.lastRun(db, project2), sha256: e.sha256 ?? null, raw: truncated ? e.raw.slice(0, MAX_RAW) : e.raw ?? null, truncated, data: e.data ?? null, parse_error: e.parse_error ?? null };
+    const raw = e.raw ?? null, len = (raw || "").length;
+    let end = Math.min(len, offset + MAX_RAW);
+    if (end < len && end > offset && /[\uD800-\uDBFF]/.test(raw[end - 1])) end--;
+    const truncated = end < len;
+    return { project: ref, path: path37, kind: e.kind, as_of: await store2.lastRun(db, project2), sha256: e.sha256 ?? null, raw: raw == null ? null : raw.slice(offset, end), truncated, ...truncated ? { next_offset: end, length: len } : {}, ...offset ? {} : { data: e.data ?? null }, parse_error: e.parse_error ?? null };
   }));
   async function logStream(ref, db, project2, e, since) {
     const segs = await db.collection("log_events").find({ project: project2, stream: e.path }).sort({ seq: 1 }).toArray();

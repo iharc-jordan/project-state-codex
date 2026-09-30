@@ -217,9 +217,22 @@ class McpSource:
         e = self._get(rel)
         if not e:
             return ""
-        if e.get("truncated"):
-            raise RuntimeError(f"malformed: {self.ref}:{rel}: too large to read through the server")
-        return e.get("raw") or ""
+        if not e.get("truncated"):
+            return e.get("raw") or ""
+        # a file over the server's piece size (60,000 characters): read on from next_offset until it is whole. A
+        # server without offsets (before 2026-09-30) keeps answering truncated with no next_offset: that is refused.
+        parts, nxt = [e.get("raw") or ""], e.get("next_offset")
+        for _ in range(200):
+            if nxt is None:
+                raise RuntimeError(f"malformed: {self.ref}:{rel}: too large to read through the server")
+            piece = self.client.call("get_entity", {"project": self.ref, "path": rel, "offset": nxt})
+            if piece.get("sha256") != e.get("sha256"):
+                raise RuntimeError(f"malformed: {self.ref}:{rel}: changed while it was being read")
+            parts.append(piece.get("raw") or "")
+            if not piece.get("truncated"):
+                return "".join(parts)
+            nxt = piece.get("next_offset")
+        raise RuntimeError(f"malformed: {self.ref}:{rel}: too large to read through the server")
 
     def listdir(self, d: str) -> list[str]:
         if self._paths is None:

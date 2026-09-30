@@ -462,6 +462,24 @@ def read_member(run: Run, m: dict, src) -> dict:
 
 
 # ── snapshot ─────────────────────────────────────────────────────────────────
+# A risk's score on the 1-9 likelihood x impact scale. Members write it several ways (found 2026-09-30 in ai26-10 and
+# project-state, which crashed the collect): a number, digits as text, a word ("high", "medium"), or a stray value
+# ("closed"). A number wins; else likelihood x impact; else the word on the same scale; else unscored.
+def risk_score(rk: dict) -> int | None:
+    raw = rk.get("score")
+    if isinstance(raw, bool):
+        raw = None
+    if isinstance(raw, (int, float)):
+        return int(raw)
+    if isinstance(raw, str) and raw.strip().isdigit():
+        return int(raw.strip())
+    scale = {"low": 1, "medium": 2, "high": 3}
+    li, im = scale.get(str(rk.get("likelihood") or "").strip().lower()), scale.get(str(rk.get("impact") or "").strip().lower())
+    if li and im:
+        return li * im
+    return {"low": 2, "medium": 4, "high": 6, "critical": 9}.get(str(raw or "").strip().lower())
+
+
 def build_snapshot(run: Run, m: dict, rev: str | None, r: dict) -> dict:
     today = run.today
     ms_rows = []
@@ -495,10 +513,7 @@ def build_snapshot(run: Run, m: dict, rev: str | None, r: dict) -> dict:
         if str(rk.get("status") or "open") in ("closed", "retired", "resolved"):
             continue
         open_risks += 1
-        score = rk.get("score")
-        if score is None and rk.get("likelihood") and rk.get("impact"):
-            scale = {"low": 1, "medium": 2, "high": 3}
-            score = scale.get(str(rk["likelihood"]).lower(), 0) * scale.get(str(rk["impact"]).lower(), 0)
+        score = risk_score(rk)
         if (score or 0) >= 6:
             high.append(dict(id=rk["id"], title=rk.get("title"), score=score, owner=rk.get("owner"),
                              last_reviewed=str(parse_date(rk.get("last_reviewed")) or ""), path=path))
@@ -632,7 +647,7 @@ def compile_index(run: Run, members: list[dict], latest: dict[str, dict], raw: d
             tag(mid, "milestone", ms["id"], ms.get("tags"))
         for path, rk in r["risks"]:
             idx["risks"].append(dict(member=mid, id=rk["id"], path=path, title=rk.get("title"), status=rk.get("status"),
-                                     score=rk.get("score"), owner=rk.get("owner"), last_reviewed=str(parse_date(rk.get("last_reviewed")) or "") or None,
+                                     score=risk_score(rk), owner=rk.get("owner"), last_reviewed=str(parse_date(rk.get("last_reviewed")) or "") or None,
                                      tags=rk.get("tags") or [], source=rk.get("source")))
             tag(mid, "risk", rk["id"], rk.get("tags"))
         for path, dc in r["decisions"]:
