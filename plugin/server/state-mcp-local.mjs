@@ -49029,8 +49029,8 @@ AFTER: update state.json harvest_cursors.calendar to the current ISO timestamp; 
 };
 var system_map_generated_default = {
   schema_version: 1,
-  generated_at: "2026-09-30T02:10:13Z",
-  plugin_version: "5.4.4",
+  generated_at: "2026-09-30T02:39:14Z",
+  plugin_version: "5.4.5",
   columns: [
     {
       id: "sources",
@@ -60264,14 +60264,45 @@ function registerWriteTools(server2, { store: store2, control, principal: princi
   }));
   server2.registerTool("log_append", {
     title: "Log an event",
-    description: `Append one event to the project's activity log (logs/activity.ndjson), as every skill does after a change, e.g. event "decision.recorded" with the decision id. The server sets ts and actor.`,
-    inputSchema: { project: PROJECT, event: external_exports.string().regex(/^[a-z][a-z0-9_-]*(\.[a-z0-9_-]+)+$/).describe('dotted event name, e.g. "risk.logged"'), summary: external_exports.string().max(500), id: external_exports.string().max(200).optional(), fields: external_exports.record(external_exports.string(), external_exports.any()).optional() },
+    description: `Append one event to the project's activity log (logs/activity.ndjson), as every skill does after a change, e.g. event "decision.recorded" with the decision id. The server sets ts and actor. To append to another append-only log (e.g. sred/evidence-log.ndjson, tenders/events.ndjson), pass its path and the line as entry, exactly as that log's skill defines it; the server adds appended_by and appended_at.`,
+    inputSchema: {
+      project: PROJECT,
+      event: external_exports.string().regex(/^[a-z][a-z0-9_-]*(\.[a-z0-9_-]+)+$/).optional().describe('dotted event name, e.g. "risk.logged" (the activity log)'),
+      summary: external_exports.string().max(500).optional().describe("one line (the activity log)"),
+      id: external_exports.string().max(200).optional(),
+      fields: external_exports.record(external_exports.string(), external_exports.any()).optional(),
+      path: external_exports.string().optional().describe('another append-only log instead of the activity log, e.g. "sred/evidence-log.ndjson"'),
+      entry: external_exports.record(external_exports.string(), external_exports.any()).optional().describe("with path: the one line to append, as that log's skill defines it")
+    },
     annotations: ACT
-  }, wrap2("log_append", async ({ project: project2, event, summary: summary2, id, fields }) => w(project2, `log ${event}`, async (dir) => {
-    const extra = Object.fromEntries(Object.entries(fields || {}).filter(([k]) => !["ts", "actor", "event"].includes(k)));
-    appendActivity(dir, { ...extra, actor: email3, event, ...id ? { id } : {}, summary: summary2 });
-    return { event, logged: true };
-  })));
+  }, wrap2("log_append", async ({ project: project2, event, summary: summary2, id, fields, path: p, entry }) => {
+    const rel = p ? safeRel(p) : "logs/activity.ndjson";
+    if (rel === "logs/activity.ndjson") {
+      if (entry) throw new Error("the activity log takes event and summary (and fields), not entry");
+      if (!event || !summary2) throw new Error("give event and summary");
+      return w(project2, `log ${event}`, async (dir) => {
+        const extra = Object.fromEntries(Object.entries(fields || {}).filter(([k2]) => !["ts", "actor", "event"].includes(k2)));
+        appendActivity(dir, { ...extra, actor: email3, event, ...id ? { id } : {}, summary: summary2 });
+        return { event, logged: true };
+      });
+    }
+    const k = REGISTRY.kindOf(rel);
+    if (!k || k.def.format !== "ndjson" || !k.def.append_only_log) throw new Error(`${rel} is not an append-only log this server knows`);
+    if (!entry || !Object.keys(entry).length) throw new Error(`give the line to append to ${rel} as entry`);
+    if (event || summary2 || fields) throw new Error(`${rel} takes the line as entry; event, summary and fields are for the activity log`);
+    const { appended_by, appended_at, ...own2 } = entry;
+    const text = JSON.stringify({ ...own2, appended_by: email3, appended_at: (/* @__PURE__ */ new Date()).toISOString() });
+    if (text.length > 1e5) throw new Error("one log line is limited to 100,000 characters");
+    const need = k.def.line_requires_one_of;
+    if (need && !need.some((f) => own2[f] != null)) throw new Error(`a line in ${rel} needs one of ${need.join(", ")}`);
+    return w(project2, `log ${rel}`, async (dir) => {
+      const abs = path34.join(dir, rel);
+      fs29.mkdirSync(path34.dirname(abs), { recursive: true });
+      const prev = fs29.existsSync(abs) ? fs29.readFileSync(abs, "utf8") : "";
+      fs29.appendFileSync(abs, (prev && !prev.endsWith("\n") ? "\n" : "") + text + "\n");
+      return { path: rel, logged: true, lines: prev.split("\n").filter((l) => l.trim()).length + 1 };
+    });
+  }));
 }
 
 // services/state-mcp/src/tools.mjs

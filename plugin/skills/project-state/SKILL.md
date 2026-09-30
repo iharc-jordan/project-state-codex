@@ -85,6 +85,7 @@ each maps to one tool call. The path stays the same; the project is `org/project
 | change a few fields | `entity_patch {project, path, set, unset, base_sha256}`: the rest of the file is kept byte for byte |
 | delete a file | `entity_delete {project, path, base_sha256, reason}`: logs and append-only records refuse |
 | append to `logs/activity.ndjson` | `log_append {project, event, summary, id}`: the server sets `ts` and `actor` |
+| append to another log (`sred/evidence-log.ndjson`, `tenders/events.ndjson`, a research `*.ndjson`) | `log_append {project, path, entry}`: `entry` is the line as the skill defines it; the server adds `appended_by` and `appended_at`. `entity_put` refuses every `.ndjson` |
 | take the advisory lock / stamp `last_modified*` | nothing: the server serialises writes and stamps them |
 | move a milestone, record a KPI reading, approve a draft, save a meeting or wiki page | the screen actions: `milestone_update`, `kpi_reading`, `queue_action`, `meeting_save`, `wiki_save`, … |
 | read `state.json` counters to allocate an id | read `state.json` with `get_entity`, then write the entity; the id check refuses a collision |
