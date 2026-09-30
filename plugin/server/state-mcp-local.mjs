@@ -32458,7 +32458,7 @@ var registry_default = {
       history_by_date: null,
       field_aliases: {},
       derived: false,
-      doc: null,
+      doc: "Project manifest",
       kind_aliases: [],
       listed: false
     },
@@ -49029,8 +49029,8 @@ AFTER: update state.json harvest_cursors.calendar to the current ISO timestamp; 
 };
 var system_map_generated_default = {
   schema_version: 1,
-  generated_at: "2026-09-30T02:39:14Z",
-  plugin_version: "5.4.5",
+  generated_at: "2026-09-30T03:30:38Z",
+  plugin_version: "5.5.0",
   columns: [
     {
       id: "sources",

@@ -447,6 +447,7 @@ Walk every YAML/JSON, parse, check frontmatter completeness. Report:
 - Stale lockfiles (older than TTL)
 - Phase manifests against the phase-manifest schema in `SCHEMA.md`
 - Lifecycle consistency — see below
+- The heavy-artifacts register — see below
 
 Return a summary; never auto-fix.
 
@@ -508,9 +509,31 @@ and stop.
 
 Spec: `docs/CONTINUOUS-LIFECYCLE-SPEC.md`.
 
+#### Heavy-artifacts register
+
+`manifest.yaml → caches` lists what the project's tools download that is large, and where each is
+cached. **Absent or `~` is valid and never reported**; `[]` means asked, nothing heavy. For each
+entry, with `<repo>` the folder holding `project-state/` (or the entry's `repo`, relative to it):
+
+- `artifact`, `tool`, `path` and `setting` are present — **error** if not.
+- `path` is relative and stays inside the repository: absolute, `~` or a `..` segment is an **error**.
+- `path` has no `node_modules` segment — **error**: a clean install deletes it, which is the defect the
+  register exists to prevent (FB-001).
+- `git -C <repo> check-ignore -q -- "<path>/"` exits 0. Exit 1 is an **error** (a cached binary must
+  never be committable). Exit 128, or `<repo>` not on this machine, is **info: not checked here**. Keep
+  the trailing slash: without it, a directory rule like `.cache/` does not match a cache folder that
+  has not been created yet.
+- `path` sits under `.cache/`, or the entry carries a `note` saying why not — **warning** otherwise.
+
+Offer a missing ignore rule as a one-line `.gitignore` addition, shown before it is written. Never
+change the tool's own setting; that is the code owner's change. Shape, the tool table and the CI cache
+step: `references/heavy-artifacts.md`.
+
 ## Reference files
 
 - `references/field-enums.yaml` — canonical enum values for `status`, `classification`, `kind`, etc.
 - `references/write-protocol.md` — detailed step-by-step write protocol with code-like pseudocode.
+- `references/heavy-artifacts.md` — the `caches` register: shape, the shared `.cache/` convention,
+  where common tools look, what validate checks, and the CI cache step.
 
 (These reference files are optional; if missing, the above instructions in SKILL.md are self-sufficient.)

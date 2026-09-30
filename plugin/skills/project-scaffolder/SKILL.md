@@ -232,6 +232,18 @@ question is the thing that stops anyone meeting it.
 
 Both keys are ruled in decision `2026-08-21-twelve-rulings-facility-contract`, items 10 and 11.
 
+**`caches` — the heavy-artifacts register; write what was confirmed, never guess.** Resolution order:
+
+1. The intake record's `caches`, from `project-onboarding` Q1.10: entries, `[]` or unset, as given.
+2. Otherwise the Step 5 question below, asked only for a project whose code lives beside the facility.
+3. Otherwise leave it unset. Unset is valid and never reported.
+
+When the written register has any entry, the facility sits in a git repository, and that repository
+does not already ignore `.cache/` (`git check-ignore -q -- .cache/` exits 1), add the line `.cache/` to it, shown in Step 6
+before it is written. This is the only file outside `project-state/` besides `.gitattributes` that the
+scaffolder touches, and it never touches the tool's own setting: that change belongs to the code's
+owner. Reference: `skills/project-state/references/heavy-artifacts.md` (FB-001, issue #47).
+
 
 **The rhythm question, when nothing settled the preset.** If neither the intake record nor the primary
 work pack's `defaults.preset` settles it, ask in plain words (`PROJECT-TYPES-SPEC` §6.1):
@@ -392,6 +404,27 @@ Which surfaces does the team use? Toggle on/off.
 > Type numbers to enable (e.g. 1 2), or press Enter to skip:
 ```
 
+**Then, for a code project only: heavy downloads.** Skip this entirely, without a word, unless the
+primary work pack is `agile-default` or the folder holding `project-state/` has `package.json`,
+`pyproject.toml` or `requirements*.txt` files, and skip it when an intake record already settled
+`caches`. Scan those files (not `node_modules`) for the tools in
+`skills/project-state/references/heavy-artifacts.md`, then ask once:
+
+```
+Some tools download something large on first run (a database binary, a browser, model weights).
+Found: mongodb-memory-server (apps/web, apps/app), cached in node_modules — a clean install deletes it.
+
+  **1** List it, cached in a git-ignored .cache/ at the repository root
+  **2** Nothing heavy here
+  **3** Not sure — ask later
+
+>
+```
+
+1 writes one entry per confirmed artifact (`artifact`, `tool`, `size`, `path: .cache/<tool>`, `setting`
+from the reference's table); 2 writes `caches: []`; 3 leaves it unset. In HTML mode, one ToggleCard per
+found artifact plus the same three choices.
+
 ---
 
 ### Step 6: Review & Confirm
@@ -409,6 +442,7 @@ Which surfaces does the team use? Toggle on/off.
   - Lead org: [lead org]
   - Consortium: [N members]
   - Surfaces: [enabled list]
+  - Heavy downloads: [N listed under .cache/ · none · not asked] (+ `.cache/` added to `.gitignore`, if missing)
   - Sharing: [model]
   - Git: Yes — will `git init` + write `.gitattributes` / No — shared drive
 - Mermaid preview of what will be created:
@@ -440,6 +474,7 @@ Review your configuration. Nothing is written until you confirm.
   Lead org:   [org]
   Consortium: [N members]
   Surfaces:   [enabled]
+  Downloads:  [N under .cache/ | none | not asked]
   Sharing:    [model]
   Git:        [yes/no]
 
@@ -479,6 +514,7 @@ Triggered immediately after the user confirms in Step 6. Write all files now.
     | ✅ | `project-state/automation/tasks.yaml` | Compiled from matrix by project-automator |
     | ✅ | `project-state/logs/activity.ndjson` | `project.scaffolded` event |
     | ✅ | `.gitattributes` | `merge=union` on logs (if git model) |
+    | ✅ | `.gitignore` | `.cache/` added (only if `caches` lists anything and it was missing) |
     | ✅ | Git repo | Initial commit: "project-state: facility scaffolded — [slug]" |
     | ⬜ | `project-state/milestones/` | Empty — seed with `/project-milestone-manager` |
     | ⬜ | `project-state/people/` | Empty — add via `/project-state` |
@@ -507,6 +543,7 @@ Triggered immediately after the user confirms in Step 6. Write all files now.
 | ✅     | project-state/automation/tasks.yaml         | Compiled from matrix           |
 | ✅     | project-state/logs/activity.ndjson          | project.scaffolded event       |
 | ✅     | .gitattributes                              | merge=union on logs            |
+| ✅     | .gitignore                                  | .cache/ (if caches listed)     |
 | ✅     | Git repo initialized                        | Initial commit made            |
 | ⬜     | project-state/milestones/                   | Empty — seed later             |
 | ⬜     | project-state/people/                       | Empty — add later              |
@@ -533,7 +570,9 @@ After files are written (Step 7), initialize git if the git sharing model was se
    # Append-only logs: keep all lines from both sides (never a real conflict)
    project-state/logs/*.ndjson merge=union
    ```
-4. Stage and commit: `git add . && git commit -m "project-state: facility scaffolded — <project.name>"`
+4. If `caches` lists anything and `.cache/` is not already ignored, append `.cache/` to the root
+   `.gitignore` (see `caches` under Step 2).
+5. Stage and commit: `git add . && git commit -m "project-state: facility scaffolded — <project.name>"`
 
 If shared-drive model: skip git entirely. Note in Step 7 output: "Git checkpointing is available if you switch to git sharing later."
 

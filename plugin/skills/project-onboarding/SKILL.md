@@ -256,7 +256,7 @@ Chapters with pre-filled data should:
 Three questions, one per axis (`docs/PROJECT-TYPES-SPEC.md` §3, decision
 `2026-09-24-project-types-three-axes`): **what the work is** (one primary work pack), **who needs to hear
 how it's going** (accountability packs), and **how the work moves** (a phase preset). Then the questions
-that were always here: SR&ED, whether it ends, timezone.
+that were always here: SR&ED, whether it ends, timezone, and, for a code project, heavy downloads.
 
 **Every option comes from the catalogue, never from this file.** Read `packs/*/manifest.yaml` and
 `templates/phase-presets/*.yaml`. A pack is offered by default only when `picker.listed: true`; show
@@ -422,6 +422,33 @@ for the first ten weeks the presets existed (FB-003); Q1.C is where it is now wr
 interact: a preset that declares no `cycles_back_to` cannot host a `continuous` lifecycle. If Q1.7
 answered "work continues" and Q1.C landed on a terminal preset, say so and ask which of the two to change
 — do not silently resolve it.
+
+**Q1.10 — Does the code download anything heavy on install?** Ask only when the project's code lives
+beside this facility: the work type is software (`agile-default`), or the folder holding
+`project-state/` has `package.json`, `pyproject.toml` or `requirements*.txt` files. Otherwise skip it
+without a word and leave `caches` unset.
+
+Look before asking. Scan those files (skip `node_modules`) for the tools in
+`skills/project-state/references/heavy-artifacts.md` (mongodb-memory-server, Playwright, Puppeteer,
+Cypress, Electron, Hugging Face, torch) and note where each caches today. Then:
+
+> Some test and build tools download something large the first time they run: a database binary, a
+> browser, model weights. I found **[mongodb-memory-server in apps/web and apps/app, caching in
+> node_modules]**. A clean install deletes that folder, so every clean install downloads it again. Shall
+> I list it, cached in one git-ignored `.cache/` at the repository root instead? Anything else like it?
+
+For each confirmed artifact ask its rough size if it is not obvious, and write an entry (`artifact`,
+`tool`, `size`, `path`, `setting`) to the working intake record's `caches`. `path` is
+`.cache/<tool>`; `setting` is the tool's own setting from the reference's table. Never write an entry
+the operator has not seen. "Nothing heavy" writes `caches: []`, which is not asked again; "not sure"
+leaves it unset.
+
+Recording the entry does not change the code. The setting is the code owner's change, and saying so
+is part of the answer: "The register now says where it should live; the change itself is
+`[setting]`, made in the code."
+
+This question exists because the waiting was invisible: on CanRentPro a 780 MB binary downloaded again
+on every clean install, in each app, for days before anyone asked why (FB-001, issue #47).
 
 
 **Confirmation:**
@@ -672,6 +699,7 @@ Work:            [work pack label]  (project.kind: [id])
 Who hears:       [accountability pack labels]
 How it moves:    [preset] [· anchored on YYYY-MM-DD]
 Packs loaded:    [packs_selected, one-line role each]
+Heavy downloads: [N listed under .cache/ · none · not asked]  [+ .gitignore gets `.cache/`, if missing]
 
 SYNTHETIC CONTENT (will be labeled)
 ──────────────────────────────────────────
@@ -794,6 +822,7 @@ intake:
     preset: ~             # Q1.C
     anchor_date: ~        # Q1.C, when the preset requires it
   asks: {}                # dotted manifest key → answer, from the packs' asks: blocks
+  caches: ~               # Q1.10: ~ not asked / [] nothing heavy / entries → manifest caches
 
   project:
     short_name: {value: "...", source: "document|conversation|synthetic"}

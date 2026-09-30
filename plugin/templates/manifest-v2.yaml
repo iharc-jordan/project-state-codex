@@ -173,6 +173,29 @@ automation:
   # schedule_path: "automation/schedule.yaml"   # default output path
 
 # ----------------------------------------------------------------------------
+# Heavy-artifacts register — for projects whose code lives beside this facility
+#
+# Things a tool downloads that are large (test-database binaries, browsers, model
+# weights), where each is cached, and the setting that puts it there. Convention:
+# one git-ignored .cache/ at the repository root, shared by every app, never
+# inside node_modules (a clean install deletes it). Asked once by
+# project-onboarding Q1.10 / project-scaffolder Step 5; `project-state validate`
+# checks each path is git-ignored.
+#   ~   never asked (valid, never reported)
+#   []  asked: nothing heavy
+# Reference: skills/project-state/references/heavy-artifacts.md (FB-001, issue #47)
+# ----------------------------------------------------------------------------
+
+caches: ~
+# caches:
+#   - artifact: "MongoDB server binary"
+#     tool: "mongodb-memory-server"
+#     size: "780 MB (Windows), 70 MB (Linux)"
+#     path: ".cache/mongodb-memory-server"   # relative to the repository root; must be git-ignored
+#     setting: "config.mongodbMemoryServer.downloadDir = ../../.cache/mongodb-memory-server (apps/*/package.json)"
+#     used_by: ["apps/web", "apps/app"]      # optional
+
+# ----------------------------------------------------------------------------
 # Concurrency model (unchanged from v1.x)
 # ----------------------------------------------------------------------------
 
