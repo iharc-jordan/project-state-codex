@@ -1,0 +1,15 @@
+# KPI suggestions — never written by onboarding. project-goal-tracker offers these in the `project-goal-tracker` workflow.
+kpis:
+  - slug: joint-value
+    title: "Joint pipeline or value created"
+    unit: "$"
+    direction: up
+  - slug: commitments-on-time
+    title: "Joint commitments delivered on time"
+    unit: "%"
+    direction: up
+  - slug: partner-satisfaction
+    title: "Partner satisfaction"
+    unit: "score"
+    direction: up
+    hint: "Ask the partner at each review."

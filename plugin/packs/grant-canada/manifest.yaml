@@ -36,6 +36,29 @@ pack:
     - "IRAP Technical Review Guide"
     - "PIC PM Guide"
   released: "2026-05-18"
+  maturity: "starter"
+  axis: accountability   # work | accountability | capability - the bundled pack contract
+
+# ----------------------------------------------------------------------------
+# Picker presentation - skills/project-scaffolder/SKILL.md Every front door (onboarding,
+# scaffolder, intake, kanban wizard) reads this block; none keeps its own table of packs.
+# ----------------------------------------------------------------------------
+picker:
+  listed: true
+  label: "Canadian grant"
+  blurb: "Pre-award submission for NSERC, IRAP, SIF, CFI, Mitacs and 14 more Canadian programs."
+  signals:
+    - "NSERC"
+    - "IRAP"
+    - "Mitacs"
+    - "CFI"
+    - "SIF"
+    - "SSHRC"
+    - "CIHR"
+    - "NGen"
+    - "SCALE.AI"
+    - "Genome Canada"
+    - "grant application"
 
 provides:
   facility_kinds:
@@ -47,15 +70,10 @@ provides:
     - review-meeting
     - funder-reporting
     - external-comms
-  templates:
-    - grant-manifest.yaml
-    - compliance-gates-canada.yaml
-    - submission-phases/00-prospect.yaml
-    - submission-phases/01-pre-submission.yaml
-    - submission-phases/02-internal-review.yaml
-    - submission-phases/03-submitted.yaml
-    - submission-phases/04-awarded.yaml
-    - submission-phases/05-rejected.yaml
+  # A templates: block declared eight files here — grant-manifest.yaml,
+  # compliance-gates-canada.yaml, and a six-file submission-phases/ ladder. None ever shipped
+  # (there is no templates/ directory) — trimmed 2026-08-21 (FB-014 / issue #17). If the
+  # submission-phase ladder is built, re-declare each file in the change that adds it.
   reporting_matrix_defaults: true
 
 depends_on:
@@ -72,8 +90,11 @@ conflicts_with:
 # facility's own manifest.yaml:phases.lifecycle always wins. Nothing is ever written blind, and
 # a facility that leaves its lifecycle unset stays permanently valid.
 # Resolution order: facility > pack default > terminal.
-# Lifecycle behavior is enforced by project-phase-gate and the selected preset.
+# Spec: skills/project-phase-gate/SKILL.md
 defaults:
   # A grant ends: a deadline, a decision, and either an award or a rejection.
   # A grant project that continues is a new grant, not a new increment.
   lifecycle: terminal
+  # preset is a suggestion too: it pre-fills the rhythm question and project-scaffolder Step 2
+  # resolution step 2. The facility\'s phases.preset always wins.
+  preset: grant-default

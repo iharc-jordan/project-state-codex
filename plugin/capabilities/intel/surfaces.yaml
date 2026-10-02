@@ -1,0 +1,463 @@
+capability: intel
+label: Intel
+description: Ecosystem and competitive intelligence held natively — entities (the players), append-only signals (the findings), mandates (engagements), and from 1.1 claims (sourced, dated, confidence-rated, append-only) projected into profiles, battlecards, deal briefs and briefs — harvested by research runs and inbox drains, surfaced through the one daily briefing.
+version: 1.2.0
+entities:
+- kind: intel-entity
+  label: Entities
+  dir: intel/entities
+  id_field: id
+  title_field: name
+  status_field: status
+  columns:
+  - path: id
+    label: ID
+  - path: name
+    label: Name
+  - path: type
+    label: Type
+  - path: priority
+    label: Priority
+  - path: status
+    label: Status
+  - path: last_signal
+    label: Last signal
+  board:
+    lanes:
+    - label: Active research
+      statuses: [active_research]
+    - label: Active engagement
+      statuses: [active_engagement]
+    - label: Watch
+      statuses: [watch]
+    - label: Inactive
+      statuses: [inactive]
+    - label: Archived
+      statuses: [archived]
+  workspace:
+    guide: "You are on the INTEL ENTITY workspace — one player in the ecosystem (vendor, competitor, regulator, partner,\n\
+      infrastructure), grounded in its live YAML under intel/entities/INT-E-NNN.yaml. Entities are evolving\n\
+      understanding and may be edited; signals are the record and are never edited. A) APPLY edits through\n\
+      project-state conventions; type must be one of the manifest's entity_types. B) REPLY with heading (id ·\n\
+      type · priority · status), the summary, the last three signals from intel/signals/ citing this entity,\n\
+      open mandates, and 2-4 ask follow-ups (e.g. \"Research this entity now\", \"Open a mandate\", \"Archive\").\n"
+- kind: intel-signal
+  label: Signals
+  dir: intel/signals
+  id_field: id
+  title_field: summary
+  status_field: intelligence_value
+  columns:
+  - path: id
+    label: ID
+  - path: date
+    label: Date
+  - path: signal_type
+    label: Type
+  - path: intelligence_value
+    label: Value
+  - path: source
+    label: Source
+  - path: entities_referenced
+    label: Entities
+  board:
+    lanes:
+    - label: High
+      statuses: [high]
+    - label: Medium
+      statuses: [medium]
+    - label: Low
+      statuses: [low]
+  workspace:
+    guide: "You are on the INTEL SIGNAL workspace — one append-only finding, grounded in its live YAML under\n\
+      intel/signals/INT-S-NNN.yaml. Signals are NEVER edited: a correction is a new signal that supersedes this\n\
+      one. Confirmed fact and inference are distinguished in the summary. A) The only writes are lineage —\n\
+      promoting this signal into a risk, a decision or a document citation records a became: edge here and a\n\
+      source: intel:INT-S-NNN on the target. B) REPLY with heading (id · type · value · source · date), the\n\
+      summary with fact/inference marked, the entities it references, and 2-4 ask follow-ups (e.g. \"Promote to\n\
+      a risk\", \"Supersede with a correction\", \"Show related signals\").\n"
+- kind: intel-mandate
+  label: Mandates
+  dir: intel/mandates
+  id_field: id
+  title_field: summary
+  status_field: status
+  columns:
+  - path: id
+    label: ID
+  - path: type
+    label: Type
+  - path: entity_id
+    label: Entity
+  - path: status
+    label: Status
+  board:
+    lanes:
+    - label: Prospecting
+      statuses: [prospecting]
+    - label: Proposed
+      statuses: [proposed]
+    - label: Active
+      statuses: [active]
+    - label: Stalled
+      statuses: [stalled]
+    - label: Closed
+      statuses: [completed, closed]
+- kind: intel-claim
+  label: Claims
+  dir: intel/claims
+  id_field: id
+  title_field: statement
+  status_field: confidence
+  columns:
+  - path: id
+    label: ID
+  - path: subject.entity
+    label: Subject
+  - path: category
+    label: Category
+  - path: epistemic_status
+    label: Status
+  - path: confidence
+    label: Confidence
+  - path: source.class
+    label: Source
+  - path: retrieved_at
+    label: Retrieved
+  board:
+    lanes:
+    - label: High
+      statuses: [high]
+    - label: Medium
+      statuses: [medium]
+    - label: Low
+      statuses: [low]
+  workspace:
+    guide: "You are on the INTEL CLAIM workspace — one append-only, sourced assertion about one entity (the competitive\n\
+      layer's atom, capabilities/intel/README.md), grounded in its live YAML under intel/claims/INT-C-NNN.yaml. Claims are\n\
+      NEVER edited: a correction is a new claim with supersedes: pointing here; a disagreement is conflicts_with on both\n\
+      sides. Freshness is derived from the category half-life, never stored — say fresh / aging / stale with the date.\n\
+      A) The only writes are supersede (new claim), record-conflict, and lineage (became: into a risk, decision or\n\
+      document). B) REPLY with heading (id · subject · category · epistemic status · confidence · source class ·\n\
+      freshness), the statement with the source excerpt, what it supersedes or conflicts with, the projections that\n\
+      cite it, and 2-4 follow-ups (e.g. \"Supersede with new evidence\", \"Record a conflict\", \"Regenerate the battlecard\").\n"
+- kind: intel-change
+  label: Changes
+  dir: intel/changes
+  id_field: id
+  title_field: recommended_action
+  status_field: significance
+  columns:
+  - path: id
+    label: ID
+  - path: detected_at
+    label: Detected
+  - path: subject
+    label: Subject
+  - path: change_type
+    label: Type
+  - path: significance
+    label: Significance
+  - path: affected
+    label: Affected
+  board:
+    lanes:
+    - label: Material
+      statuses: [material]
+    - label: Notable
+      statuses: [notable]
+    - label: Noise
+      statuses: [noise]
+- kind: intel-winloss
+  label: Win-loss
+  dir: intel/winloss
+  id_field: id
+  title_field: deal_ref
+  status_field: outcome
+  columns:
+  - path: id
+    label: ID
+  - path: deal_ref
+    label: Deal
+  - path: outcome
+    label: Outcome
+  - path: closed_at
+    label: Closed
+  - path: competitor
+    label: Competitor
+  - path: segment
+    label: Segment
+  - path: seller_reported_reason.category
+    label: Seller says
+  - path: buyer_evidenced_reason.category
+    label: Buyer says
+  board:
+    lanes:
+    - label: Won
+      statuses: [win]
+    - label: Lost
+      statuses: [loss]
+    - label: No decision
+      statuses: [no-decision]
+  workspace:
+    guide: "You are on the INTEL WIN-LOSS workspace — one closed deal, grounded in its live YAML under\n\
+      intel/winloss/INT-W-NNN.yaml (intel 1.2, OCI win-loss-analyzer). The seller's reported reason and the buyer's\n\
+      evidenced reason are kept apart and NEVER merged; the record is append-only except the buyer evidence that\n\
+      arrives after the close. A) The only writes are adding the buyer's reason (a debrief, a letter, an email from\n\
+      the buyer — never inferred from the seller's notes) through /intel-winloss evidence, and the claims it teaches.\n\
+      B) REPLY with heading (id · deal · outcome · competitor · segment), the two reasons side by side with their\n\
+      sources, the criteria (explicit vs inferred), the claims it wrote, and 2-4 follow-ups (e.g. \"Add the buyer's\n\
+      debrief\", \"Run the win-loss analysis\", \"Regenerate the battlecard\").\n"
+reports:
+- id: competitive
+  label: Competitive
+  latest: intel/reports/competitive.html
+  produced_by: intel-harvester          # python3 capabilities/intel/views/build-intel-competitive.py <facility> — also run by intel-battlecard, intel-deal-coach, intel-brief
+  sample: samples/competitive.html      # fixture render — the template shown before any claim exists
+- id: at-a-glance
+  label: At a glance
+  latest: intel/reports/at-a-glance.html
+  produced_by: intel-harvester          # python3 capabilities/intel/views/build-intel-glance.py <facility> — also run after intel-ingest and intel-onboarding
+  default: true
+  sample: samples/at-a-glance.html      # fixture render — the template shown before the capability is enabled or has any signal
+overview: '**Intel gives this project its competitive and ecosystem intelligence natively.**
+
+  Entities are the players, signals are the findings, mandates are engagements with intel
+
+  context — all first-class records in this project''s own substrate, beside the risks and
+
+  decisions they feed. Research runs (entity, question, agenda, longlist, sweep, competitor)
+
+  and inbox drains produce signals; new entities are proposed, never auto-created.
+
+
+  The harvester judges relevance against the declared focus — no focus, no harvest. A search
+
+  that returns nothing is reported as nothing. Signals are append-only; promoting one into a
+
+  risk or decision is a lineage edge, not a copy.
+
+  '
+flow:
+- skill: intel-onboarding
+  does: Enables the capability (focus REQUIRED — the harvester's relevance lens), declares entity and mandate types and the staleness threshold, and seeds 3-5 starter entities and first P0 agenda questions on confirmation.
+- skill: intel-harvester
+  does: Runs research — one entity, one question, an agenda tier, the overnight longlist, a sweep, a competitor deep-dive — and logs signals with fact and inference distinguished; proposes entities for the operator to confirm.
+- skill: intel-ingest
+  does: Drains intel-classified documents from documents/inbox/ into signals with provenance.
+- skill: intel-harvester competitor
+  does: The competitive research (OCI competitor-research) — claims before prose, sourced signals lifted into claims, supersession chains and change events on reconciliation, the cited profile with its coverage block.
+- skill: intel-battlecard
+  does: Claims about a competitor and about us into seller guidance — differentiators that pass the three-part test, a required avoid-saying list, zero unsourced lines.
+- skill: intel-deal-coach
+  does: Competitive evidence plus one deal's context (a tender, the deals directory, the inbox) into ranked moves for that deal; writes what it learned back as claims.
+- skill: intel-brief
+  does: The period's material changes for a named audience, allowed to say nothing changed.
+- skill: intel-ask
+  does: Grounded answers from retrieved claims with staleness inline; unknown is an answer.
+- skill: intel-monitor
+  does: The scheduled change monitor — re-reads the watch list's sources through their connectors, writes what changed as superseding claims and change events classed material, notable or noise, each with its owners.
+- skill: intel-winloss
+  does: Closed deals into learning — the seller's reason and the buyer's kept apart, the claims each deal teaches, and analyses with the sample behind every pattern.
+setup:
+  stages:
+  - stage: Enable the capability
+    intro: Done at enablement — the harvester has a relevance lens and knows what kinds of players and engagements to track.
+    steps:
+    - label: Capability enabled in this project's manifest
+      check:
+        type: manifest
+        path: enabled
+        equals: true
+    - label: Focus declared (the relevance lens)
+      check:
+        type: manifest
+        path: focus
+        nonempty: true
+      hint: 1-3 sentences — what ecosystem is being mapped, for what product or pursuit, and what "relevant" means here. No focus, no harvest.
+      action:
+        type: manifest_set
+        path: focus
+        placeholder: The Canadian public-sector procurement-tooling ecosystem, for the tender capability; relevant means anyone who sells, regulates or integrates with it.
+        button: Set focus
+  - stage: Seed the map
+    intro: The map starts with a few obvious players and the questions that decide strategy now.
+    steps:
+    - label: At least one entity on file
+      check:
+        type: entity_count
+        kind: intel-entity
+        min: 1
+      action:
+        type: run_skill
+        button: Seed starter entities
+        prompt: 'Run /intel-onboarding seed — propose 3-5 obvious players from the declared focus with type, priority and a one-line why; write the ones I confirm.'
+    - label: Research agenda seeded (intel/agenda.yaml)
+      check:
+        type: manual
+      hint: 3-5 P0 questions the focus implies; the digest raises intel.p0-unanswered until a signal answers each.
+  - stage: Run and verify
+    intro: The first research run proves the lens; the overnight longlist keeps the map current.
+    steps:
+    - label: First signal logged
+      check:
+        type: entity_count
+        kind: intel-signal
+        min: 1
+      action:
+        type: run_skill
+        button: Run the first longlist
+        prompt: 'Run /intel-harvester longlist --tier p1 — a breadth-first research pass over the map; log signals with fact and inference distinguished and propose any new entities for confirmation.'
+    - label: Overnight longlist armed in the reporting matrix
+      check:
+        type: manual
+      hint: Enabling with the intel-default pack seeds intel-overnight-longlist and intel-landscape-report; confirm project-automator compiled them into automation/tasks.yaml.
+  - stage: Position
+    intro: The competitive layer — claims as the atom, battlecards as projections. Needs an entity that is us; nothing about us is provable otherwise.
+    steps:
+    - label: Self entity declared (competitive.self_entity)
+      check:
+        type: manifest
+        path: competitive.self_entity
+        nonempty: true
+      hint: An intel entity of type self — us. /intel-onboarding competitive creates it and writes the id here; or paste an existing INT-E id.
+      action:
+        type: manifest_set
+        path: competitive.self_entity
+        placeholder: INT-E-009
+        button: Set self entity
+    - label: First claim logged
+      check:
+        type: entity_count
+        kind: intel-claim
+        min: 1
+      action:
+        type: run_skill
+        button: Research one competitor
+        prompt: 'Run /intel-harvester competitor self, then /intel-harvester competitor <the P0 competitor> — claims before prose; lift the sourced signals; write unknowns as unknowns.'
+    - label: First battlecard generated
+      check:
+        type: manual
+      hint: /intel-battlecard <competitor> — every differentiator passes the three-part test, avoid-saying populated, health.unsourced_lines 0. The Competitive report shows its currency from then on.
+  - stage: Watch and learn
+    intro: Intel 1.2 — the monitor keeps the claims current on a cadence, and closed deals feed back as win-loss records. Together with two connectors beyond the web, this is OCI level L2.
+    steps:
+    - label: Watch list declared (intel/watch.yaml)
+      check:
+        type: manual
+      hint: /intel-monitor watch proposes sources from the ones the claims already cite — pricing and home pages through web.read, the project's own deals through deals.read, the inbox through documents.search.
+      action:
+        type: run_skill
+        button: Propose the watch list
+        prompt: 'Run /intel-monitor watch — propose sources for every in-scope competitor from the refs its claims already cite, plus a deals.read and a documents.search source where deals and inbox documents name it; write the ones I confirm.'
+    - label: First monitor run
+      check:
+        type: manual
+      hint: The intel-weekly-monitor matrix entry runs it unattended from then on; the digest raises intel.monitor-overdue and intel.change-material.
+    - label: First closed deal recorded
+      check:
+        type: entity_count
+        kind: intel-winloss
+        min: 1
+      action:
+        type: run_skill
+        button: Record a closed deal
+        prompt: 'Run /intel-winloss record <the deal> — the seller''s reason and the buyer''s kept apart; if the buyer has not said why, leave it empty and tell me who to ask.'
+operations: '**Daily rhythm.** The digest raises unanswered P0 questions, an overnight longlist
+
+  awaiting review, intel documents waiting in the inbox, and entities past the staleness
+
+  threshold. Review the longlist report; confirm or reject proposed entities.
+
+
+  **Monthly.** The landscape report — entities by type, relationships, gaps — as a read for
+
+  people, reviewed before it goes anywhere.
+
+
+  **Your part.** Keep the focus honest, decide what to track, promote signals into risks and
+
+  decisions where they belong. Nothing is fabricated: a search that finds nothing says so.
+
+
+  **Watch and learn.** The weekly monitor re-reads the watch list and writes changes as claim
+
+  deltas; the digest raises a material change the same week. Record every closed deal with the
+
+  seller''s and the buyer''s reasons apart; the quarterly analysis reports patterns with their samples.
+
+
+  **Competitive.** The weekly refresh re-researches stale material claims; the monthly brief
+
+  goes to people after PL review. The digest raises stale claims, open conflicts, battlecards
+
+  behind their evidence, and open unknowns on P0 competitors. Never edit a battlecard —
+
+  correct the claim set and regenerate.
+
+  '
+enablement:
+  defaults:
+    pack: intel-default
+    # focus is deliberately absent: the setup step stays todo until the operator sets it, and the
+    # memory layer's enable verb refuses without it — no focus, no harvest.
+    entity_types:
+    - vendor
+    - competitor
+    - regulator
+    - partner
+    - infrastructure
+    - adjacent
+    - self
+    mandate_types:
+    - integration-partnership
+    - licensing
+    - pilot
+    - research-engagement
+    staleness_threshold_days: 14
+    competitive:
+      # self_entity is deliberately absent: the Position stage stays todo until it is set.
+      competitors: []
+      audiences: []
+      half_lives_days: {pricing: 90, packaging: 90, product: 180, feature: 180, integration: 180, positioning: 180, messaging: 180, go-to-market: 180, security: 180, customer: 270, partnership: 270, compliance: 270, leadership: 365, funding: 365, market: 365, objection: 120, win-loss: 120, sales-tactic: 120, product-gap: 120}
+      source_precedence: {}
+      deal_context: [tender, deals-dir, inbox]
+      monitor:
+        connectors: {web.read: {class: by-owner, status: verified}, documents.search: {class: by-document, status: reported}, deals.read: {class: internal-observation, status: reported}, messages.search: {class: internal-observation, status: reported}, mail.search: {class: internal-observation, status: reported}}
+        significance: {material_categories: [pricing, packaging, product, feature, positioning, security, compliance, partnership, customer]}
+      winloss: {min_sample: 3, reason_categories_extra: []}
+      conformance_target: L1
+  scaffold:
+  - intel/entities
+  - intel/signals
+  - intel/mandates
+  - intel/network
+  - intel/reports
+  - intel/claims
+  - intel/changes
+  - intel/profiles
+  - intel/battlecards
+  - intel/deals
+  - intel/answers
+  - intel/winloss
+  - intel/monitor
+  - intel/agenda.yaml
+  - intel/watch.yaml
+  state_init:
+    counters:
+      entity: 0
+      signal: 0
+      mandate: 0
+      claim: 0
+      change: 0
+      winloss: 0
+    cursors: {}
+    last_longlist: null
+    last_sweep: null
+    projections: {}
+    last_refresh: null
+    last_brief: null
+    monitor:
+      last_run: null
+      sources: {}
+    last_winloss_analysis: null

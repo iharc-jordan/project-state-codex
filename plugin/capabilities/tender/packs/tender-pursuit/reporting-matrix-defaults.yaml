@@ -1,0 +1,39 @@
+defaults:
+  - stakeholder_group: pursuit-team
+    report: daily-tender-digest
+    cadence: { kind: daily, day: "weekday" }
+    format: md
+    surface: gmail.draft + slack
+    generator: project-notifier
+    profile: tender-pursuit.notifier
+
+  - stakeholder_group: pursuit-team
+    report: weekly-pipeline-report
+    cadence: { kind: weekly, day: monday }
+    format: md
+    surface: gmail.draft
+    generator: project-status-reporter
+    sections:
+      - totals: [discovered, qualified, pursued, dismissed]
+      - top_capability_categories
+      - top_buyers
+      - source_contribution
+      - average_review_time
+      - upcoming_submissions
+      - outstanding_decisions
+
+  - stakeholder_group: leadership
+    report: monthly-buyer-activity
+    cadence: { kind: monthly, day: 1 }
+    format: md
+    surface: gmail.draft
+    generator: project-status-reporter
+    optional: true
+
+  - stakeholder_group: pursuit-team
+    report: win-loss-analysis
+    cadence: { kind: quarterly }
+    format: md
+    surface: gmail.draft
+    generator: project-lessons
+    optional: true

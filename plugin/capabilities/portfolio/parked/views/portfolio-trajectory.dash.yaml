@@ -1,0 +1,21 @@
+# portfolio-trajectory — small multiples over the snapshot series (V1.1; declarative)
+view:
+  id: portfolio-trajectory
+  title: "Trajectory"
+  requires: "capability=portfolio"
+  kind: small-multiples
+  facet: "one panel per active member"
+  series: "one per panel (no legend): the chosen measure over the last N snapshots"
+  measure_options:
+    - { id: percent_complete, label: "Milestones % complete", source: "snapshot.milestones" }
+    - { id: events_7d, label: "Activity / 7 d", source: "snapshot.activity.events_7d" }
+    - { id: open_risk_max, label: "Top risk score", source: "snapshot.risks.high[0].score" }
+    - { id: inbox_untriaged, label: "Inbox backlog", source: "snapshot.harvest.inbox.untriaged" }
+  marks:
+    line: "2 px, member colour = the portfolio's neutral ink (single series per panel)"
+    endpoint: "8 px marker with direct value label"
+    forecast: "dashed extension to the next planned_end when a slip-forecast finding is open, labelled with the projected date"
+    grid: "recessive; one y-scale per panel, 0-based for percent and counts"
+  window: "last 8 snapshots"
+  tooltip: "snapshot date, value, source_rev"
+  table_view: true

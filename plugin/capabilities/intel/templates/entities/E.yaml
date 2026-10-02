@@ -1,0 +1,16 @@
+# intel-entity template — an ecosystem player. Entities are evolving understanding:
+# update freely; the signals are the record of when each fact arrived.
+id: INT-E-NNN
+type: "<one of capabilities.intel.entity_types>"
+name: "Entity Name"
+priority: P2                # P0 decides strategy … P3 background
+status: active_research     # active_research|active_engagement|watch|inactive|archived
+summary: >
+  What this entity is and why it matters to the declared focus.
+key_facts: []
+research_questions: []      # answered questions are marked, not deleted — sweeps skip them
+urls: []
+relationships: []           # - {entity: INT-E-NNN, type: partner|competitor|…, note: "…"}
+tags: []
+created: YYYY-MM-DD
+last_updated: YYYY-MM-DD

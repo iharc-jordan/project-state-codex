@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import base64
 import json
+import subprocess
 import sys
-import webbrowser
 from pathlib import Path
 
 STUDIO = Path.home() / "Desktop" / "simple-minds.html"
@@ -29,10 +29,7 @@ def main() -> int:
     data = json.loads(path.read_text(encoding="utf-8"))
     payload = json.dumps(data, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     url = STUDIO.resolve().as_uri() + "#vibe=" + b64url(payload)
-    if not webbrowser.open(url):
-        print("Could not open the default browser", file=sys.stderr)
-        print(url)
-        return 1
+    subprocess.run(["open", url], check=False)
     print(url)
     return 0
 

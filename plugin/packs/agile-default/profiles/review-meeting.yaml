@@ -19,7 +19,10 @@ attendees:
     - id: design
 
 agenda:
-  template: "templates/sprint-retro.md"
+  # templates/sprint-retro.md was referenced here but never shipped — trimmed 2026-08-21
+  # (FB-014 / issue #17). With no template the generator composes the retro from state;
+  # add the file and point this at it to fix the format.
+  template: ~
   required_sections:
     - "Sprint goals review (achieved? deferred?)"
     - "What went well (Continue)"

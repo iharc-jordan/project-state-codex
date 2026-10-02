@@ -1,11 +1,21 @@
 ---
 name: project-onepager
-description: "Own audience-specific one-pagers, briefs, deep-dives, and whitepapers from Project State. Invoke only for an explicit audience-specific document request, a due enabled onepager matrix entry, or an active pack profile that requires it. Preserve recipes, provenance, established paths, and change reporting. Draft once per source event and period for human review; never send or publish automatically."
+description: "Write an audience-framed document from project state — 'one-pager for the board', 'brief for investors', 'write a whitepaper about the project'. Stored recipes, regenerable, with provenance."
+map:
+  tier: P2
+  stage: generate
+  requires: [memory]
+  reads: [manifest, milestones, objectives, risks, decisions]
+  writes: [reports]
+  produces: [onepager]
+  profile_driven: true
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project One-Pager (documents as views over state)
+
+> **When to use.**
+>
+> Generate audience-framed documents from project state — one-pagers, briefs, deep-dives, whitepapers. A document is a RECIPE (audience × altitude × purpose × evidence filters) stored in reports/custom-defs/, rendered against current state into branded HTML (print-ready → PDF) with every claim carrying provenance back to a typed record. Audience voice comes from pack profiles (onepager.yaml) or built-in defaults; drafts land in outbox/queue/ for review — never sent or published automatically. Recipes regenerate: re-running one against newer state refreshes the document and reports what changed. Use whenever the user says 'one-pager', 'write a brief', 'leave-behind', 'whitepaper', 'exec summary doc', 'funder one-pager', 'make a doc for <audience>', 'regenerate the onepager', or when the reporting matrix schedules a onepager entry. Reads state through project-state; distributes via project-blog-publisher / project-website-publisher / project-notifier after human approval.
 
 Long-form documents — from a 400-word leave-behind to a structured whitepaper —
 generated from the substrate, framed for an audience, and regenerable. The core
@@ -77,12 +87,7 @@ must not appear in any form, including paraphrase.
 ## Workflow
 
 1. **Resolve** — load recipe (or build one from the user's ask and save it);
-   resolve audience profile; read bounded summaries through `project-state`,
-   then open only evidence selected by the recipe. Deep full-ledger reads are
-   reserved for an explicitly requested deepdive/whitepaper.
-   Compute the deterministic event identity from source event, reporting period,
-   this owner, canonical artifact path, recipe, and exact source revision. If the
-   same identity and artifact/card already exist, return them without regenerating.
+   resolve audience profile; read evidence through `project-state`.
 2. **Draft** — write the document at the requested altitude. Every claim that
    states a fact about the project carries a provenance marker. The honest-risk
    section is mandatory at every altitude except `public` (where it becomes
@@ -95,9 +100,8 @@ must not appear in any form, including paraphrase.
    artifact path, audience, signoff role from profile). **Never** publish, mail,
    or post directly — approval routes to `project-blog-publisher`,
    `project-website-publisher`, or `project-notifier`.
-5. **Record** — for a new identity only, update recipe `last_generated`
-   (timestamp, activity-log sequence, artifact path); append the existing
-   `onepager_generated` event with the deterministic canonical `id`.
+5. **Record** — update recipe `last_generated` (timestamp, activity-log
+   sequence, artifact path); append `onepager_generated` to the activity log.
 6. **Regenerate** (on re-run) — diff current state against `last_generated`
    markers; produce the fresh artifact plus a change note (moved milestones,
    new/closed decisions and risks, KPI deltas) prepended to the outbox card.

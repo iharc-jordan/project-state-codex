@@ -1,0 +1,32 @@
+# work-partnership — milestone seeds. Drafts only; `due` is a date expression resolved once at seed time.
+milestones:
+  - slug: shared-goals
+    title: "Shared goals agreed"
+    due: start+2w
+    phase: 01-define
+    acceptance: "Both sides wrote down what each wants from the partnership"
+  - slug: agreement-signed
+    title: "Agreement signed"
+    due: start+6w
+    phase: 02-plan
+    acceptance: "MOU or partnership agreement signed by both parties"
+  - slug: joint-plan
+    title: "Joint plan agreed"
+    due: start+8w
+    phase: 02-plan
+    acceptance: "Named owners on both sides; first joint deliverable dated"
+  - slug: first-joint-deliverable
+    title: "First joint deliverable"
+    due: 60%
+    phase: 03-deliver
+    acceptance: "Something shipped or run together"
+  - slug: joint-review
+    title: "Joint review"
+    due: end-1w
+    phase: 04-review
+    acceptance: "Both sides assessed results against the shared goals"
+  - slug: renew-or-close
+    title: "Renew or close"
+    due: end
+    phase: 05-close
+    acceptance: "Decision to continue, change or end, recorded"

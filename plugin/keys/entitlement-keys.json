@@ -1,0 +1,4 @@
+{
+  "note": "Public keys this plugin trusts to sign capability entitlements (decision 2026-09-27-capability-entitlements). Empty until the production key ships: while it is empty, no install checks entitlements and every paid verb runs as it did before. Add the production server's key from https://<server>/.well-known/project-state-entitlement-keys.",
+  "keys": []
+}

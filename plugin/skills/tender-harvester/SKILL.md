@@ -1,20 +1,29 @@
 ---
 name: tender-harvester
-description: "Collect tender opportunities only when the tender-intelligence capability is enabled and at least one connector is configured, or when the operator explicitly requests setup. Preserve source coverage, cursor/health state, quarantine, politeness, and project-state write contracts. A due enabled capability trigger may run it; otherwise remain inert and never infer connector access."
+description: "Harvest public-sector tenders (CanadaBuys, MERX, SaskTenders, bids&tenders) — 'find tenders', 'harvest tenders', 'any new RFPs for us'. Collects opportunities for the tender pipeline."
+map:
+  tier: capability
+  stage: ingest
+  requires: [memory, python, connector:web, connector:gmail]
+  inputs: [web, gmail]
+  reads: [manifest]
+  writes: [tenders, state]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # tender-harvester
+
+> **When to use.**
+>
+> The collection layer of the tender package. Harvest public-sector tender opportunities from CanadaBuys (RSS/Atom + email), MERX (email), SaskTenders/GEM (email + conservative public listing polling) and bids&tenders (email + approved public search) into tender entities inside the enabling project-state/ facility. Tracks per-connector cursors and health in state/tender.json (the capability's own state file), quarantines unrecognized notification templates, honors a global per-domain politeness ledger, and writes every record through the project-state memory layer. Trigger on 'harvest tenders', 'check the tender feeds', 'what came in from CanadaBuys', 'drain the tender mailbox', 'poll SaskTenders', 'run the tender harvest', 'any new tenders', or when project-orchestrator finds a connector past its expected interval. Designed to run in scheduled sessions between interactive use.
 
 Pull tender opportunities from configured sources and deposit them as `kind: tender` entities in the enabling facility, via the `project-state` memory layer. This skill discovers and normalizes; it does not score (`tender-qualifier`), track changes on followed tenders (`tender-monitor`), or move workflow status (`tender-pipeline`).
 
 ## Preconditions
 
 1. Locate the facility: walk up from cwd to `project-state/manifest.yaml` (standard project-state discovery).
-2. Confirm `manifest.yaml:packages.tender-intelligence.enabled: true`. If absent, stop: "Tender package not enabled in this facility — adapt the bundled `templates/tender/manifest-capability-block.yaml` into manifest.yaml."
+2. Confirm `manifest.yaml:packages.tender.enabled: true`. If absent, stop: "Tender package not enabled in this facility — add the package block (templates/manifest-package-block.yaml) to manifest.yaml."
 3. Read the package block for sources, feeds, mailbox label, and intervals.
-4. Read `state/tender-intelligence.json:tender_connectors` for cursors and health. Initialize missing connector entries with the schema-extension defaults before first use.
+4. Read `state/tender.json:tender_connectors` for cursors and health. Initialize missing connector entries with the schema-extension defaults before first use.
 
 ## Philosophy
 
@@ -40,7 +49,7 @@ For each URL in `sources.canadabuys.feeds.discovery` (watch feeds belong to `ten
    - Extract the notice reference number from the entry link/id.
    - Check existing tenders for a source match (`sources[].portal == CanadaBuys && source_id == ref`). If found and unchanged, skip. If found and changed, update `last_checked_at` and hand the diff to `tender-monitor` conventions (write nothing yourself beyond the source block).
    - If new: fetch the public notice page; parse title, organization, notice type, status, publication date, closing date (preserve original timezone), regions of delivery, commodity codes (UNSPSC/GSIN), trade agreements, procurement method, contact where public, external tendering-system links.
-   - Build the entity from `templates/tender/tender-entity-template.yaml`; `sources[0].role: discovery`; if the notice points to another submission portal, record `submission_url` and add a second source block with `role: submission`.
+   - Build the entity from `templates/tender-entity-template.yaml`; `sources[0].role: discovery`; if the notice points to another submission portal, record `submission_url` and add a second source block with `role: submission`.
    - Write via memory layer → `tender.discovered`.
 4. Update cursor, `etag`, `last_success`, `last_new_record`; reset `consecutive_failures`.
 
@@ -111,6 +120,22 @@ Tender harvest — <facility> — 2026-07-21 09:00 PT
 ```
 
 Always end by suggesting the follow-on: `tender-qualifier score` for new/changed tenders; flag amendments for `tender-monitor`.
+
+## The declared report
+
+After every run (including a run that found nothing — connector health changed) re-render the
+tender desk's **At a glance** page, declared in `capabilities/tender/surfaces.yaml → reports:`
+and shown in place on the app's Tender page:
+
+```bash
+python3 capabilities/tender/views/build-tender-glance.py <facility>/project-state
+```
+
+It reads `tenders/`, `state/tender.json` (connector health — the rows this skill just updated)
+and the tender events log, and writes only `tenders/reports/at-a-glance.html`. A lens, not a
+writer: nothing in it is state, and it is regenerated rather than edited. Until the first
+harvest the app shows the shipped sample (`samples/at-a-glance.html`, fixture data) banded
+"Template".
 
 ## What this skill must never do
 

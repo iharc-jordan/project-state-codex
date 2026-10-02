@@ -1,0 +1,45 @@
+# Seeded into project-state/reporting-matrix.yaml when the research capability is enabled with this pack
+# (capabilities/research/README.md). project-automator compiles cadence → automation/tasks.yaml; the digest's
+# research.* checks (routine.yaml) are the review hooks for the unattended entries.
+entries:
+  - id: research-nightly-walk
+    stakeholder: internal
+    report: "Nightly research walk — one run inside a budget: auto actions done, decisions parked for a person"
+    cadence: daily
+    at: "02:00"
+    format: json
+    surface: "research/runs/RUN-{date}-N.json"
+    producer: research-walk
+    unattended: true           # performs only auto actions; every gate is parked — research.walk-gated is the review hook
+    review: none
+  - id: research-weekly-sweep
+    stakeholder: internal
+    report: "Weekly red-team sweep over every live finding of every standing mandate"
+    cadence: { kind: weekly, day: sunday }
+    at: "03:00"
+    format: yaml
+    surface: "research/challenges/"
+    producer: research-redteam
+    producer_args: "sweep"
+    unattended: true           # challenges are filed, never ruled — they surface in the digest
+    review: none
+  - id: research-weekly-delta
+    stakeholder: internal
+    report: "Weekly delta for each standing mandate — what changed, or 'nothing material changed'"
+    cadence: { kind: weekly, day: monday }
+    at: "06:30"
+    format: markdown
+    surface: "research/reports/{mandate}-delta-{date}.md"   # one per standing mandate (templates/delta-brief.md)
+    producer: research-brief
+    producer_args: "delta"
+    review: PL                 # the delta goes to its audience after a person reads it
+  - id: research-glance
+    stakeholder: internal
+    report: "Research at a glance, re-rendered after each walk"
+    cadence: { kind: ad-hoc, on_event: "research.walk.closed" }
+    format: html
+    surface: "research/reports/at-a-glance.html"
+    producer: research-walk
+    producer_args: "render"
+    unattended: true
+    review: none

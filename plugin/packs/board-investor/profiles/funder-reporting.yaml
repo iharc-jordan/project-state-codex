@@ -13,7 +13,9 @@ reports:
       lead_time_days: 3
     format:
       kind: md
-      template: "templates/monthly-investor-update.md"
+      # templates/monthly-investor-update.md was referenced but never shipped — trimmed
+      # 2026-08-21 (FB-014 / issue #17). The generator composes the update from state.
+      template: ~
       output_naming: "reports/investors/{YYYY}-{MM}-investor-update.md"
     field_mapping:
       highlights:
@@ -25,7 +27,7 @@ reports:
         extract: "blockers + risks"
         from_period: "previous month"
       metrics:
-        source: "kpis/*.yaml"        # Project State KPI entities (kind: kpi)
+        source: "kpis/*.yaml"        # the substrate KPI entities (kind: kpi) — see project-state/SCHEMA.md
         select: "delivers_to in objectives where horizon in [annual, north-star]"
         format: "{metric}: {current}{unit} (target {target}; {delta} since previous month)"
       asks:

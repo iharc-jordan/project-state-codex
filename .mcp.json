@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "project-state": {
+      "command": "node",
+      "args": ["./plugin/scripts/start-state-mcp.mjs"],
+      "cwd": ".",
+      "env_vars": ["PROJECT_STATE_DIR", "PROJECT_STATE_ACTOR", "PROJECT_STATE_READ_ONLY", "PROJECT_STATE_REGISTRY", "PS_WORKSPACE_ROOT"]
+    }
+  }
+}

@@ -21,7 +21,9 @@ attendees:
     - id: investor_observers
 
 agenda:
-  template: "templates/board-pack.md"
+  # templates/board-pack.md was referenced but never shipped — trimmed 2026-08-21
+  # (FB-014 / issue #17). The generator composes the pack from state.
+  template: ~
   required_sections:
     - "CEO update (5-min cold open)"
     - "Financial summary (cash, runway, MRR/ARR)"

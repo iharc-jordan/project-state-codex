@@ -1,0 +1,37 @@
+# work-content — milestone seeds. Drafts only; `due` is a date expression resolved once at seed time.
+milestones:
+  - slug: outline-approved
+    title: "Outline approved"
+    due: anchor-60d
+    phase: 01-plan
+    acceptance: "Audience, purpose, structure and owners agreed"
+  - slug: first-draft
+    title: "First draft complete"
+    due: anchor-35d
+    phase: 02-build-out
+    acceptance: "Every section drafted, however rough"
+  - slug: review-complete
+    title: "Review complete"
+    due: anchor-21d
+    phase: 02-build-out
+    acceptance: "Reviewer, legal and permissions feedback in and resolved"
+  - slug: production-ready
+    title: "Design and production ready"
+    due: anchor-7d
+    phase: 03-final-countdown
+    acceptance: "Final files, layout, captions and metadata done"
+  - slug: publish
+    title: "Publish"
+    due: anchor
+    phase: 04-live
+    acceptance: "Live on every planned channel"
+  - slug: promotion-review
+    title: "Promotion review"
+    due: anchor+14d
+    phase: 04-live
+    acceptance: "Early numbers checked; promotion adjusted"
+  - slug: wrap
+    title: "Wrap"
+    due: anchor+30d
+    phase: 05-wrap
+    acceptance: "Results recorded; sources and files archived"

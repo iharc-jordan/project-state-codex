@@ -1,0 +1,19 @@
+# KPI suggestions — never written by onboarding. project-goal-tracker offers these in the `project-goal-tracker` workflow.
+kpis:
+  - slug: adoption-rate
+    title: "Adoption rate"
+    unit: "%"
+    direction: up
+    hint: "Share of people in scope working the new way."
+  - slug: training-completion
+    title: "Training completion"
+    unit: "%"
+    direction: up
+  - slug: pulse-score
+    title: "Pulse / sentiment score"
+    unit: "score"
+    direction: up
+  - slug: time-to-productivity
+    title: "Time to productivity"
+    unit: "days"
+    direction: down

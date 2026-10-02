@@ -1,0 +1,55 @@
+preset_id: countdown-default
+description: |
+  Planned backwards from a fixed date: a launch, an event, a go-live, a filing. The date does not move
+  (or moving it is a big deal), so the work is organised by how far away it is rather than by what
+  was finished last.
+
+  requires: [anchor_date] - the facility declares phases.anchor_date (launch day, event day), and
+  04-live is the phase that date opens. Pack seeds express milestone due dates as anchor-Nd, and
+  matrix deadlines anchor to phases.anchor_date with negative offsets, so the whole plan hangs off one
+  value. Moving the anchor does not move milestones already written (re-anchoring is phase 2 of the
+  spec).
+
+  Terminal by design. A campaign or event series that repeats is a new facility per instance, or a
+  cycle-default facility if the instances genuinely share one plan.
+  Spec: skills/project-scaffolder/SKILL.md
+
+requires:
+  - anchor_date
+anchor_phase: "04-live"
+
+phases:
+  - id: "01-plan"
+    label: "Plan"
+    gate_in: ~
+    gate_out: "Brief approved, date fixed, budget and owners agreed"
+    required_artifacts:
+      - "Brief"
+
+  - id: "02-build-out"
+    label: "Build-out"
+    gate_in: "Brief approved"
+    gate_out: "Everything that must be booked, made or confirmed is booked, made or confirmed"
+    required_recurring:
+      - "Weekly countdown status"
+
+  - id: "03-final-countdown"
+    label: "Final countdown"
+    gate_in: "Build-out complete"
+    gate_out: "Readiness check passed; run of show / launch plan locked"
+    required_artifacts:
+      - "Readiness check"
+
+  - id: "04-live"
+    label: "Live"
+    gate_in: "Anchor date reached"
+    gate_out: "Live period over (event held / campaign out of market)"
+
+  - id: "05-wrap"
+    label: "Wrap"
+    gate_in: "Live period over"
+    gate_out: ~
+    required_artifacts:
+      - "Results report"
+      - "Budget reconciled"
+      - "Lessons learned"

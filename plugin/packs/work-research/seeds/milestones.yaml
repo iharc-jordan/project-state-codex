@@ -1,0 +1,32 @@
+# work-research — milestone seeds. Drafts only; `due` is a date expression resolved once at seed time.
+milestones:
+  - slug: questions-agreed
+    title: "Research questions agreed"
+    due: start+2w
+    phase: 01-define
+    acceptance: "Questions, scope and intended use of the findings written down"
+  - slug: method-approved
+    title: "Method approved"
+    due: start+5w
+    phase: 02-plan
+    acceptance: "Protocol, sampling and analysis plan agreed; ethics approval if required"
+  - slug: data-collected
+    title: "Data collection complete"
+    due: 60%
+    phase: 03-deliver
+    acceptance: "Target sample reached, or the shortfall recorded and accepted"
+  - slug: analysis-complete
+    title: "Analysis complete"
+    due: end-4w
+    phase: 03-deliver
+    acceptance: "Analysis run against the plan; deviations documented"
+  - slug: findings-reported
+    title: "Findings reported"
+    due: end-1w
+    phase: 04-review
+    acceptance: "Report or presentation delivered to the people who will use it"
+  - slug: close
+    title: "Close and archive"
+    due: end
+    phase: 05-close
+    acceptance: "Data archived per the plan; lessons recorded"

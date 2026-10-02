@@ -1,0 +1,20 @@
+# portfolio-capacity — people × months heat-map (V1.1; declarative, not yet mounted)
+view:
+  id: portfolio-capacity
+  title: "Capacity ahead"
+  requires: "capability=portfolio"
+  kind: heatmap
+  rows: "people appearing in any member snapshot's people[] (id → display name from the portfolio's people/)"
+  columns: "next 3 months"
+  cell:
+    value: "count of in-flight milestones + dated deadlines owned by the person across members whose date falls in the month"
+    secondary: "count of distinct members contributing"
+    color: "sequential single hue by value (light = 0, dark = max)"
+    label: "value, always shown; members count as a superscript"
+    flag: "capacity conflict when members >= capacity.conflict_threshold (from the manifest block) — outlined cell + link to the capacity-conflict finding"
+    tooltip: "the milestones and deadlines behind the number, by member"
+  basis_note: "computed from milestone ownership (inferred-from-owners) unless members declare allocations"
+  filters:
+    - { id: person, label: "Person", source: "rows" }
+    - { id: member, label: "Member", source: "member rows" }
+  table_view: true

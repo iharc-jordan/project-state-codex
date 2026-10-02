@@ -1,0 +1,65 @@
+# Measure set: health — "is this a well-run project right now?"
+# Declared data, computed by portfolio-reviewer from the latest snapshot per member.
+# Every measure traces to snapshot fields; one that cannot be computed for a member is
+# reported as `not-measurable` with the missing requirement, never as zero.
+schema_version: 1
+set: health
+version: "1.0.0"
+question: "Is this a well-run project right now?"
+measures:
+  - id: health.freshness
+    question: "How current is what we know about this member?"
+    formula: "max(days_since(activity.last_event_at), max(harvest.surfaces[].cursor_age_days))"
+    requires: [activity, harvest]
+    unit: days
+    direction: lower_is_better
+    thresholds: { green: "<=3", amber: "<=7", red: ">7" }
+    basis: declared
+  - id: health.inbox-backlog
+    question: "Is triage keeping up with what arrives?"
+    formula: "harvest.inbox.untriaged"
+    requires: [harvest]
+    unit: docs
+    direction: lower_is_better
+    thresholds: { green: "<=5", amber: "<=15", red: ">15" }
+    basis: declared
+  - id: health.schedule
+    question: "How much in-flight work is overdue or blocked?"
+    formula: "(milestones.overdue + milestones.blocked) / max(1, milestones.in_progress + milestones.at_risk + milestones.blocked + milestones.overdue)"
+    requires: [milestones]
+    unit: ratio
+    direction: lower_is_better
+    thresholds: { green: "0", amber: "<=0.25", red: ">0.25" }
+    basis: declared
+  - id: health.risk-exposure
+    question: "How exposed is the project, and is the register alive?"
+    formula: "max(risks.high[].score) ; and count(risks where last_reviewed older than 30d)"
+    requires: [risks]
+    unit: score
+    direction: lower_is_better
+    thresholds: { green: "<6", amber: "<9", red: ">=9 or any unreviewed >30d" }
+    basis: declared
+  - id: health.decision-latency
+    question: "Are decisions being made when they are needed?"
+    formula: "count(decisions.pending where needed_by < today)"
+    requires: [decisions]
+    unit: decisions
+    direction: lower_is_better
+    thresholds: { green: "0", amber: "1", red: ">1" }
+    basis: declared
+  - id: health.reporting-compliance
+    question: "Did the reports the matrix promised actually get produced?"
+    formula: "produced / due over the last 30 days, from the member's promise scoreboard"
+    requires: [promise_scoreboard]
+    unit: ratio
+    direction: higher_is_better
+    thresholds: { green: ">=0.9", amber: ">=0.7", red: "<0.7" }
+    basis: declared
+  - id: health.phase-dwell
+    question: "Has the project sat in its current phase longer than its own preset expects?"
+    formula: "days_in_phase / preset_expected_days(current_phase)"
+    requires: [project.phase_entered, preset]
+    unit: ratio
+    direction: lower_is_better
+    thresholds: { green: "<=1.0", amber: "<=1.5", red: ">1.5" }
+    basis: declared

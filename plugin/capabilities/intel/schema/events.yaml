@@ -1,0 +1,29 @@
+# intel.* event vocabulary — appended to the host activity log by the memory layer.
+schema_version: 1
+capability: intel
+events:
+  - intel.entity.added
+  - intel.entity.updated
+  - intel.signal.logged          # only intel-harvester, intel-ingest, or manual
+  - intel.mandate.updated
+  - intel.agenda.answered        # a research-agenda question closed by a signal
+  - intel.longlist.completed     # payload: report path, items, signals by value
+  - intel.inbox.drained          # payload: files processed, signals created
+  - intel.report.generated       # landscape / network / briefing artifacts
+  # ── competitive layer (1.1) ────────────────────────────────────────────────
+  - intel.claim.logged           # only intel-harvester, intel-deal-coach, intel-ask, or manual
+  - intel.claim.superseded       # payload: old id, new id
+  - intel.conflict.recorded      # payload: the two ids, category
+  - intel.change.detected        # payload: change id, significance, before/after
+  - intel.profile.generated
+  - intel.battlecard.generated   # payload: subject, audience, health
+  - intel.deal-brief.generated   # payload: deal_ref, competitor, confidence
+  - intel.brief.generated        # payload: period, material changes (may be 0)
+  - intel.question.answered      # intel-ask --keep: answer path, claims cited
+  - intel.approval.logged        # the human gate: approver, artifact, destination
+  # ── monitor and win-loss (1.2) ─────────────────────────────────────────────
+  - intel.monitor.completed      # payload: sources checked / unchanged / unreachable, claims logged, changes by significance
+  - intel.watch.updated          # intel/watch.yaml changed: sources added, retired
+  - intel.winloss.recorded       # payload: id, deal_ref, outcome, competitor, has_buyer_evidence
+  - intel.winloss.evidenced      # buyer evidence added to a record after the close (interview, debrief letter)
+  - intel.winloss.analyzed       # payload: report path, sample size, divergence rate, segments

@@ -1,0 +1,65 @@
+pack:
+  id: "work-event"
+  name: "Event"
+  version: "0.1.0"
+  compatible_core: ">=4.0,<6.0"
+  description: |
+    Work type for a conference, summit, offsite, gala, trade-show presence or launch party: work
+    planned backwards from a fixed event date. Gives the project the countdown ladder anchored on
+    the event date, a dated milestone skeleton (venue → programme → registration → run of show →
+    event → survey → wrap), event risks, KPI suggestions (registrations, show rate, satisfaction,
+    cost per attendee, sponsorship), a weekly countdown digest that becomes daily in the final
+    countdown, a run-of-show readiness brief a week out, and a post-event report.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "skills/project-scaffolder/SKILL.md"
+    - "templates/phase-presets/countdown-default.yaml — the phase ladder this pack assumes"
+  released: "2026-09-24"
+  maturity: "starter"
+  axis: work   # work | accountability | capability - the bundled pack contract
+
+# ----------------------------------------------------------------------------
+# Picker presentation - skills/project-scaffolder/SKILL.md Every front door (onboarding,
+# scaffolder, intake, kanban wizard) reads this block; none keeps its own table of packs.
+# ----------------------------------------------------------------------------
+picker:
+  listed: true
+  label: "Event"
+  blurb: "Conference, summit, offsite or gala — planned back from a fixed event date."
+  signals:
+    - "event"
+    - "conference"
+    - "summit"
+    - "offsite"
+    - "gala"
+    - "trade show"
+    - "venue"
+    - "attendees"
+    - "registration"
+    - "speakers"
+    - "run of show"
+    - "catering"
+
+provides:
+  profiles: []
+  seeds: [milestones, risks, kpis]
+  reporting_matrix_defaults: true
+
+depends_on:
+  packs: []
+
+conflicts_with:
+  packs: []
+
+asks:
+  - key: phases.anchor_date
+    prompt: "What's the event date? (the first day, if it runs several)"
+    required: true
+  - key: project.event.expected_attendance
+    prompt: "Roughly how many attendees do you expect?"
+    required: false
+
+defaults:
+  lifecycle: terminal
+  preset: countdown-default

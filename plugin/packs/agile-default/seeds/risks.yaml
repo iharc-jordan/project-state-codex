@@ -1,0 +1,16 @@
+risks:
+  - slug: scope-creep
+    title: "Release scope grows sprint over sprint"
+    likelihood: high
+    impact: medium
+    mitigation: "Release scope frozen at feature-complete; new stories go to the next increment."
+  - slug: key-developer-dependency
+    title: "One developer is the only person who understands a critical component"
+    likelihood: medium
+    impact: high
+    mitigation: "Pairing and code review on that component; architecture notes in the wiki."
+  - slug: integration-surprises
+    title: "An external integration behaves differently in production"
+    likelihood: medium
+    impact: high
+    mitigation: "Integrate against real sandboxes in the first sprints, not during hardening."

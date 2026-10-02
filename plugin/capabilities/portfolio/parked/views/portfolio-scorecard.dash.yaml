@@ -1,0 +1,22 @@
+# portfolio-scorecard — members × measures matrix (V1.1; declarative, not yet mounted)
+view:
+  id: portfolio-scorecard
+  title: "Scorecard"
+  requires: "capability=portfolio"
+  kind: matrix
+  rows: "portfolio/registry.yaml:members where status in [active, paused, closing]"
+  columns: "enabled measure sets → measures (capabilities/portfolio/measures/*.yaml)"
+  cell:
+    source: "latest snapshot per member → reviewer measure pass"
+    value: "measure value with unit"
+    status: "green | amber | red | not-measurable"
+    trend: "↑ → ↓ over the last 4 snapshots"
+    basis_mark: "declared (solid) | inferred (dashed)"
+    tooltip: "formula, threshold, evidence ref, snapshot date"
+  group_headers: "one per set, showing the set's distribution (n green · n amber · n red · n grey)"
+  filters:
+    - { id: set, label: "Set", values: [health, performance, innovation, portco] }
+    - { id: status, label: "Status", values: [red, amber, green, not-measurable] }
+    - { id: member_kind, label: "Kind", source: "member rows" }
+  table_view: true            # the matrix IS the table; no separate view needed
+  export: "portfolio/reports/scorecard-{date}.md"

@@ -1,0 +1,39 @@
+# work-campaign — reporting matrix defaults (the bundled pack contract)
+# Deadlines anchor to phases.anchor_date (launch day) and project.end_date (out of market); they
+# wait, unscheduled, until those dates are set. active_phases gates an entry to part of the ladder.
+
+defaults:
+  - id: weekly-campaign-status
+    stakeholder_group: internal.team
+    report: weekly-campaign-status
+    cadence: { kind: weekly, day: monday }
+    format: md
+    surface: slack + gmail.draft
+    generator: project-status-reporter
+
+  - id: launch-readiness-check
+    stakeholder_group: internal.team
+    report: launch-readiness-check
+    cadence: { kind: deadline, anchor: "phases.anchor_date", offset_days: -7 }
+    format: md
+    surface: gmail.draft
+    generator: project-status-reporter
+    description: "Every asset, channel, tracking event and approval checked one week before launch."
+
+  - id: weekly-performance-report
+    stakeholder_group: internal.sponsor
+    report: weekly-performance-report
+    cadence: { kind: weekly, day: friday }
+    active_phases: ["04-live"]
+    format: md
+    surface: gmail.draft
+    generator: project-status-reporter
+    description: "In-market performance against the campaign KPIs. Runs only while the campaign is live."
+
+  - id: campaign-results-report
+    stakeholder_group: internal.sponsor
+    report: campaign-results-report
+    cadence: { kind: deadline, anchor: "project.end_date", offset_days: -7 }
+    format: md
+    surface: gmail.draft
+    generator: project-status-reporter

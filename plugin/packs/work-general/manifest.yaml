@@ -1,0 +1,54 @@
+pack:
+  id: "work-general"
+  name: "General Project"
+  version: "0.1.0"
+  compatible_core: ">=4.0,<6.0"
+  description: |
+    Work type for any project that is not better described by a more specific type: an office
+    move, a policy rollout, a vendor selection, a process improvement, a report. A legitimate
+    choice, not a failure path — it gives the project a stage-gate ladder, a dated milestone
+    skeleton, starter risks and a weekly team update, so it runs from day one.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "skills/project-scaffolder/SKILL.md"
+    - "templates/phase-presets/stage-gate-default.yaml — the phase ladder this pack assumes"
+  released: "2026-09-24"
+  maturity: "starter"
+  axis: work   # work | accountability | capability - the bundled pack contract
+
+# ----------------------------------------------------------------------------
+# Picker presentation - skills/project-scaffolder/SKILL.md Every front door (onboarding,
+# scaffolder, intake, kanban wizard) reads this block; none keeps its own table of packs.
+# ----------------------------------------------------------------------------
+picker:
+  listed: true
+  label: "General project"
+  blurb: "Anything with a goal, a team and a finish line: define, plan, deliver, review, close."
+  signals:
+    - "project"
+    - "initiative"
+    - "move"
+    - "migration"
+    - "process improvement"
+    - "vendor selection"
+    - "implementation"
+
+provides:
+  profiles: []
+  seeds: [milestones, risks, kpis]
+  reporting_matrix_defaults: true
+
+depends_on:
+  packs: []
+
+conflicts_with:
+  packs: []
+
+# ----------------------------------------------------------------------------
+# Defaults this pack suggests to a facility that loads it (suggestions, never settings;
+# the facility's own manifest always wins).
+# ----------------------------------------------------------------------------
+defaults:
+  lifecycle: terminal
+  preset: stage-gate-default

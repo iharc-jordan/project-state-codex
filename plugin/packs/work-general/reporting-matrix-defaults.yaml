@@ -1,0 +1,10 @@
+# work-general — reporting matrix defaults (the bundled pack contract)
+
+defaults:
+  - id: weekly-team-update
+    stakeholder_group: internal.team
+    report: weekly-team-update
+    cadence: { kind: weekly, day: monday }
+    format: md
+    surface: slack + gmail.draft
+    generator: project-status-reporter

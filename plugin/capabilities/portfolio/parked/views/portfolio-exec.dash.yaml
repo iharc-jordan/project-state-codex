@@ -1,0 +1,26 @@
+# portfolio-exec — the executive roll-up (V1.1; declarative, not yet mounted)
+# Renders the exec-summary card and the four exec-set cards as one screen.
+view:
+  id: portfolio-exec
+  title: "Executive view"
+  requires: "capability=portfolio"
+  kind: rollup
+  source: "portfolio/cards/exec/*.md (regenerated on every collect)"
+  layout:
+    - band: five-questions
+      source: "exec-summary.md → Five questions"
+      render: "one row per question: answer sentence + set chip"
+    - band: set-rollups
+      source: "exec-summary.md → Set roll-ups"
+      render: "four tiles, one per set: distribution as a labelled stacked bar (status palette + count labels), 3 portfolio measures, movers"
+    - band: capital
+      source: "member rows → investment (declared)"
+      render: "horizontal bars by stage, single hue, direct labels; table beside it with thesis fit and risk-adjusted exposure"
+    - band: decisions
+      source: "exec-summary.md → Decisions this month"
+      render: "numbered list; each links to the finding or hopper card it comes from"
+  filters:
+    - { id: period, label: "Month", source: "snapshot dates" }
+  table_view: true
+  export: "portfolio/reports/exec-{yyyy-mm}.md"
+  review: PL

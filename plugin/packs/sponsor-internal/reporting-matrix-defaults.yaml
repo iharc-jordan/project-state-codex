@@ -1,0 +1,20 @@
+# Internal Sponsor pack — reporting matrix defaults (the bundled pack contract)
+
+defaults:
+  - id: weekly-sponsor-update
+    stakeholder_group: internal.sponsor
+    report: weekly-sponsor-update
+    cadence: { kind: weekly, day: friday }
+    format: md
+    surface: gmail.draft
+    generator: project-funder-reporting
+    profile: sponsor-internal.funder-reporting
+
+  - id: monthly-steering-review
+    stakeholder_group: internal.sponsor
+    report: monthly-steering-review
+    cadence: { kind: monthly, day_of_month: "first-monday" }
+    format: md + meeting
+    surface: calendar.invite + gmail.draft
+    generator: project-review-meeting
+    profile: sponsor-internal.review-meeting

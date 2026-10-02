@@ -1,0 +1,18 @@
+# work-ops-cycle — set-up milestones. The recurring work is the cycle itself (one increment per
+# period), not a milestone per period.
+milestones:
+  - slug: cycle-calendar-agreed
+    title: "Cycle calendar agreed"
+    due: start+2w
+    phase: 01-prepare
+    acceptance: "Every period task has an owner and a working-day deadline; contributors know their input dates"
+  - slug: first-period-on-time
+    title: "First period closed on time"
+    due: start+6w
+    phase: 04-close
+    acceptance: "One full cycle completed inside the agreed calendar"
+  - slug: process-documented
+    title: "Process documented"
+    due: start+8w
+    phase: 03-review
+    acceptance: "Checklist and procedures written so anyone on the team could run a period"

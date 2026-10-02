@@ -1,0 +1,62 @@
+# Measure set: performance — "is it delivering what it committed to?"
+schema_version: 1
+set: performance
+version: "1.0.0"
+question: "Is this project delivering what it committed to?"
+measures:
+  - id: performance.velocity
+    question: "How fast is milestone completion moving?"
+    formula: "delta(percent_complete_overall) over the last 30 days of snapshots"
+    requires: [milestones, snapshot_history>=2]
+    unit: "percent points / month"
+    direction: higher_is_better
+    thresholds: { green: ">=8", amber: ">=3", red: "<3" }
+    basis: declared
+  - id: performance.schedule-variance
+    question: "When milestones finish, how late are they?"
+    formula: "median(actual_end - planned_end) over milestones completed in the last 90 days"
+    requires: [milestones.completed_with_dates]
+    unit: days
+    direction: lower_is_better
+    thresholds: { green: "<=0", amber: "<=14", red: ">14" }
+    basis: declared
+  - id: performance.throughput
+    question: "How much has shipped recently?"
+    formula: "count(milestones completed in the last 90 days)"
+    requires: [milestones]
+    unit: milestones
+    direction: higher_is_better
+    thresholds: { green: ">=2", amber: "1", red: "0" }
+    basis: declared
+  - id: performance.objective-attainment
+    question: "Are the outcomes moving, not just the outputs?"
+    formula: "share of objectives with status on-track ; mean(kpi.current / kpi.target)"
+    requires: [objectives, kpis]
+    unit: ratio
+    direction: higher_is_better
+    thresholds: { green: ">=0.75", amber: ">=0.5", red: "<0.5" }
+    basis: declared
+  - id: performance.change-burden
+    question: "How much re-planning is the project absorbing?"
+    formula: "count(change orders + material changes in the last 90 days)"
+    requires: [changes]
+    unit: changes
+    direction: lower_is_better
+    thresholds: { green: "0", amber: "<=2", red: ">2" }
+    basis: declared
+  - id: performance.slip-forecast
+    question: "At current velocity, will the next milestone land on time?"
+    formula: "projected_end(next_due[0]) - planned_end, using velocity over the last 4 snapshots"
+    requires: [milestones.next_due, snapshot_history>=4]
+    unit: days
+    direction: lower_is_better
+    thresholds: { green: "<=0", amber: "<=7", red: ">7" }
+    basis: inferred-from-activity
+  - id: performance.burn
+    question: "What is this project consuming per month?"
+    formula: "sum(cost entries) over the last 30 days"
+    requires: [costs]                 # most members do not carry cost data today
+    unit: CAD
+    direction: context
+    thresholds: { green: "within plan", amber: "<=10% over", red: ">10% over" }
+    basis: declared

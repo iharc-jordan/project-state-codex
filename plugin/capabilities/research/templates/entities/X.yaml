@@ -1,0 +1,13 @@
+# research-change template (spec §4.7) — APPEND-ONLY. The delta of a supersession on a question (or a
+# candidate): before → after finding ids, classed material / notable / noise. Noise never reaches a delta brief.
+id: RES-X-NNN
+kind: research-change
+mandate_id: RES-M-NNN
+subject: Q1                 # a question id, or a candidate id
+detected_at: YYYY-MM-DD
+before: []
+after: []
+significance: notable       # material | notable | noise
+summary: "What changed, in one sentence."
+detected_by: research-walk  # research-walk | research-step | research-deepweb | manual
+run_id: ~

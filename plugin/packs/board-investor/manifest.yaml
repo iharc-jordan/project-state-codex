@@ -2,23 +2,44 @@ pack:
   id: "board-investor"
   name: "Board / Investor Reporting"
   version: "0.1.0-starter"
-  compatible_core: ">=2.0,<3.0"
+  compatible_core: ">=4.0,<6.0"
   description: |
     Pack for PE/VC-backed startup projects. Configures the suite to handle board
     meetings, monthly investor updates, KPI dashboard reporting, board pack
     assembly. Pairs naturally with another funder/customer pack.
   authors:
     - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "Common PE/VC board reporting practice — monthly investor update and board pack shape"
+    - "templates/reporting-matrix.yaml — the stakeholder/cadence contract this pack seeds"
   released: "2026-04-27"
   maturity: "starter"
+  axis: accountability   # work | accountability | capability - the bundled pack contract
+
+# ----------------------------------------------------------------------------
+# Picker presentation - skills/project-scaffolder/SKILL.md Every front door (onboarding,
+# scaffolder, intake, kanban wizard) reads this block; none keeps its own table of packs.
+# ----------------------------------------------------------------------------
+picker:
+  listed: true
+  label: "Board or investors"
+  blurb: "Monthly investor updates with KPI snapshots, board meetings and board packs."
+  signals:
+    - "board of directors"
+    - "investors"
+    - "investor update"
+    - "cap table"
+    - "board pack"
 
 provides:
   profiles:
     - review-meeting
     - funder-reporting
-  templates:
-    - board-pack.md
-    - monthly-investor-update.md
+    - onepager            # audience voice profiles for project-onepager — shipped since the
+                          # onepager skill landed but never declared here until 2026-08-21
+  # A templates: block declared board-pack.md and monthly-investor-update.md here; neither file
+  # ever shipped (there is no templates/ directory) — trimmed 2026-08-21 (FB-014 / issue #17).
+  # Re-declare each in the same change that adds the file.
   reporting_matrix_defaults: true
 
 # ----------------------------------------------------------------------------
@@ -29,7 +50,7 @@ provides:
 # facility's own manifest.yaml:phases.lifecycle always wins. Nothing is ever written blind, and
 # a facility that leaves its lifecycle unset stays permanently valid.
 # Resolution order: facility > pack default > terminal.
-# Lifecycle behavior is enforced by project-phase-gate and the selected preset.
+# Spec: skills/project-phase-gate/SKILL.md
 defaults:
   # Board and investor reporting does not close out - it recurs for the life of the company.
   lifecycle: continuous

@@ -1,0 +1,18 @@
+# portfolio-calendar — merged deadlines across members, next 90 days (V1.1; declarative)
+view:
+  id: portfolio-calendar
+  title: "Portfolio calendar"
+  requires: "capability=portfolio"
+  kind: timeline
+  source: "latest snapshot per member → deadlines[]"
+  window: "today .. today+90d"
+  item:
+    date: date
+    label: "{member} · {label}"
+    color_by: member
+    tooltip: "{source} {ref} · owner {owner}"
+  overlays:
+    - source: "portfolio/findings/ where type == deadline-collision and status in [open, acknowledged]"
+      render: "band over window.from..window.to, labelled with the finding id"
+    - source: "capability strips with tier urgent (e.g. sred hard deadline <= 30d)"
+      render: "red marker"

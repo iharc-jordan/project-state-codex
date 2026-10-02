@@ -1,0 +1,21 @@
+risks:
+  - slug: champion-leaves
+    title: "Our champion inside the buyer leaves or loses influence"
+    likelihood: medium
+    impact: high
+    mitigation: "Build at least two relationships above and beside the champion."
+  - slug: competitor-undercuts
+    title: "A competitor undercuts on price late in the process"
+    likelihood: medium
+    impact: medium
+    mitigation: "Anchor value early; agree walk-away terms before negotiation."
+  - slug: procurement-delay
+    title: "Procurement or legal review stalls the decision"
+    likelihood: high
+    impact: medium
+    mitigation: "Map the buyer's approval steps in discovery and start paperwork early."
+  - slug: scope-mismatch
+    title: "What we can deliver drifts from what the buyer expects"
+    likelihood: medium
+    impact: high
+    mitigation: "Delivery lead reviews the proposal before it is sent."

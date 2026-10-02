@@ -1,0 +1,44 @@
+# Internal Sponsor — review-meeting profile (monthly steering review)
+
+profile_id: sponsor-internal.review-meeting
+
+meeting:
+  name: "Steering Review"
+  short_id_prefix: "SR"
+  cadence:
+    kind: monthly
+    day_of_month: "first-monday"
+  notice_minimum_days: 5
+  lookahead_months: 3
+  minutes_distribution_max_days: 2
+  duration_minutes: 45
+
+attendees:
+  sponsor_attendees:
+    - id: sponsor
+      required: true
+    - id: steering_member
+      required: false
+  internal_attendees:
+    - id: project_lead
+      required: true
+
+agenda:
+  template: ~
+  required_sections:
+    - "Status against plan (milestones, budget, schedule)"
+    - "Decisions requested — each with options and a recommendation"
+    - "Risks needing sponsor help"
+    - "Scope or priority changes proposed"
+    - "Actions from last review — done / not done"
+    - "Actions + next review date"
+
+preread_pack:
+  assembly:
+    - status-reporter.snapshot
+    - milestone-manager.completed-since-last-review
+    - milestone-manager.next-period-plan
+    - risks.open-by-score
+    - decisions.pending
+  output: "reports/sponsor/steering/{review-id}-preread.md"
+  distribution_lead_days: 2

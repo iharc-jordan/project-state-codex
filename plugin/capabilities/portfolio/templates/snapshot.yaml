@@ -1,0 +1,63 @@
+# portfolio-snapshot — one dated, read-only capture of one member, written by portfolio-collector.
+# Everything under `project:` is READ from the member's own substrate as it is. The collector
+# computes only counts and the merged deadline list. Never edited after capture.
+kind: portfolio-snapshot
+member_id: ""                     # portfolio-member id
+captured_at: ""                   # ISO8601
+source_rev: null                  # member git HEAD, or substrate-rev, or null when untracked
+read_via: files                   # files | local-mcp | cloud — how the collector read the member (member_source.py)
+read_copy: home                   # home | mirror | moved-copy — which copy (the two-copy rule); when not home:
+# copy_as_of: …                   #   when that copy last changed (a mirror: when it was last published)
+# home_unreachable: missing       #   why the home copy did not answer
+reachable: true
+# unreachable:                    # present only when reachable is false
+#   reason: missing | permission | malformed | remote
+#   detail: ""
+
+project:
+  name: ""
+  kind: ""
+  current_phase: ""
+  phase_entered: null             # from state.json pointers when present
+  packs_loaded: []
+  capabilities_enabled: []
+  capability_strips: []           # each enabled capability's always_surface line, evaluated against the member
+
+milestones:
+  total: 0
+  complete: 0
+  in_progress: 0
+  at_risk: 0
+  blocked: 0
+  overdue: 0
+  next_due: []                    # [{id, title, planned_end, owner, status}] — the next 5 by planned_end
+
+risks:
+  open: 0
+  high: []                        # [{id, title, score, owner}] — score >= 6
+
+decisions:
+  pending: []                     # [{id, title, needed_by}]
+  recent: []                      # [{id, date, title}] — last 30 days
+
+deadlines: []                     # merged, sorted: [{date, label, source: milestone|matrix|capability, ref, owner}]
+
+people: []                        # [{id, role, in_flight_milestones: []}]
+
+activity:
+  last_event_at: null
+  events_7d: 0
+  events_30d: 0
+
+# ── Harvest health (spec §6.5) — read from the member's harvest/cursors/ and documents/index.yaml.
+#    The portfolio does not harvest; it makes sure harvesting happened.
+harvest:
+  delegated_to_portfolio: []      # V2 only; always empty in V1
+  surfaces: []                    # [{surface, cursor_age_days, last_run, deposited_30d}]
+  inbox:
+    untriaged: 0
+    dismissed_30d: 0
+    dismissed_items: []           # [{doc, surface, contact, keywords, dismissed}] — the residue (spec §6.6)
+
+health: {}                        # the member's state.json health block, verbatim, if present
+gaps: []                          # the member's own gaps read, if computable; else empty

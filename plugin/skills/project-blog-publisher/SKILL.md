@@ -1,11 +1,20 @@
 ---
 name: project-blog-publisher
-description: "Draft a Project State progress post only when the operator explicitly requests it, a configured blog surface is available, or an active pack's due enabled trigger requires it. Preserve all MPA/pack review windows and approval rules. Nothing posts automatically, including team-internal content; external publication requires explicit authorization after review."
+description: "Draft blog posts from project progress for the scsiwyg blog — 'write a progress post', 'blog about M03', 'monthly update post'. Respects any publication-review window before anything goes public."
+map:
+  tier: P2
+  stage: generate
+  requires: [memory]
+  reads: [milestones, reports]
+  calls: [project-notifier, project-website-publisher, project-external-comms]
+  produces: [blog-post]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project Blog Publisher
+
+> **When to use.**
+>
+> Bridge project state to the scsiwyg blog — draft progress posts from milestone completions, monthly briefs, and ad-hoc stories. Respects the MPA 30/14-day Steering Committee publication review clock before anything goes public. Use whenever the user says 'blog post about M02 completion', 'draft a progress post', 'scsiwyg', 'post this to the blog', 'publish the milestone story', 'what should we blog about', 'update the project blog', 'announce M05 publicly', 'write up this quarter', 'public post about the project', 'share with the community', or any request to publish project content beyond team-internal channels. Team-internal posts ship directly; consortium posts require consortium review; public posts require full 30/14-day SC review.
 
 ## Purpose
 
@@ -107,7 +116,7 @@ If SC review returns revisions, increment version and re-start the review clock 
 ## Outbox emission (queue the draft for review)
 
 Every blog draft emits an outbox card into `project-state/outbox/queue/` as a
-`<id>.md` + `<id>.meta.yaml` pair using the fields below, always
+`<id>.md` + `<id>.meta.yaml` pair (contract: `plugin/skills/project-external-comms/SKILL.md`), always
 `status: queued`. The draft post body is the artifact.
 
 - `kind: blog_post`, `surface: scsiwyg`.

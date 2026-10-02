@@ -1,0 +1,39 @@
+# work-event — reporting matrix defaults (the bundled pack contract)
+# The countdown digest is weekly until the final countdown, then daily: two entries gated by
+# active_phases rather than one cadence that changes shape. Deadlines anchor to the event date.
+
+defaults:
+  - id: weekly-countdown-digest
+    stakeholder_group: internal.team
+    report: weekly-countdown-digest
+    cadence: { kind: weekly, day: monday }
+    active_phases: ["01-plan", "02-build-out"]
+    format: md
+    surface: slack + gmail.draft
+    generator: project-status-reporter
+
+  - id: daily-countdown-digest
+    stakeholder_group: internal.team
+    report: daily-countdown-digest
+    cadence: { kind: daily, day: weekday }
+    active_phases: ["03-final-countdown"]
+    format: slack
+    surface: slack
+    generator: project-status-reporter
+
+  - id: run-of-show-readiness
+    stakeholder_group: internal.team
+    report: run-of-show-readiness
+    cadence: { kind: deadline, anchor: "phases.anchor_date", offset_days: -7 }
+    format: md
+    surface: gmail.draft
+    generator: project-status-reporter
+    description: "Run of show, vendor confirmations, AV, staffing and contingencies — one week out."
+
+  - id: post-event-report
+    stakeholder_group: internal.sponsor
+    report: post-event-report
+    cadence: { kind: deadline, anchor: "phases.anchor_date", offset_days: 10 }
+    format: md
+    surface: gmail.draft
+    generator: project-status-reporter

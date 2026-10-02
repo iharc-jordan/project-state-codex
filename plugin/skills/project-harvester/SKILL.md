@@ -1,18 +1,22 @@
 ---
 name: project-harvester
-description: "Harvest external signals from configured Slack, Gmail, Google Docs, scsiwyg, Jira, Confluence, Linear, and GitHub surfaces into project-state/documents/inbox. Activate only when at least one surface is configured or harvesting is explicitly requested, and use only connectors available in the current host; GitHub may use its connector or gh CLI. Track per-user cursors and preserve the configured local or explicitly supplied deposit binding."
+description: "Harvest project signals from Slack, Gmail, Google Docs, Jira, Confluence, Linear, GitHub into the project inbox — 'harvest', 'pull in what happened', 'check Slack and email for the project'."
+map:
+  tier: P3
+  stage: ingest
+  requires: [memory, shell, connector:slack, connector:gmail, connector:gdocs, connector:scsiwyg, connector:jira, connector:confluence, connector:linear, connector:github]
+  inputs: [slack, gmail, gdocs, scsiwyg, jira, confluence, linear, github]
+  reads: [manifest, state]
+  writes: [documents, state, log]
 ---
-
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
 
 # project-harvester
 
-Pull compact external signals relevant to a project into
-`project-state/documents/inbox/` for curation. Source systems remain authoritative
-for full issue bodies, comments, and document content. Project State stores stable
-identity/reference, provenance, and only the status or bounded excerpt necessary
-to decide whether a durable shared fact changed. Create a managed copy only when
-an active pack/output contract explicitly requires one.
+> **When to use.**
+>
+> Harvest external signals (Slack, Gmail, GDocs, scsiwyg, Jira, Confluence, Linear, GitHub) relevant to a specific project and write them as classified intel docs into `project-state/documents/inbox/`. Jira, Confluence, and Linear are pulled through available matching connectors; GitHub via its MCP connector or the gh CLI (commits digested per repo/day, plus PRs, releases, issues). Reads the project manifest to discover which channels, contacts, keywords, projects/boards, spaces, and surfaces to watch. Tracks per-user, per-surface cursors in `project-state/harvest/cursors/`. Persists through the substrate binding: local file writes by default, or the project-state.app deposit API when a cloud endpoint + personal token are configured (see HARVEST-CONNECTIVITY-ROADMAP.md). Designed to be called by `project-orchestrator` as part of the daily routine. Trigger: `/project-harvester` or invoked by project-orchestrator.
+
+Pull external intelligence relevant to a project and deposit it into `project-state/documents/inbox/` for the `project-document-curator` to classify, link to milestones/decisions, and promote.
 
 ---
 
@@ -42,10 +46,10 @@ Relevance is determined from the project manifest — no hardcoded rules. Every 
 
 ### scsiwyg
 - Posts on `surfaces.scsiwyg.site_slug` published or updated since the cursor.
-- Posts on any *other* configured sites that contain project keywords in title or body — this catches consortium partner writing that references the project.
+- Posts on any *other* sites (e.g., Rafal's site) that contain project keywords in title or body — this catches consortium partner writing that references the project.
 
 ### Jira *(via the Atlassian MCP connector)*
-- Issues in `surfaces.jira.projects[]` (project keys, e.g. `PROJ`) created or **updated** since the cursor — stable key/URL, title, status, assignee, and updated timestamp. Do not copy full bodies or comments.
+- Issues in `surfaces.jira.projects[]` (project keys, e.g. `LEDGER`) created or **updated** since the cursor — title, status, assignee, latest comments.
 - Issues matching `surfaces.jira.jql` (an explicit JQL filter) if set — overrides the project-key scan for power users.
 - Issues mentioning a project keyword in summary/description, and issues assigned to / commented on by anyone in the contact roster.
 
@@ -55,7 +59,7 @@ Relevance is determined from the project manifest — no hardcoded rules. Every 
 - Pages whose title or body contains a project keyword (catches partner documentation that references the project).
 
 ### Linear *(via the Linear MCP connector)*
-- Issues in `surfaces.linear.teams[]` (team keys) or `surfaces.linear.projects[]` updated since the cursor — stable id/URL, title, state, assignee, and updated timestamp. Do not copy full bodies or comments.
+- Issues in `surfaces.linear.teams[]` (team keys) or `surfaces.linear.projects[]` updated since the cursor — title, state, assignee, latest comments.
 - Issues matching `surfaces.linear.query` (free-text/filter) if set.
 - Issues mentioning a project keyword, or assigned to / commented on by a contact-roster member (matched by email where Linear exposes it).
 
@@ -69,12 +73,12 @@ Relevance is determined from the project manifest — no hardcoded rules. Every 
 surfaces:
   slack:
     enabled: true
-    channel: "#project-updates"         # primary project channel
+    channel: "#ledger-rt"               # primary project channel
     extra_channels: []                  # additional channels to watch
     workspace: ~                        # Slack workspace name (optional; MCP default if null)
   gmail:
     enabled: true
-    from_identity: "operator@example.com"  # replace with the authorized send-as identity
+    from_identity: "david@atomic47.co"  # the project owner's send-as address
     drafts_only: false                  # if true, skip inbound filtering (pre-award mode)
     keywords: []                        # optional subject/body keywords to match inbound mail
   gdocs:
@@ -86,12 +90,12 @@ surfaces:
     watch_sites: []                     # other site slugs to watch for keyword mentions
   jira:                                 # via the Atlassian MCP connector
     enabled: false
-    projects: []                        # Jira project keys to watch, e.g. ["PROJ","PLAT"]
+    projects: []                        # Jira project keys to watch, e.g. ["LEDGER","PLAT"]
     jql: ~                              # optional explicit JQL; overrides the project-key scan
     site: ~                             # Atlassian site/cloud id if the connector serves several
   confluence:                           # via the Atlassian MCP connector
     enabled: false
-    spaces: []                          # Confluence space keys to watch, e.g. ["PROJ","ENG"]
+    spaces: []                          # Confluence space keys to watch, e.g. ["LEDGER","ENG"]
     cql: ~                              # optional explicit CQL
     site: ~                             # Atlassian site/cloud id if the connector serves several
   linear:                               # via the Linear MCP connector
@@ -101,7 +105,7 @@ surfaces:
     query: ~                            # optional free-text/filter query
   github:                               # via the GitHub MCP connector OR the gh CLI
     enabled: false
-    repos: []                           # "owner/repo" to watch, e.g. ["example-org/example-repo"]
+    repos: []                           # "owner/repo" to watch, e.g. ["Atomic-47-Labs/project-state"]
     events: [commits, pulls, releases, issues]  # which activity to pull (subset ok)
     branch: ~                           # limit commits to a branch (null = default branch)
     query: ~                            # optional GitHub search qualifier (overrides repo scan)
@@ -110,12 +114,12 @@ surfaces:
 consortium:
   members:
     - contacts:
-        - email: "partner@example.org"
-          name: "Partner Contact"
+        - email: "r.rohozinski@secdev.com"
+          name: "Rafal Rohozinski"
   lead_applicant:
     contact:
-      email: "lead@example.org"
-      name: "Lead Contact"
+      email: "ishtiaque.ahmed@utoronto.ca"
+      name: "Syed Ishtiaque Ahmed"
 ```
 
 ---
@@ -124,16 +128,10 @@ consortium:
 
 The skill persists through five verbs — `read-context`, `seen?`/`mark-seen`, `write-doc`, `advance-cursor`, `append-activity` — with two interchangeable bindings (resolver owned by the `project-state` memory-layer skill; see its "Substrate binding" section):
 
-- **File binding (default).** Root = `$PROJECT_STATE_DIR`, else `./project-state`. All verbs are the file operations described in this document. Local users and compatible headless runners use this binding. **No remote adapter config → this binding, byte-identical behavior — never ask about remote setup.**
-- **Deposit binding (conditional).** The private backend protocol is not bundled
-  in the public package. Use this binding only when an installed internal adapter
-  supplies the five persistence verbs and the operator explicitly configures and
-  authorizes it. Preserve atomic server dedup/cursor/activity behavior and never
-  fall back to local writes when that endpoint is unreachable.
+- **File binding (default).** Root = `$PROJECT_STATE_DIR`, else `./project-state`. All verbs are the file operations described in this document. This is what a local-only user AND the appliance's own headless runner use. **No cloud config → this binding, byte-identical behavior — never ask about cloud setup.**
+- **Deposit binding.** Active only when `$PS_ENDPOINT` and a personal `ksm_` token (`$PS_TOKEN` or `~/.config/project-state/token`) are both set. `read-context` = `GET {PS_ENDPOINT}/api/harvest/context?project={id}`; `write-doc` + `advance-cursor` + dedup + activity = one `POST {PS_ENDPOINT}/api/harvest/deposit` batch at the end of each surface. The server dedups and advances cursors only for docs it accepted — retries are idempotent, so a failed POST means: keep the batch, retry once, then stop and report. **Never fall back to writing local files when the endpoint is unreachable** — a project has one canonical substrate; queue and retry, don't fork it.
 
-**Harvester identity** (used for cursor ownership and provenance): an explicitly
-configured identity, else `git config user.email`, else `local`. A supported
-deposit adapter must resolve identity server-side rather than trust a claimed one.
+**Harvester identity** (used for cursor ownership and provenance): `$PS_USER_EMAIL`, else `git config user.email`, else `local`. On the deposit binding the server ignores the claimed identity and uses the token's email.
 
 ---
 
@@ -146,14 +144,14 @@ project-state/harvest/cursors/{email}--{surface}.yaml
 ```
 
 ```yaml
-# project-state/harvest/cursors/operator@example.com--slack.yaml
+# project-state/harvest/cursors/keystone@stonemaps.org--slack.yaml
 surface: slack
-email: operator@example.com
+email: keystone@stonemaps.org
 cursor: "2026-07-20T00:00:00Z"
 updated_at: "2026-07-23T09:12:00Z"
 ```
 
-File-per-cursor means N people (and a supported server adapter) can harvest the same project concurrently with no lock contention and no clobbering — the concurrency rule is the same file-per-entity rule the rest of the substrate uses. **Org-scoped server harvests** use the reserved identity `server` — one project-grain cursor per surface, e.g. `server--slack.yaml`.
+File-per-cursor means N people (and the server) can harvest the same project concurrently with no lock contention and no clobbering — the concurrency rule is the same file-per-entity rule the rest of the substrate uses. **Org-scoped server harvests** (the appliance running with service credentials) use the reserved identity `server` — one project-grain cursor per surface, e.g. `server--slack.yaml`.
 
 Default cursor when missing: 7 days ago. Cursor is only advanced after a surface is fully harvested without errors.
 
@@ -163,11 +161,7 @@ Default cursor when missing: 7 days ago. Cursor is only advanced after a surface
 
 ## Output — inbox documents
 
-Each harvested item becomes a compact reference/signal markdown file in
-`project-state/documents/inbox/`. For tickets, the body contains only the status
-snapshot and why it may affect shared Project State. For externally owned
-documents, it contains identity/provenance/reference and a bounded excerpt when
-needed for classification, not a replacement copy:
+Each harvested item becomes a markdown file in `project-state/documents/inbox/`:
 
 ```
 YYYY-MM-DD-{surface}-{slug}.md
@@ -181,23 +175,23 @@ source: slack                          # slack | gmail | gdocs | scsiwyg | jira 
 source_id: "C123/1714389612.123456"   # channel/ts, thread_id, doc_id, post_id, issue_key, page_id
 harvested_at: "2026-05-04T12:00:00Z"
 surface_timestamp: "2026-05-04T09:30:00Z"
-author: "Partner Contact"
-author_contact: "partner@example.org"
-channel: "#project-updates"            # slack only
+author: "Rafal Rohozinski"
+author_contact: "r.rohozinski@secdev.com"
+channel: "#ledger-rt"                  # slack only
 subject: ~                             # gmail only
 doc_title: ~                           # gdocs only
 post_title: ~                          # scsiwyg only
-issue_key: ~                           # jira/linear only (e.g. PROJ-142)
+issue_key: ~                           # jira/linear only (e.g. LEDGER-142)
 issue_url: ~                           # jira/linear only — link back to the issue
 issue_status: ~                        # jira/linear only (e.g. "In Progress")
 page_id: ~                             # confluence only
 page_url: ~                            # confluence only
 space: ~                               # confluence only (space key)
 relevance_signals:                     # why this was flagged
-  - contact_match: "partner@example.org"
-  - channel_match: "#project-updates"
-harvested_by: "operator@example.com" # server-resolved or operator-confirmed identity
-harvest_plane: local                   # local | server | desktop | claude-ai (legacy provenance value)
+  - contact_match: "r.rohozinski@secdev.com"
+  - channel_match: "#ledger-rt"
+harvested_by: "keystone@stonemaps.org" # harvester identity (see Substrate binding)
+harvest_plane: local                   # use the configured local or server transport
 status: inbox                          # always "inbox" on write; curator promotes
 ---
 
@@ -222,7 +216,7 @@ Read `project-state/manifest.yaml`:
 - Build the **contact roster**: all emails from `consortium.*.contacts[].email` + `consortium.lead_applicant.contact.email`
 - Build the **keyword list**: project `id`, project `name`, any explicit `surfaces.*.keywords[]`
 
-Read this identity's cursor files from `project-state/harvest/cursors/{email}--{surface}.yaml` (run the v1 migration first if `state.json` still has `harvest_cursors`). Default missing cursors to 7 days ago. A supported deposit adapter supplies the equivalent context through its `read-context` verb.
+Read this identity's cursor files from `project-state/harvest/cursors/{email}--{surface}.yaml` (run the v1 migration first if `state.json` still has `harvest_cursors`). Default missing cursors to 7 days ago. On the deposit binding, manifest config and cursors arrive together from `GET /api/harvest/context`.
 
 ### Step 2 — Slack harvest (if `surfaces.slack.enabled`)
 
@@ -299,9 +293,8 @@ for each watch_site in surfaces.scsiwyg.watch_sites:
   → emit inbox doc
 ```
 
-> **Connectors note (Jira / Confluence / Linear).** These surfaces use an available
-> Atlassian or Linear connector in the current Codex host, not a
-> project-state-owned server. The exact tool names vary by which connector build
+> **Connectors note (Jira / Confluence / Linear).** These surfaces are served by
+> installed matching connectors when available. The exact MCP tool names vary by which connector build
 > is installed, so **discover the available `mcp__*` tools at runtime** and use the
 > ones that match the operations below. If the connector for a surface isn't
 > connected, skip that surface and log it (same as any other surface). All access is
@@ -316,14 +309,13 @@ jql = surfaces.jira.jql or
 
 <atlassian-mcp search-issues tool>(jql, limit=50)        # e.g. searchJiraIssuesUsingJql / jira_search
 for each issue:
-  fetch/select only missing stable metadata (key, URL, title, status, assignee, reporter, updated)
+  <atlassian-mcp get-issue tool>(issue.key)              # full fields + comments
   emit inbox doc if:
     - the issue is in a watched project (all such issues are relevant), OR
-    - the configured JQL or returned summary matches a project keyword, OR
-    - assignee/reporter email ∈ contact_roster
+    - summary/description/comment contains a project keyword, OR
+    - assignee/reporter/commenter email ∈ contact_roster
   → frontmatter: source=jira, source_id=issue.key, issue_key, issue_url, issue_status,
     author=assignee||reporter, surface_timestamp=issue.updated
-  do not persist the issue body or comments; the issue URL is the evidence reference
 ```
 
 ### Step 5c — Confluence harvest (if `surfaces.confluence.enabled`, Atlassian MCP connected)
@@ -334,11 +326,10 @@ cql = surfaces.confluence.cql or
 
 <atlassian-mcp search-pages tool>(cql, limit=50)          # e.g. searchConfluenceUsingCql / confluence_search
 for each page:
-  fetch stable metadata and, only when classification needs it, a bounded source excerpt
-  emit inbox doc if: in a watched space, OR the configured CQL/title/excerpt matches a keyword
+  <atlassian-mcp get-page tool>(page.id, body=true)
+  emit inbox doc if: in a watched space, OR title/body contains a project keyword
   → frontmatter: source=confluence, source_id=page.id, page_id, page_url, space,
     doc_title=page.title, surface_timestamp=page.lastModified
-  retain page_url and version as evidence; do not copy the full page without an output contract
 ```
 
 ### Step 5d — Linear harvest (if `surfaces.linear.enabled`, Linear MCP connected)
@@ -350,14 +341,13 @@ for each page:
   query=surfaces.linear.query, updatedAfter=cursor_ts, limit=50
 )
 for each issue:
-  fetch/select only stable metadata (identifier, URL, title, state, assignee, creator, updatedAt)
+  <linear-mcp get-issue / list-comments tool>(issue.id)
   emit inbox doc if:
     - the issue is in a watched team/project, OR
-    - configured query or returned title contains a project keyword, OR
-    - assignee/creator ∈ contact_roster (by email where exposed)
+    - title/description/comment contains a project keyword, OR
+    - assignee/creator/commenter ∈ contact_roster (by email where exposed)
   → frontmatter: source=linear, source_id=issue.identifier, issue_key=issue.identifier,
     issue_url=issue.url, issue_status=issue.state, author=assignee, surface_timestamp=issue.updatedAt
-  do not persist the issue body or comments; the issue URL is the evidence reference
 ```
 
 ### Step 5e — GitHub harvest (if `surfaces.github.enabled`)
@@ -367,8 +357,9 @@ in the watched repos since the cursor. This is where "what the code did this wee
 becomes project intel the curator can link to milestones.
 
 > **Access.** Two paths, discovered at runtime — use whichever is present:
-> an available **GitHub connector**, or the **`gh` CLI** when already authenticated.
-> Both are read-only. If
+> a **GitHub MCP connector** (server name `ps_github`; the appliance renders it from
+> an enrolled GitHub PAT via the surface-grant → connector-render generator), OR the
+> **`gh` CLI** (local / desktop, already authenticated). Both are read-only. If
 > neither is available, skip the surface and log it.
 
 ```
@@ -381,20 +372,20 @@ for each repo in surfaces.github.repos:   # or run surfaces.github.query instead
   # --- pull requests ---
   if 'pulls' in events:
     <gh pr list --repo {repo} --state all --search "updated:>={cursor_date}">
-    → one reference per PR touched since cursor: number, URL, title, state
-      (open/merged/closed), author, merged_at.
+    → one doc per PR touched since cursor: number, title, state (open/merged/closed),
+      author, body excerpt, merged_at.
   # --- releases ---
   if 'releases' in events:
     <gh release list --repo {repo}>  → filter published/updated > cursor
-    → one reference per release: tag, URL, name, published timestamp.
+    → one doc per release: tag, name, notes.
   # --- issues ---
   if 'issues' in events:
     <gh issue list --repo {repo} --state all --search "updated:>={cursor_date}">
-    → one reference per issue touched: number, URL, title, state, labels, author, updated timestamp.
+    → one doc per issue touched: number, title, state, labels, author, latest comment.
 
   emit each item if:
     - it's in a watched repo (all such activity is relevant), OR
-    - title or commit-message metadata contains a project keyword, OR
+    - title/message/body contains a project keyword, OR
     - author/committer/assignee ∈ contact_roster (by GitHub login or email where exposed)
   → frontmatter: source=github, source_id="{repo}#{kind}:{id}" (kind ∈ commit-digest|
     pr|release|issue; id = date | pr-number | tag | issue-number),
@@ -411,11 +402,10 @@ those are already the natural units.
 For each item flagged for ingest:
 1. Build the filename: `{YYYY-MM-DD}-{surface}-{slug}.md` where slug = sanitized title or channel+ts
 2. Check if file already exists (dedup by source_id hash) — skip if so
-3. Write the markdown file to `project-state/documents/inbox/` (file binding) or
-   pass it to the supported deposit adapter's `write-doc` operation
+3. Write the markdown file to `project-state/documents/inbox/` (file binding) or add it to the surface's deposit batch (deposit binding — the batch POSTs in Step 7 with the proposed cursor)
 4. Append a one-line entry to `project-state/harvest/harvest.log`:
    ```
-   2026-05-04T12:00:00Z  slack   #project-updates/1714389612.123456  → 2026-05-04-slack-project-updates-abc123.md
+   2026-05-04T12:00:00Z  slack   #ledger-rt/1714389612.123456  → 2026-05-04-slack-ledger-rt-abc123.md
    ```
 
 ### Step 7 — Advance cursors
@@ -430,7 +420,7 @@ For each surface that completed without error, write this identity's cursor file
 | jira / confluence / linear | max issue/page updated seen |
 | github | max commit/PR/release/issue timestamp seen |
 
-File binding: rewrite `harvest/cursors/{email}--{surface}.yaml` (single-writer per identity — no lock needed). A supported deposit adapter advances the cursor atomically only past accepted documents.
+File binding: rewrite `harvest/cursors/{email}--{surface}.yaml` (single-writer per identity — no lock needed). Deposit binding: the proposed cursor rides in the deposit batch and the server advances it only past accepted docs.
 
 ### Step 8 — Report
 
@@ -475,7 +465,7 @@ Dedup key: `{surface}:{source_id}`. Stored in `project-state/harvest/seen.json` 
 
 `seen.json` is append-only — never prune. It stays small (one 12-byte hash per harvested item).
 
-Dedup is **load-bearing across harvesters**, not just re-run safety: two users watching the same Slack channel, or a user and a supported server adapter harvesting the same surface, must produce one inbox doc. A deposit adapter owns server-side dedup; the client check is only an optimization.
+Dedup is **load-bearing across harvesters**, not just re-run safety: two users watching the same Slack channel, or a user and the server harvesting the same surface, must produce one inbox doc. On the deposit binding the server owns `seen.json` and dedups the batch — the client-side check is only an optimization to shrink the upload.
 
 ---
 
@@ -490,10 +480,9 @@ is emitted.
 
 Sources are swept by evidence tier (schema `evidence_source_tiers`):
 
-- **Tier 1 — Jira** (`hints.jira`): stable references and timestamps for matching issues and
-  explicitly cited worklog/comment evidence in the configured projects, plus anything labeled per
-  `hints.jira.labels`. Reference is the issue key or evidence permalink (durable,
-  server-timestamped); bodies and comments remain in Jira. An issue labeled `sred-ex-NN` /
+- **Tier 1 — Jira** (`hints.jira`): issues/comments/worklogs in the configured projects
+  matching frontier keywords, plus anything labeled per `hints.jira.labels`. Reference is
+  the issue key (durable, server-timestamped). An issue labeled `sred-ex-NN` /
   `sred-tu-NN` is author-asserted linkage: the proposal arrives pre-linked to that entity
   with high confidence — still confirmed by a human, never auto-logged.
 - **Tier 1 — Confluence** (`hints.confluence`): pages in the configured spaces matching
@@ -557,8 +546,8 @@ once in the harvest summary ("sred enabled but no criteria — run define_criter
 | Malformed message/doc              | Skip item; log; continue                      |
 | Disk write failure                 | Halt; do NOT advance cursor; report error     |
 | `project-state/` not found        | Fail fast — wrong working directory (file binding) |
-| Configured deposit adapter unreachable | Retry once; then stop and report. Cursor unchanged. Do NOT write local files instead |
-| Deposit adapter rejects the write  | Stop; report authorization problem; nothing written |
+| Deposit endpoint unreachable       | Retry once; then stop and report. Cursor unchanged. Do NOT write local files instead |
+| Deposit rejects batch (401/403)    | Stop; report token/grant problem; nothing written |
 
 ---
 

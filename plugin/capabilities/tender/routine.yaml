@@ -1,0 +1,64 @@
+# tender — capability routine
+#
+# What this capability contributes to `project-orchestrator`'s read phase — composed into
+# the one digest; no second orchestrator. These checks are lifted from surfaces.yaml's
+# "operations" prose, which already named exactly what the daily routine should flag.
+# Scheduling (hourly harvest, weekly pipeline review) lives in the tender-pursuit pack's
+# reporting-matrix defaults, never here.
+schema_version: 1
+capability: tender
+version: "1.0.0"
+
+state:
+  runtime: "state/tender.json"
+  manifest_block: "capabilities.tender"
+  events: "tenders/events.ndjson"
+
+checks:
+  # ── Blocking / urgent ────────────────────────────────────────────────────────
+  - id: "tender.no-profiles"
+    when: "capability enabled AND no enabled tender-profile exists"
+    severity: urgent
+    message: "Tender is on but no capability profile is enabled — the qualifier cannot score anything."
+    action: "Seed at least one profile in tenders/profiles/ (the guided setup's first gate)."
+    handler: tender-qualifier
+
+  - id: "tender.closing-soon"
+    when: "any tender in {qualified, bid_no_bid_pending, pursue, preparing_response} closing within 7 days"
+    severity: urgent
+    message: "{n} live tender(s) close within 7 days — nearest: {id} on {date}."
+    action: "Decide or ship: record the bid/no-bid, or finish the response."
+    handler: tender-pipeline
+
+  - id: "tender.connector-overdue"
+    when: "any enabled connector past its expected interval since last_success"
+    severity: urgent
+    message: "Connector {id} last succeeded {ago} — leads may be silently missing (MERX has no fallback channel)."
+    action: "Run /tender-harvester all and read the per-connector health report."
+    handler: tender-harvester
+
+  # ── This week ────────────────────────────────────────────────────────────────
+  - id: "tender.bid-no-bid-waiting"
+    when: "any tender in bid_no_bid_pending"
+    severity: soon
+    message: "{n} qualified tender(s) awaiting a bid/no-bid decision."
+    action: "Record the decision — it is a facility decision entity, with the reasoning kept."
+    handler: tender-pipeline
+
+  - id: "tender.quarantine-waiting"
+    when: "documents/inbox/quarantine holds unrecognized portal-email templates"
+    severity: soon
+    message: "{n} quarantined portal email(s) — an unknown template is never guessed at."
+    action: "Review the quarantine; teach the harvester the template or dismiss the mail."
+    handler: tender-harvester
+
+  # ── On deck ──────────────────────────────────────────────────────────────────
+  - id: "tender.watch-stale"
+    when: "any followed tender with no monitor check in 7+ days"
+    severity: ondeck
+    message: "{n} followed tender(s) unchecked for a week — amendments and deadline moves land silently."
+    action: "Run /tender-monitor across the followed set."
+    handler: tender-monitor
+
+quiet_when: "no check fires"
+quiet_message: "Tender desk is current — {n} live pursuits, connectors healthy, nothing closing inside a week."

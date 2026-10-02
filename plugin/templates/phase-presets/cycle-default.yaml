@@ -1,0 +1,36 @@
+preset_id: cycle-default
+description: |
+  The same phases every period: a month-end close, a quarterly budget cycle, a compliance calendar,
+  a recurring operational process. The work never finishes; each period does.
+
+  Continuous-capable: 04-close declares cycles_back_to 01-prepare, and each pass is one increment
+  (one period) under the continuous lifecycle's increment layer - a closed period's records are frozen,
+  never reopened. Continuous behaviour is inert unless the facility declares
+  phases.lifecycle: continuous, which work-ops-cycle suggests.
+  Spec: skills/project-scaffolder/SKILL.md; skills/project-phase-gate/SKILL.md.
+
+phases:
+  - id: "01-prepare"
+    label: "Prepare"
+    gate_in: ~
+    gate_out: "Period calendar confirmed; inputs requested from contributors"
+
+  - id: "02-execute"
+    label: "Execute"
+    gate_in: "Inputs requested"
+    gate_out: "All period tasks complete"
+    required_recurring:
+      - "Period checklist"
+
+  - id: "03-review"
+    label: "Review"
+    gate_in: "Period tasks complete"
+    gate_out: "Results reviewed and signed off"
+
+  - id: "04-close"
+    label: "Close"
+    gate_in: "Results signed off"
+    gate_out: "Period closed; issues carried into the next period"
+    required_artifacts:
+      - "Period close report"
+    cycles_back_to: "01-prepare"   # increment boundary: the next period

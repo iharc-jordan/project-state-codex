@@ -1,0 +1,37 @@
+# work-campaign — milestone seeds. anchor = launch day (phases.anchor_date); end = out of market.
+milestones:
+  - slug: brief-approved
+    title: "Campaign brief approved"
+    due: anchor-60d
+    phase: 01-plan
+    acceptance: "Audience, objective, budget, channels and success measures agreed with the sponsor"
+  - slug: messaging-locked
+    title: "Messaging and creative locked"
+    due: anchor-35d
+    phase: 02-build-out
+    acceptance: "Core message, creative concepts and legal/brand review signed off"
+  - slug: assets-ready
+    title: "Channels and assets ready"
+    due: anchor-14d
+    phase: 02-build-out
+    acceptance: "Every asset produced, every channel booked, tracking and attribution tested"
+  - slug: launch
+    title: "Launch"
+    due: anchor
+    phase: 04-live
+    acceptance: "Campaign live in every planned channel"
+  - slug: mid-flight-readout
+    title: "Mid-flight readout"
+    due: anchor+14d
+    phase: 04-live
+    acceptance: "Performance against targets reviewed; spend and creative re-allocated if needed"
+  - slug: results-report
+    title: "Results report"
+    due: end-7d
+    phase: 05-wrap
+    acceptance: "Outcome against every success measure, with spend reconciled"
+  - slug: wrap
+    title: "Campaign wrap"
+    due: end
+    phase: 05-wrap
+    acceptance: "Lessons recorded; assets archived for reuse"

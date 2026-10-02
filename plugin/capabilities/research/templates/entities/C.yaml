@@ -1,0 +1,16 @@
+# research-challenge template (spec §4.5). Content immutable; status, resolution, resolved_by advance —
+# and only a person moves status. An unattended walk may add evidence and set proposed_resolution; it
+# never rules. Rejecting a challenge is a recorded ruling, never a deletion.
+id: RES-C-NNN
+mandate_id: RES-M-NNN
+finding_id: RES-F-NNN
+kind: single-source         # single-source | self-interested-primary | non-independent-triangulation | unresolved-contradiction | inference-gap | stale-evidence | off-mandate | unfalsifiable
+argument: "Why this finding may not hold, specifically — name the page, the gap, the missing source."
+severity: material          # blocking | material | minor — blocking stops research-brief
+status: open                # open | accepted | rejected | resolved
+proposed_resolution: ~      # the walk's suggestion; a person rules
+resolution: ~
+resolved_by: ~              # a person, never the walk
+resolved_at: ~
+logged_by: research-redteam
+created: YYYY-MM-DDTHH:MM:SSZ

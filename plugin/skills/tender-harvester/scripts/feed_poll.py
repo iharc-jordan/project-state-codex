@@ -2,7 +2,7 @@
 """Reference RSS/Atom poller for tender-harvester (CanadaBuys).
 
 Stateless helper: fetches one feed with conditional headers and prints new/changed
-entries as JSON lines. Cursor state stays in the facility's state/tender-intelligence.json — the agent
+entries as JSON lines. Cursor state stays in the facility's state/tender.json — the agent
 passes it in and persists what comes back. Stdlib only.
 
 Usage:
@@ -21,7 +21,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
-UA = "Atomic47-TenderIntelligence/1.0 (+https://atomic47.co; polite crawler)"
+UA = "Atomic47-TenderIntelligence/1.0 (+https://atomic47.co; polite; contact keystone@stonemaps.org)"
 ATOM = "{http://www.w3.org/2005/Atom}"
 
 

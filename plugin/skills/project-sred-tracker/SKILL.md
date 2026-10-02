@@ -1,11 +1,20 @@
 ---
 name: project-sred-tracker
-description: "Track Canadian SR&ED TU/EX/ADV records, evidence, gaps, reviews, costs, and innovation criteria only when the sred capability is enabled. An explicit screening/setup request may route to sred-onboarding without writing SR&ED state. Preserve traceability and cadence outputs; never infer eligibility, enable the capability from keywords, or file a claim."
+description: "Capture SR&ED work as it happens — 'log an uncertainty', 'record this experiment', 'we learned X', 'SR&ED note'. Records uncertainties, experiments, advancements and evidence for the T661."
+map:
+  tier: capability
+  stage: keep
+  requires: [memory]
+  reads: [sred, log]
+  writes: [sred]
+  produces: [t661-narrative]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project SR&ED Tracker
+
+> **When to use.**
+>
+> Continuous SR&ED work capture for Canadian T661 claims. Records technological uncertainties (TUs), experiments (EXs), technological advancements (ADVs), and contemporaneous evidence entries into sred/ substrate. Enforces TU→EX→ADV traceability. Runs gap analysis, weekly progress digests, quarterly completeness reviews, cost roll-ups, and the innovation-criteria interview. Active when the sred capability is enabled. Use whenever the user says 'record a technical uncertainty', 'log SR&ED work', 'add an experiment', 'capture an advancement', 'SR&ED evidence', 'what's our SR&ED status', 'weekly SR&ED update', 'SR&ED digest', 'quarterly SR&ED review', 'gap analysis', 'define innovation criteria', 'what counts as innovation here', 'is this SR&ED', 'evaluate this SR&ED opportunity', 'screen this for SR&ED', or any request to track or screen experimental development work for CRA.
 
 ## Purpose
 
@@ -66,7 +75,7 @@ status: "active"    # active | resolved | removed
 resolution: ~       # if resolved: brief statement of how uncertainty was resolved
 
 # Meta
-created_by: "TODO"
+created_by: "<actor>"             # the person, per project-state "Who the actor is"
 last_modified: "YYYY-MM-DDThh:mm:ssZ"
 ```
 
@@ -122,7 +131,7 @@ status: "in_progress"  # in_progress | complete | abandoned
 abandonment_reason: ~  # if abandoned: why
 
 # Meta
-created_by: "TODO"
+created_by: "<actor>"             # the person, per project-state "Who the actor is"
 last_modified: "YYYY-MM-DDThh:mm:ssZ"
 ```
 
@@ -153,7 +162,7 @@ established_date: "YYYY-MM-DD"  # when the advancement was achieved / knowledge 
 fiscal_year: "YYYY"
 
 # Meta
-created_by: "TODO"
+created_by: "<actor>"             # the person, per project-state "Who the actor is"
 last_modified: "YYYY-MM-DDThh:mm:ssZ"
 ```
 
@@ -366,10 +375,28 @@ the SR&ED advisor in the room. Reads the Layer 0 baseline
 4. **Confirm framing** — every area description must be field-relative; rewrite any
    "new to us" phrasing on the spot, citing the Layer 0 field-level rule.
 
-Write the file from `capabilities/sred/templates/criteria.yaml`, `status: draft` until PL sign-off flips it
+Write the file from `templates/criteria.yaml`, `status: draft` until PL sign-off flips it
 to `reviewed`. Emit `sred.criteria.updated` with areas added/removed — criteria drift is
 audit-relevant and must be visible in the activity log. The quarterly review nudges a
 refresh when `last_refreshed` ages past a quarter.
+
+### `render_dashboard()` — the declared report
+
+The SR&ED dashboard is a **declared report** (`capabilities/sred/surfaces.yaml → reports:`): the
+app's SR&ED page renders `reports/adhoc/sred-dashboard.html` in place, so it must be fresh
+whenever state changes. Run it after every operation above that writes a TU/EX/ADV, appends
+evidence, or moves a claim status — and at the end of the weekly and quarterly reviews:
+
+```bash
+node capabilities/sred/views/build-sred-dashboard.mjs <facility>/project-state
+```
+
+It reads the manifest block, `sred/criteria.yaml`, the three entity directories, the evidence
+log and `state/sred.json`; it writes ONE file and nothing else — a lens, never a writer. If Node
+is unavailable, say so in the run report instead of leaving a stale page: the app shows the
+last render's timestamp, and a stale timestamp is an honest signal. Before the first render (or
+when the capability is merely installed) the app shows `samples/dashboard.html`, a fixture
+render, banded "Template" — never mistake it for this project's data.
 
 ## Discipline rules
 
@@ -392,7 +419,7 @@ refresh when `last_refreshed` ages past a quarter.
 
 ## Reference schema files
 
-- `capabilities/sred/templates/t661-narrative.md` — narrative template (Sections E/F/G)
-- `capabilities/sred/templates/evidence-map.md` — evidence map template
-- `capabilities/sred/templates/cost-categorization.yaml` — cost allocation template
+- `packs/sred-canada/templates/t661-narrative.md` — narrative template (Sections E/F/G)
+- `packs/sred-canada/templates/evidence-map.md` — evidence map template
+- `packs/sred-canada/templates/cost-categorization.yaml` — cost allocation template
 - `packs/sred-canada/profiles/funder-reporting.yaml` — language guidance and cadence config

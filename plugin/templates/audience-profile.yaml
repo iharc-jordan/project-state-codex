@@ -1,0 +1,46 @@
+# Audience profile — seeded into project-state/audiences/<id>.yaml.
+# One file per audience the project speaks to. The manifest's default_audience names the voice of
+# conversational surfaces (orchestrator daily read, educator); reporting-matrix rows may name their
+# own. All writes route through project-state. Design: templates/audience-profile.yaml
+
+id: band-council
+label: "Band council"
+
+# How much practice fluency the words assume.
+# newcomer  — the plain-language contract (INLINE-EDUCATION-SPEC §3.1): five questions, spoken
+#             register, humanized numbers, names before codes
+# practicing — compact practitioner form allowed; teaching only on new concepts
+# fluent    — full practitioner register; no unprompted teaching
+register: newcomer
+
+# Natural language for this audience's renderings. Non-canonical languages require a language pack
+# (templates/audience-profile.yaml); uncovered strings fall back to the canonical language, visibly.
+language: en
+
+framing:
+  # The local institution project practices are framed as extending — never replacing.
+  governance_anchor: "band council governance and accountability"
+
+# Audience's words for the practice's words. Bridged, not hidden — the educator teaches both.
+lexicon:
+  risk-register: "the list of things that could knock us off course"
+  decision-record: "the written why, like a council minute"
+  milestone: "a promised checkpoint with a date"
+  reporting-matrix: "the list of who we've promised to tell what, and when"
+
+# Words the system never says to this audience (generalizes the concierge's forbidden list).
+forbidden_vocabulary:
+  - substrate
+  - schema
+  - pipeline
+  - orchestrator
+
+# The education facet (absorbs education/profile.yaml — see VOICE-LAYER-SPEC §7).
+education:
+  # Quoted on purpose: bare `on` is boolean true in YAML 1.1, and the vocabulary is "on"|"off".
+  annotations: "on"
+  muted_topics: []
+
+# true on exactly one profile per project: artifacts of record (claims, funder reports, contracts)
+# are authored in this voice; other renderings are clearly-marked companion views.
+canonical_for_record: false

@@ -1,0 +1,65 @@
+# Seeded into project-state/reporting-matrix.yaml when the intel capability is enabled
+# with this pack. These entries replace intel-runner: scheduling lives in the matrix,
+# project-automator compiles cadence → automation/tasks.yaml, and the daily digest
+# (routine.yaml) covers what the old briefing-schedule did — no separate briefing entry.
+entries:
+  - id: intel-overnight-longlist
+    stakeholder: internal
+    report: "Overnight longlist research run"
+    cadence: weekly            # promote to daily on active pursuits; demote to monthly when quiet
+    at: "01:30"
+    format: markdown
+    surface: "intel/reports/longlist-{date}.md"
+    producer: intel-harvester
+    producer_args: "longlist --tier p1"
+    unattended: true           # candidates deferred to morning review, never auto-created
+    review: none               # the digest's intel.longlist-unreviewed check is the review hook
+  - id: intel-landscape-report
+    stakeholder: internal
+    report: "Ecosystem landscape report — entities by type, relationships, gaps"
+    cadence: monthly
+    format: markdown
+    surface: "intel/reports/landscape-{date}.md"
+    producer: intel-harvester
+    review: PL                 # landscape reads go to people; a human looks first
+  # ── competitive layer (1.1, capabilities/intel/README.md) ──────────────────────────
+  - id: intel-weekly-claim-refresh
+    stakeholder: internal
+    report: "Weekly refresh of stale material claims on in-scope competitors"
+    cadence: weekly
+    at: "02:30"
+    format: yaml
+    surface: "intel/claims/"
+    producer: intel-harvester
+    producer_args: "competitor all --stale-only"
+    unattended: true           # new claims and change events land; the digest's intel.stale-material is the review hook
+    review: none
+  - id: intel-monthly-competitive-brief
+    stakeholder: internal
+    report: "Competitive brief — what changed, why it matters, deals affected, actions, watching next"
+    cadence: monthly
+    format: markdown
+    surface: "intel/reports/brief-{date}.md"
+    producer: intel-brief
+    review: PL                 # a brief that leaves the Project is gated; may honestly say nothing changed
+  # ── monitor and win-loss (1.2, capabilities/intel/README.md) ─────────────────────
+  - id: intel-weekly-monitor
+    stakeholder: internal
+    report: "Weekly change monitor — the watch list re-read, changes written as claim deltas"
+    cadence: weekly
+    at: "02:00"
+    format: markdown
+    surface: "intel/monitor/runs/{date}.md"
+    producer: intel-monitor
+    producer_args: "run"
+    unattended: true           # claims and change events land; intel.change-material is the review hook
+    review: none
+  - id: intel-quarterly-winloss
+    stakeholder: internal
+    report: "Win-loss analysis — seller vs buyer reasons, patterns by segment with their samples"
+    cadence: quarterly
+    format: markdown
+    surface: "intel/reports/winloss-{quarter}.md"
+    producer: intel-winloss
+    producer_args: "analyze"
+    review: PL                 # a finding about the sales organisation goes to people after review

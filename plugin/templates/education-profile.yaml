@@ -1,0 +1,37 @@
+# Education profile — seeded into project-state/education/profile.yaml by project-educator
+# on first use (or by project-intake / project-onboarding at init when the audience is known).
+# All writes route through project-state. Design: templates/education-profile.yaml
+
+# Who is being taught, in the team's own words. Free text; used to select framing.
+# Examples: community-org | band-management | first-time-grantee | founder-team | practiced-pm-team
+audience: community-org
+
+# newcomer  — dense inline why-lines, full teaching frames on explain
+# practicing — thin annotations, teaching only on new concepts
+# fluent    — no unprompted teaching; explain still answers on request
+level: newcomer
+
+# Inline why-lines on inward-facing artifacts (status reports, briefings, confirmations).
+# Never applies to outward-facing artifacts regardless of this setting.
+# Quoted on purpose: bare `on` is boolean true in YAML 1.1, and the declared vocabulary is "on"|"off".
+annotations: "on"
+
+framing:
+  # The local institution that project practices are framed as extending — never replacing.
+  # e.g. "band council governance and accountability", "the board's fiduciary duty",
+  # "the way this team already runs its weekly huddle"
+  governance_anchor: "the way this organization already governs itself"
+
+# Audience's words for the practice's words. Terms are translated AND bridged — the educator
+# teaches both, e.g. "we call this a risk register; you might think of it as…".
+vocabulary:
+  risk-register: "the list of things that could knock us off course"
+  decision-record: "the written why — like a council minute"
+  milestone: "a promised checkpoint with a date"
+  change-order: "a written 'the plan changed, and here's why'"
+  reporting-matrix: "the list of who we've promised to tell what, and when"
+  phase-gate: "a scheduled moment to ask 'are we still on the right road?'"
+
+# Concepts the user said "stop explaining" to. The educator answers factually but drops the
+# teaching frame for anything listed here.
+muted_topics: []

@@ -1,0 +1,52 @@
+plugin:
+  id: "research"
+  name: "Research — question-driven, evidence-graded research"
+  version: "0.1.0"
+  type: capability
+  description: |
+    Teaches a project to hold research natively: mandates (the questions, and the contract
+    for answering them), steps, append-only findings graded on source tier, confidence,
+    epistemic status and independence, challenges raised before anything ships, longlist
+    candidates, and change records. Bounded mandates answer and complete; standing mandates
+    never complete and report what changed each run. Pairs with the work-research pack.
+    Replaces the standalone deep-research facility per decision
+    2026-09-27-research-capability-only.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  spec: "capabilities/research/README.md"
+  released: ~                    # unreleased — lands with the next project-state version
+
+compatibility:
+  substrate: ">=5.0"
+
+namespace:
+  prefix: "research"             # directories, entity kinds, events, state file
+  skills:                        # spec §6
+    - research-onboarding
+    - research-ingest
+    - research-mandate
+    - research-step
+    - research-deepweb
+    - research-longlist
+    - research-redteam
+    - research-brief
+    - research-retro
+    - research-walk
+    - research-ask
+  agents:                        # spec §13 Q1 — the four fan-out subagents; read-only, they return JSON the parent merges
+    - research-fetcher
+    - research-ingestor
+    - research-comparer
+    - research-scorer
+
+payload:
+  schema: "schema/"
+  skills: "skills/"
+  agents: "agents/"              # placed into the plugin's agents/ (the loader reads subagents there)
+  templates: "templates/"        # manifest-block · agenda · entities/{M,S,F,C,L,X} · sections · article · delta-brief · intel-proposal
+  validator: "validator/validate-research.md"   # composes validator/scripts/check.py — the checks are executable (spec §7)
+  scripts: "scripts/"            # redteam · walk · merge · render · learn · promote · migrate_research_state
+  views: "views/"                # _research.py (the shared model) · build-research-{glance,evidence,timeline,library,delta}.py
+  samples: "samples/"
+  packs:
+    bundled: [research-default]

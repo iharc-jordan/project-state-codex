@@ -1,0 +1,42 @@
+# tender — schema extension registered at enable time.
+# Full prose schema (field-level detail, event stream shape): schema-extension.md beside this file.
+# Extracted 2026-08-28 from the operative contract (surfaces.yaml + the four skills);
+# surfaces.yaml remains authoritative for app integration — if they disagree, re-derive.
+schema_version: 1
+capability: tender
+
+directories:
+  - path: "tenders"
+    kind: tender
+  - path: "tenders/profiles"
+    kind: tender-profile
+  - path: "documents/inbox/quarantine"
+    kind: none             # unrecognized portal-email templates — never guessed, always parked
+
+files:
+  - path: "tenders/events.ndjson"
+    seed: ""               # append-only typed change log; corrections append with superseded_ts
+  - path: "state/tender.json"
+    seed: '{"tender_connectors":{},"counters":{"tenders":0}}'
+
+kinds:
+  tender:
+    id_format: "t-<year>-<seq>"          # e.g. t-2026-0041
+    file: "tenders/t-YYYY-NNNN.yaml"
+    required: [id, title, source, dates, workflow]
+    enums:
+      workflow.status: [discovered, preliminary_match, documents_required, under_review,
+                        qualified, bid_no_bid_pending, pursue, preparing_response, submitted,
+                        watch, partner_opportunity, awarded, unsuccessful, dismissed,
+                        cancelled, expired]
+    mutable: true
+    notes: |
+      Transitions only through tender-pipeline's validated lifecycle; every transition emits
+      tender.status.changed with previous/new values. Dismissals require a reason code.
+      human_approved fields are reserved for humans — no agent ever sets them.
+  tender-profile:
+    id_format: "profile id (slug)"
+    file: "tenders/profiles/<id>.yaml"
+    required: [id, name, enabled]
+    mutable: true
+    notes: "Matching weights must sum to 100 — the validator enforces it."

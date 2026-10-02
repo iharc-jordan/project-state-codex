@@ -1,0 +1,14 @@
+# KPI suggestions — never written by onboarding. project-goal-tracker offers these in the `project-goal-tracker` workflow.
+kpis:
+  - slug: sample-vs-target
+    title: "Sample collected against target"
+    unit: "%"
+    direction: up
+  - slug: protocol-deviations
+    title: "Protocol deviations"
+    unit: "count"
+    direction: down
+  - slug: outputs-delivered
+    title: "Outputs delivered (reports, papers, briefings)"
+    unit: "count"
+    direction: up

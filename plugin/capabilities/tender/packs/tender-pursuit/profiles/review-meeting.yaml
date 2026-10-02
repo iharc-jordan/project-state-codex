@@ -1,0 +1,42 @@
+profile_id: tender-pursuit.review-meeting
+
+meeting:
+  name: "Tender Pipeline Review"
+  short_id_prefix: "TPR"
+  cadence:
+    kind: weekly
+    day: monday
+  notice_minimum_days: 0
+  duration_minutes: 30
+
+attendees:
+  required:
+    - id: bd_reviewer
+    - id: executive_decision_maker
+  optional:
+    - id: subject_matter_reviewers
+    - id: tender_administrator
+
+agenda:
+  required_sections:
+    - "Act-now items and unowned high scores"
+    - "Bid/no-bid decisions due or overdue"
+    - "Deadlines within 14 days (questions, meetings, closings)"
+    - "Amendments since last review; re-qualification needs"
+    - "Active pursuits: status, blockers, budget burn"
+    - "Dismissals and lessons; profile tuning candidates"
+    - "Connector health"
+
+preread_pack:
+  assembly:
+    - tenders.act-now-unowned
+    - decisions.open-bid-no-bid
+    - tenders.deadlines-14d
+    - tender-events.since-last-review
+    - tenders.active-pursuits
+    - tender-connectors.health
+  output: "reports/tender-reviews/{review-id}.md"
+  distribution_lead_days: 0
+
+minutes:
+  capture: "decisions recorded live via tender-pipeline; minutes into the review doc"

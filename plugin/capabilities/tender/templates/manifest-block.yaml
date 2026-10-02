@@ -1,0 +1,18 @@
+# The `capabilities: tender:` block that `enable` writes.
+# DERIVED from surfaces.yaml → enablement.defaults (the app's guided-setup source of
+# truth); if the two disagree, surfaces.yaml wins — re-derive this file.
+# mailbox_label is REQUIRED: without it portal alert emails have nowhere to land and the
+# primary lead channel (MERX has NO other channel) silently does not exist.
+capabilities:
+  tender:
+    enabled: true
+    version: "1.0.0"               # plugin version at enable time; validator checks drift
+    pack: tender-pursuit           # bundled default; composes with any other pack
+    mailbox_label: REQUIRED        # e.g. "tenders/<project-slug>" — Gmail label the harvester drains
+    profiles_enabled: []           # at least one capability profile before the first harvest
+    sources:
+      canadabuys: { feed: true, email: true, feeds: { discovery: [], watch: [] } }
+      merx: { email: true }        # email is the ONLY MERX channel
+      sasktenders: { email: true, listing: true, listing_interval_hours: 4 }
+      gem: { listing: true, listing_interval_hours: 4 }
+      bidsandtenders: { email: true, listing: true, listing_interval_hours: 4, search_urls: [] }

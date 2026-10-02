@@ -1,0 +1,48 @@
+preset_id: stage-gate-default
+description: |
+  The generic phase ladder: define the work, plan it, deliver it, review it, close it. For any project
+  that moves through stages with a sign-off between them and is not software-shaped (that is
+  waterfall-default) or funder-shaped (that is grant-default) - an office move, a policy rollout, a
+  vendor selection, a partnership, a report.
+
+  Terminal by design: no phase declares cycles_back_to, so the facility cannot be continuous on this
+  ladder. Work that repeats belongs on cycle-default.
+  Spec: skills/project-scaffolder/SKILL.md
+
+phases:
+  - id: "01-define"
+    label: "Define"
+    gate_in: ~
+    gate_out: "Charter agreed: outcome, scope, sponsor and success measures written down"
+    required_artifacts:
+      - "Project charter or brief"
+
+  - id: "02-plan"
+    label: "Plan"
+    gate_in: "Charter agreed"
+    gate_out: "Plan approved: milestones dated, owners named, budget and risks recorded"
+    required_artifacts:
+      - "Milestone plan"
+      - "Risk register (initial)"
+
+  - id: "03-deliver"
+    label: "Deliver"
+    gate_in: "Plan approved"
+    gate_out: "All planned deliverables complete or formally descoped"
+    required_recurring:
+      - "Weekly status update"
+
+  - id: "04-review"
+    label: "Review"
+    gate_in: "Deliverables complete"
+    gate_out: "Sponsor has accepted the outcome"
+    required_artifacts:
+      - "Outcome review against the charter's success measures"
+
+  - id: "05-close"
+    label: "Close"
+    gate_in: "Outcome accepted"
+    gate_out: ~
+    required_artifacts:
+      - "Lessons learned"
+      - "Handover of anything that lives on"

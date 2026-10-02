@@ -20,10 +20,15 @@ project:
   long_name: "TODO-LongProjectTitle"
   one_liner: |
     TODO — one-paragraph description of what the project does and why.
-  kind: "TODO-project-kind"              # generic | grant_consortium | client_engagement | startup | open_source | mixed
+  # kind: the PRIMARY WORK TYPE — the id of a loaded `axis: work` pack (work-general, work-campaign,
+  # work-event, work-ops-cycle, agile-default = Software product). The primary alone supplies the
+  # suggested phase preset. Legacy free-text values (grant_consortium, client_engagement, startup,
+  # open_source, generic, mixed) stay valid and change nothing. Spec: skills/project-scaffolder/SKILL.md
+  kind: "TODO-project-kind"
   start_date: ~                          # YYYY-MM-DD
   end_date: ~                            # YYYY-MM-DD
-  packs_loaded: []                       # e.g. ["pic-pcais"], ["client-services", "board-investor"], ["agile-default"]
+  packs_loaded: []                       # additive: one work pack + any accountability packs, e.g.
+                                         # ["work-event", "sponsor-internal"], ["agile-default", "pic-pcais"]
   reporting_matrix_path: "reporting-matrix.yaml"
 
 # ----------------------------------------------------------------------------
@@ -63,9 +68,15 @@ stakeholders:
 # ----------------------------------------------------------------------------
 
 phases:
-  preset: "TODO-preset"                  # grant-default | agile-default | waterfall-default | client-engagement-default | open-source-default | custom
+  preset: "TODO-preset"                  # agile-default | stage-gate-default | countdown-default | cycle-default
+                                         # | grant-default | client-engagement-default | waterfall-default
+                                         # | open-source-default | custom
   custom_path: ~                         # if preset == "custom", path to your custom preset yaml
   current_phase: ~                       # set by project-phase-gate
+  anchor_date: ~                         # YYYY-MM-DD. The fixed date a countdown preset plans back from
+                                         # (launch day, event day). Required only by presets declaring
+                                         # requires: [anchor_date]. Seeds dated anchor-Nd and matrix
+                                         # deadlines anchored here. the bundled pack contract
 
   # Does this project have an end date after which no further work is planned?
   #   terminal   — yes. One pass through the ladder, ending in closeout and archive. The default.
@@ -74,7 +85,7 @@ phases:
   # LEAVE THIS UNSET IF UNSURE. Absent means terminal, is permanently valid, and is never warned
   # about. Only presets that declare cycles_back_to on a phase can be continuous; grant-default
   # cannot, by design. Written by project-phase-gate / project-onboarding, not by hand.
-  # Lifecycle behavior is enforced by project-phase-gate and the selected preset.
+  # Spec: skills/project-phase-gate/SKILL.md
   lifecycle: ~                           # terminal | continuous | ~ (absent == terminal)
 
 # ----------------------------------------------------------------------------
@@ -157,9 +168,32 @@ automation:
   window:
     start: "23:00"                       # earliest start time for cron jobs (local tz)
     end:   "05:00"                       # latest finish time (next-day if end < start)
-  timezone: ~                            # IANA tz; required before scheduled automation is enabled
+  timezone: ~                            # IANA tz string, e.g. "America/Vancouver" — REQUIRED
   # on_change: regenerate               # future: auto-recompile when matrix changes
-  # schedule_path: "automation/tasks.yaml"      # canonical registry path
+  # schedule_path: "automation/tasks.yaml"   # default output path
+
+# ----------------------------------------------------------------------------
+# Heavy-artifacts register — for projects whose code lives beside this facility
+#
+# Things a tool downloads that are large (test-database binaries, browsers, model
+# weights), where each is cached, and the setting that puts it there. Convention:
+# one git-ignored .cache/ at the repository root, shared by every app, never
+# inside node_modules (a clean install deletes it). Asked once by
+# project-onboarding Q1.10 / project-scaffolder Step 5; `project-state validate`
+# checks each path is git-ignored.
+#   ~   never asked (valid, never reported)
+#   []  asked: nothing heavy
+# Reference: skills/project-state/references/heavy-artifacts.md (FB-001, issue #47)
+# ----------------------------------------------------------------------------
+
+caches: ~
+# caches:
+#   - artifact: "MongoDB server binary"
+#     tool: "mongodb-memory-server"
+#     size: "780 MB (Windows), 70 MB (Linux)"
+#     path: ".cache/mongodb-memory-server"   # relative to the repository root; must be git-ignored
+#     setting: "config.mongodbMemoryServer.downloadDir = ../../.cache/mongodb-memory-server (apps/*/package.json)"
+#     used_by: ["apps/web", "apps/app"]      # optional
 
 # ----------------------------------------------------------------------------
 # Concurrency model (unchanged from v1.x)

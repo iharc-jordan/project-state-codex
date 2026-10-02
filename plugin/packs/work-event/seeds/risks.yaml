@@ -1,0 +1,26 @@
+risks:
+  - slug: venue-vendor-failure
+    title: "Venue or a critical vendor fails or cancels"
+    likelihood: low
+    impact: high
+    mitigation: "Contract clauses for cancellation; a named backup for venue, AV and catering."
+  - slug: low-registration
+    title: "Registrations track below target"
+    likelihood: medium
+    impact: high
+    mitigation: "Weekly registration check against a curve; promotion plan with trigger points."
+  - slug: speaker-cancellation
+    title: "A headline speaker cancels"
+    likelihood: medium
+    impact: medium
+    mitigation: "Confirm in writing; hold a stand-by speaker or panel format for key slots."
+  - slug: travel-disruption
+    title: "Travel or weather disrupts attendance"
+    likelihood: low
+    impact: medium
+    mitigation: "Hybrid or recording option; communications plan for day-of changes."
+  - slug: budget-overrun
+    title: "Costs exceed budget"
+    likelihood: medium
+    impact: medium
+    mitigation: "Contingency line; every commitment over the threshold approved by the sponsor."

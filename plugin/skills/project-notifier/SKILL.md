@@ -1,11 +1,22 @@
 ---
 name: project-notifier
-description: "Route an approved Project State artifact only to a configured, available Slack, Gmail-draft, Calendar, or blog surface, or when the operator explicitly requests surface setup. A generator may offer this handoff but must not invoke an unconfigured surface. Require authorization for posts/events; Gmail remains draft-only. Log one delivery event through project-state."
+description: "Send a project artifact to the right surface — 'post this to Slack', 'draft an email to the funder', 'put a hold in the calendar'. Gmail is always a draft; calendar events are proposed holds."
+map:
+  tier: P2
+  stage: generate
+  requires: [memory, connector:slack, connector:gmail, connector:gcal]
+  reads: [reports]
+  writes: [log]
+  produces: [team-update]
+  delivers: [slack, gmail-draft, calendar]
+  profile_driven: true
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project Notifier
+
+> **When to use.**
+>
+> Route project artifacts to the right surface — Slack (post), Gmail (always as draft for human review), Google Calendar (events + holds), or scsiwyg (via project-blog-publisher). Use whenever the user says 'post this to Slack', 'send to the channel', 'email to PIC', 'draft an email to the consortium', 'put this on the calendar', 'schedule the SC meeting', 'ping finance rep about the claim', 'alert the team about the at-risk milestone', 'notify', or any request to push a report, reminder, or update from project-state/ out to a surface. Never sends Gmail messages — only drafts them. Respects the surfaces config in manifest.yaml. Logs every delivery as an activity event via project-state. Used by orchestrator, status-reporter, sc-meeting, claim-prep, phase-gate whenever they produce output that needs to reach humans.
 
 ## Purpose
 
@@ -120,7 +131,7 @@ matching queued card (match on `artifact` filename or `artifact_ref` → card `i
    `queue/`).
 2. Set `deep_link` to the created Gmail draft URL or Calendar event URL.
 3. Leave `status` untouched — backfilling a link is **not** approval. The card stays
-   `queued`; the human still reviews and actions it from the file queue or a compatible viewer.
+   `queued`; the human still reviews and actions it from `/queue`.
 4. Route the write through `project-state` so the edit is logged
    (`outbox.deep_link.backfilled`).
 
@@ -129,14 +140,13 @@ draft. Never create a card here; emission is the generator's job, linking is not
 
 ## Idempotency
 
-For each notification, compute the adapter's canonical deterministic event `id`
-from the delivery event name, audience, stable artifact reference plus exact
-artifact revision/reporting period, and configured surface. Search canonical
-activity for that id before the external call. If it exists, return the prior
-delivery reference; do not post/draft/create an event or backfill again. Record
-the id only after a successful delivery. Existing
-`state.json:recent_notifications` and legacy delivery keys remain readable, but
-new idempotency does not depend on a six-hour window or a second key map.
+For each notification, compute a deterministic `delivery_key`:
+```
+delivery_key = sha1("{audience}|{artifact_ref}|{date}|{channel}")
+```
+Before delivering, check `state.json:recent_notifications[delivery_key]`. If present and dated within 6 hours, skip (the user must have already triggered it). Otherwise record it after successful delivery.
+
+This lets `project-orchestrator` call `notify` eagerly without worrying about duplicate Monday-morning weekly posts.
 
 ## Discipline
 
@@ -147,9 +157,7 @@ new idempotency does not depend on a six-hour window or a second key map.
 
 ## Integration
 
-- **project-state** — reads surfaces config; writes deterministic `notify.*`
-  events; backfills `deep_link` once onto matching `outbox/` cards; reads legacy
-  `recent_notifications` entries without requiring new ones.
+- **project-state** — reads surfaces config; writes `notify.*` events; backfills `deep_link` onto matching `outbox/` cards; maintains `recent_notifications` key map.
 - **project-status-reporter** — biggest caller; produces weekly/SC/claim payloads.
 - **project-orchestrator** — drives reminders and calendar holds on schedule.
 - **project-review-meeting** — uses this for invites + minutes distribution.

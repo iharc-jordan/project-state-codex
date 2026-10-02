@@ -1,0 +1,48 @@
+plugin:
+  id: "intel"
+  name: "Intel — ecosystem intelligence capability"
+  version: "1.2.0"
+  type: capability
+  description: |
+    Teaches a project to hold its competitive and ecosystem intelligence natively:
+    entities (the players), append-only signals (the findings), and mandates
+    (engagements with intel context) as first-class substrate kinds — harvested by
+    research runs and inbox drains, surfaced through the one daily briefing, scheduled
+    by the one reporting matrix. 1.1 adds the competitive layer — claims as the atom
+    (epistemic status, derived freshness, supersession, surfaced conflicts) and the
+    seller-facing projections: an implementation of Open Competitive Intelligence v0.1 at
+    L1 Grounded (capabilities/intel/README.md). 1.2 adds the scheduled change monitor and win-loss
+    analysis (L2 Connected), the OCI §13 evaluation harness over a golden set (L3), and the
+    migration from a standalone intel-state facility. Replaces the standalone intel-state facility shape
+    per decision 2026-08-28-intel-capability-only; the org's standing desk is a
+    Project with this capability enabled.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  spec: "capabilities/intel/README.md"
+  released: "2026-08-28"
+
+compatibility:
+  substrate: ">=4.9"
+
+namespace:
+  prefix: "intel"          # directories, entity kinds, events, state file
+  skills:
+    - intel-onboarding
+    - intel-harvester
+    - intel-ingest
+    - intel-battlecard
+    - intel-deal-coach
+    - intel-brief
+    - intel-ask
+    - intel-monitor
+    - intel-winloss
+
+payload:
+  schema: "schema/"
+  skills: "skills/"
+  templates: "templates/"
+  validator: "validator/validate-intel.md"
+  views: "views/"                       # build-intel-glance.py · build-intel-competitive.py — the two declared reports
+  scripts: "scripts/"                   # 1.2: monitor.py · winloss.py · eval_metrics.py · migrate_intel_state.py (+ intel_lib.py) — read-only lenses and the migration
+  packs:
+    bundled: [intel-default]

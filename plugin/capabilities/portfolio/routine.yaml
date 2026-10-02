@@ -1,0 +1,55 @@
+# portfolio — capability routine (lean V1)
+#
+# What this capability contributes to `project-orchestrator`'s read phase on the PORTFOLIO
+# Project: one standing line and at most three checks. Nothing else is computed for the
+# digest — collisions, load, syntheses are queries a person runs and answers that are kept.
+# Scheduling is NOT here; the portfolio-default pack carries the one weekly collect.
+#
+# Spec: skills/project-state/SKILL.md, capabilities/portfolio/README.md
+schema_version: 1
+capability: portfolio
+version: "1.0.0"
+
+state:
+  runtime: "state/portfolio.json"
+  manifest_block: "capabilities.portfolio"
+  registry: "portfolio/registry.yaml"
+
+always_surface:
+  id: "portfolio.strip"
+  description: |
+    One line: "Portfolio — {n} members ({a} active · {p} proposed) · next deadline {date}
+    ({member}) · last collect {date}". From portfolio/registry.yaml and state/portfolio.json.
+  suppress_when: "no members on file"
+
+checks:
+  - id: "portfolio.not-initialized"
+    when: "capability enabled AND portfolio/members/ holds no rows"
+    severity: urgent
+    message: "Portfolio is enabled but the registry is empty — no member projects on file."
+    action: "Run /portfolio-onboarding to declare the reach and seed members."
+    handler: portfolio-onboarding
+
+  - id: "portfolio.member-unreachable"
+    when: "any cursor in state/portfolio.json with reachable == false for an active member"
+    severity: urgent
+    message: "{n} active member(s) could not be read at the last collect: {members} ({reasons})."
+    action: "Fix the row's location, pull the clone, or pause the member."
+    handler: portfolio-collector
+
+  - id: "portfolio.member-silent"
+    when: "any active member with activity.last_event_at older than silence_threshold_days"
+    severity: soon
+    message: "{member} has not written in {n} days{deadline_note}."
+    action: "Ask the owner whether it is paused; if so, flip the row to paused so silence stops reading as risk."
+    handler: portfolio-onboarding
+
+  - id: "portfolio.harvest-stale"
+    when: "any active member with a surface cursor older than harvest_stale_after_days"
+    severity: soon
+    message: "{member}: {surface} not harvested in {n} days — its snapshot is missing that signal."
+    action: "Run the member's own harvester for that surface, or fix its connector."
+    handler: portfolio-collector
+
+quiet_when: "no check fires AND every active member was collected within snapshot_cadence_days"
+quiet_message: "Portfolio is current — {n} members collected, nothing unreachable, silent, or stale."

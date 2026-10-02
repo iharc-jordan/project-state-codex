@@ -1,0 +1,21 @@
+risks:
+  - slug: recruitment-shortfall
+    title: "Too few participants or samples"
+    likelihood: medium
+    impact: high
+    mitigation: "Recruit from two channels; set a mid-point check against the target."
+  - slug: ethics-delay
+    title: "Ethics or data-access approval takes longer than planned"
+    likelihood: medium
+    impact: high
+    mitigation: "Submit early; plan work that does not depend on approval."
+  - slug: data-quality
+    title: "Data is incomplete or inconsistent"
+    likelihood: medium
+    impact: medium
+    mitigation: "Pilot the instruments; check quality weekly while collecting."
+  - slug: scope-drift
+    title: "New questions creep in mid-study"
+    likelihood: medium
+    impact: medium
+    mitigation: "Park new questions in a follow-on list; change scope only through the change register."

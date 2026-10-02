@@ -1,11 +1,20 @@
 ---
 name: sred-onboarding
-description: "Guided onboarding for the Canadian SR&ED capability. Runs seven chapters: claimant identity (legal name, Business Number, fiscal year end), advisor engagement, capability enablement, the capture lens (Layer 2 innovation criteria), first uncertainty capture from real in-flight work, evidence-source wiring, and an orientation check that ends on a real filing date. Refuses to enable without a fiscal year end — every SR&ED deadline is computed from it. Writes through project-state's capability enable verb; delegates the criteria interview and TU capture to project-sred-tracker. Never asserts eligibility and never files. Use when the user says 'set up SR&ED', 'onboard SR&ED', 'enable SR&ED', 'turn on SR&ED tracking', 'start capturing SR&ED', 'we want to claim SR&ED', 'get us ready for the T661', 'how do we start with SR&ED', or when project-onboarding hands off after the operator answers yes to the SR&ED question."
+description: "Set up SR&ED (Canadian R&D tax credit) tracking on a project — 'set up SR&ED', 'enable SR&ED', 'we might qualify for SR&ED'. Collects fiscal year end, claimant and advisor details first."
+map:
+  tier: capability
+  stage: ingest
+  requires: [memory]
+  inputs: [operator]
+  writes: [manifest, sred]
+  calls: [project-state, project-sred-tracker]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # SR&ED Onboarding
+
+> **When to use.**
+>
+> Guided onboarding for the Canadian SR&ED capability. Runs seven chapters: claimant identity (legal name, Business Number, fiscal year end), advisor engagement, capability enablement, the capture lens (Layer 2 innovation criteria), first uncertainty capture from real in-flight work, evidence-source wiring, and an orientation check that ends on a real filing date. Refuses to enable without a fiscal year end — every SR&ED deadline is computed from it. Writes through project-state's capability enable verb; delegates the criteria interview and TU capture to project-sred-tracker. Never asserts eligibility and never files. Use when the user says 'set up SR&ED', 'onboard SR&ED', 'enable SR&ED', 'turn on SR&ED tracking', 'start capturing SR&ED', 'we want to claim SR&ED', 'get us ready for the T661', 'how do we start with SR&ED', or when project-onboarding hands off after the operator answers yes to the SR&ED question.
 
 ## Purpose
 
@@ -46,15 +55,9 @@ on re-orientation), then gets out of the way.
 - "how do we start with SR&ED"
 - Handoff from `project-onboarding` when the operator answers yes to the SR&ED question
 
-## Presentation protocol
+## Presentation in Codex
 
-Follow the shared Markdown protocol in `project-onboarding`: seven progress
-segments, attributed pre-filled values, grouped unresolved questions, summaries,
-status rows, and explicit confirmation before writes.
-
-One deviation: **the deadline strip is red-bg, not green.** Once Chapter 3 computes a real
-filing date, render it at the top of every subsequent chapter. It is the only number in this
-session the operator cannot recover from missing.
+Follow `project-onboarding`'s concise Markdown presentation. Show the computed filing deadline prominently in later steps and distinguish a supplied date from an inferred one. A direct enable request authorizes setup once the required fiscal-year end is known.
 
 ## Pre-check
 

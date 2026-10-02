@@ -1,0 +1,37 @@
+# work-event — milestone seeds. anchor = event day (phases.anchor_date).
+milestones:
+  - slug: venue-confirmed
+    title: "Venue and date confirmed"
+    due: anchor-120d
+    phase: 01-plan
+    acceptance: "Venue contract signed; deposit paid; date announced internally"
+  - slug: programme-confirmed
+    title: "Programme and speakers confirmed"
+    due: anchor-60d
+    phase: 02-build-out
+    acceptance: "Agenda published; every speaker slot confirmed in writing"
+  - slug: registration-open
+    title: "Registration open"
+    due: anchor-56d
+    phase: 02-build-out
+    acceptance: "Registration page live, tested end to end, and promoted"
+  - slug: run-of-show-locked
+    title: "Run of show locked"
+    due: anchor-7d
+    phase: 03-final-countdown
+    acceptance: "Minute-by-minute plan with owners; vendors and AV confirmed; contingencies written"
+  - slug: event-day
+    title: "Event day"
+    due: anchor
+    phase: 04-live
+    acceptance: "Event held"
+  - slug: survey-out
+    title: "Attendee survey sent"
+    due: anchor+2d
+    phase: 05-wrap
+    acceptance: "Survey in every attendee's inbox"
+  - slug: wrap
+    title: "Budget reconciled and wrap"
+    due: anchor+30d
+    phase: 05-wrap
+    acceptance: "Invoices settled; results report delivered; lessons recorded"

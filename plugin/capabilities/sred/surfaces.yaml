@@ -1,0 +1,269 @@
+capability: sred
+label: SR&ED
+description: Capture SR&ED-eligible work as it happens — uncertainties, experiments, advancements, evidence — so the annual T661 claim is a byproduct. Drafts only; never files, never asserts eligibility.
+version: 1.0.0
+entities:
+- kind: sred-uncertainty
+  label: Uncertainties (TU)
+  dir: sred/uncertainties
+  id_field: id
+  title_field: uncertainty_statement
+  status_field: status
+  columns:
+  - path: id
+    label: ID
+  - path: uncertainty_statement
+    label: Uncertainty
+  - path: status
+    label: Status
+  - path: claim_fy
+    label: Claim FY
+  - path: identified_date
+    label: Identified
+  - path: linked_experiments
+    label: Experiments
+  board:
+    lanes:
+    - label: Active
+      statuses: [active, open]
+    - label: Resolved
+      statuses: [resolved, closed]
+    - label: Abandoned
+      statuses: [abandoned, withdrawn]
+  workspace:
+    guide: "You are on the TECHNOLOGICAL UNCERTAINTY workspace — one T661 Section E [242] record, grounded in its\n\
+      live YAML under sred/uncertainties/TU-NN-<slug>.yaml. A) APPLY edits the operator asks for through the\n\
+      project-sred-tracker skill's conventions: uncertainty_statement and standard_practice_gap are the narrative\n\
+      sources; every EX links exactly one TU; resolution and status change together. Never assert eligibility —\n\
+      borderline is labelled borderline. Append logs/activity.ndjson for every change. B) REPLY with a short read\n\
+      in the block protocol: heading (id · status · claim FY), the statement, linked experiments and advancements,\n\
+      evidence count from sred/evidence-log.ndjson, and 2-4 ask follow-ups (e.g. \"Record an experiment against\n\
+      this\", \"Log evidence\", \"Mark resolved\").\n"
+- kind: sred-experiment
+  label: Experiments (EX)
+  dir: sred/experiments
+  id_field: id
+  title_field: hypothesis
+  status_field: status
+  columns:
+  - path: id
+    label: ID
+  - path: hypothesis
+    label: Hypothesis
+  - path: status
+    label: Status
+  - path: linked_tu
+    label: TU
+  - path: claim_fy
+    label: Claim FY
+  - path: start_date
+    label: Started
+  board:
+    lanes:
+    - label: Planned
+      statuses: [planned, proposed]
+    - label: In progress
+      statuses: [in_progress, active]
+    - label: Complete
+      statuses: [complete, completed]
+    - label: Abandoned
+      statuses: [abandoned]
+  workspace:
+    guide: "You are on the EXPERIMENT workspace — one T661 Section F [244] record, grounded in its live YAML under\n\
+      sred/experiments/EX-NN-<slug>.yaml. A) APPLY edits through project-sred-tracker conventions: hypothesis,\n\
+      method_and_trials, observations_and_results and limitations are the narrative sources; failed trials are\n\
+      recorded, never hidden; evidence is appended to sred/evidence-log.ndjson with the work date AND the logged\n\
+      date (backfilled: true when >7 days apart). B) REPLY with heading (id · status · TU · claim FY), the\n\
+      hypothesis, evidence entries in the last 14 days, people_involved with eligible_days, and 2-4 ask\n\
+      follow-ups (e.g. \"Log today's trial\", \"Record the advancement\", \"Mark complete\").\n"
+- kind: sred-advancement
+  label: Advancements (ADV)
+  dir: sred/advancements
+  id_field: id
+  title_field: advancement_statement
+  status_field: status
+  columns:
+  - path: id
+    label: ID
+  - path: advancement_statement
+    label: Advancement
+  - path: status
+    label: Status
+  - path: linked_tu
+    label: TU
+  - path: claim_fy
+    label: Claim FY
+  - path: established_date
+    label: Established
+  board:
+    lanes:
+    - label: Draft
+      statuses: [draft]
+    - label: Reviewed
+      statuses: [reviewed, accepted]
+    - label: Claimed
+      statuses: [claimed, filed]
+    - label: Withdrawn
+      statuses: [withdrawn, rejected]
+  workspace:
+    guide: "You are on the ADVANCEMENT workspace — one T661 Section G [246] record, grounded in its live YAML under\n\
+      sred/advancements/ADV-NN-<slug>.yaml. Every advancement references at least one TU and one EX (the tracker\n\
+      refuses otherwise). A) APPLY edits through project-sred-tracker conventions; advancement_statement and\n\
+      knowledge_gained are the narrative sources; review_notes are written back by project-sred-reviewer, never\n\
+      by hand. B) REPLY with heading (id · status · claim FY), the statement, its TU and EX links, the reviewer's\n\
+      latest verdict if any, and 2-4 ask follow-ups (e.g. \"Run the reviewer on this FY\", \"Link an experiment\").\n"
+# Generated reports the app renders in place (spec: PORTFOLIO-CAPABILITY-SPEC §10.1, the declared-report
+# mechanism). The SR&ED dashboard is built from state by views/build-sred-dashboard.mjs into
+# reports/adhoc/; it must stay self-contained (no external scripts or stylesheets) under the app's CSP.
+reports:
+- id: dashboard
+  label: Dashboard
+  latest: reports/adhoc/sred-dashboard.html
+  produced_by: project-sred-tracker      # runs capabilities/sred/views/build-sred-dashboard.mjs <facility>
+  default: true
+  scripts: true                          # draws itself from embedded JSON with inline JS (trusted: our own builder's output)
+  height: 2600                           # the dashboard scrolls inside its own body, so it cannot be measured; give it room
+  sample: samples/dashboard.html         # fixture render — the template shown before the capability is enabled or has captured anything
+overview: '**SR&ED gives this project continuous capture of experimental work, so the claim is a
+
+  byproduct, not a reconstruction.** Technological uncertainties (TU), experiments (EX) and
+
+  advancements (ADV) are first-class records; an append-only evidence log accumulates
+
+  contemporaneous entries (commits, test outputs, meeting notes) linked to them. The
+
+  reporting matrix drives quarterly completeness reviews and the annual claim chain on a
+
+  fiscal-year schedule with hard-deadline escalation: the 18-month window is unforgiving.
+
+
+  The system drafts only. It never files a T661, never submits to CRA, and never asserts
+
+  eligibility — that is a qualified advisor''s call. Every chain ends in a draft a human
+
+  reviews. CRA is not a stakeholder here; every matrix entry is internal preparation.
+
+  '
+flow:
+- skill: sred-onboarding
+  does: Enables the capability (fiscal_year_end REQUIRED), declares the capture lens in sred/criteria.yaml with the advisor where possible, and records the first TU so capture starts on day one.
+- skill: project-sred-tracker
+  does: Records TU / EX / ADV as the work happens, appends contemporaneous evidence, confirms harvester-proposed candidates from sred/inbox/, runs the quarterly completeness review and the cost roll-up.
+- skill: project-sred-reviewer
+  does: Reviews a fiscal year's T661 narrative for audit risk — thin evidence, back-filled entries, marketing language, missing links — and writes review_notes back; a weak verdict blocks the advisor handoff.
+- skill: project-funder-reporting
+  does: Runs the annual claim chain from the sred-canada pack — cost categorization, T661 narrative draft, review, advisor package as a Gmail DRAFT. Never sends, never files.
+setup:
+  stages:
+  - stage: Enable the capability
+    intro: Done at enablement — the capability knows the fiscal year everything anchors to, and who is claiming.
+    steps:
+    - label: Capability enabled in this project's manifest
+      check:
+        type: manifest
+        path: enabled
+        equals: true
+    - label: Fiscal year end declared (--MM-DD)
+      check:
+        type: manifest
+        path: fiscal_year_end
+        nonempty: true
+      hint: Every deadline in the capability is computed from this — a guessed value produces a confidently wrong filing date.
+      action:
+        type: manifest_set
+        path: fiscal_year_end
+        placeholder: --12-31
+        button: Set fiscal year end
+    - label: Claimant organization named
+      check:
+        type: manifest
+        path: claimant_org
+        nonempty: true
+      action:
+        type: manifest_set
+        path: claimant_org
+        placeholder: Your Corp Inc.
+        button: Set claimant
+  - stage: Declare the capture lens
+    intro: Without criteria the weekly digest cannot say what is uncaptured, and the harvester has nothing to match against.
+    steps:
+    - label: Capture criteria recorded (sred/criteria.yaml)
+      check:
+        type: manual
+      hint: Run define_criteria in project-sred-tracker — the guided interview, ideally with the advisor present.
+      action:
+        type: run_skill
+        button: Define capture criteria
+        prompt: 'Run /project-sred-tracker define_criteria — walk me through declaring the capture lens (candidate uncertainty areas, standard practice, what counts as evidence) and write sred/criteria.yaml.'
+    - label: First technological uncertainty recorded
+      check:
+        type: entity_count
+        kind: sred-uncertainty
+        min: 1
+      action:
+        type: run_skill
+        button: Record the first uncertainty
+        prompt: 'Run /project-sred-tracker record_tu — help me state the first technological uncertainty (what we could not know from standard practice) and record it.'
+  - stage: Keep it contemporaneous
+    intro: Evidence logged at the time of the work is the claim; silence reads as inactivity to CRA.
+    steps:
+    - label: At least one experiment in flight
+      check:
+        type: entity_count
+        kind: sred-experiment
+        min: 1
+    - label: Fiscal-year state initialized (state/sred.json)
+      check:
+        type: state_file
+        key: fiscal_years
+        nonempty: true
+      hint: Written at enable; carries per-FY claim status and the hard deadline countdown the digest surfaces.
+    - label: Advisor engaged before the claim window closes
+      check:
+        type: manifest
+        path: advisor.engaged
+        equals: true
+      hint: The system drafts; a qualified SR&ED advisor files. Record the advisor once engaged.
+operations: '**Daily rhythm.** The digest carries the deadline strip for every open fiscal year and
+
+  flags stale experiments (no evidence in 14 days), unconfirmed harvested candidates, and
+
+  criteria still in draft. Log evidence as the work happens — including failed trials.
+
+
+  **Quarterly.** project-sred-tracker runs the completeness review: gap analysis against the
+
+  declared criteria, deadline countdown, cost-allocation staleness.
+
+
+  **Annually.** The claim chain from the sred-canada pack produces the cost categorization,
+
+  the T661 narrative draft, the audit-risk review, and the advisor package — as drafts.
+
+  Nothing here files.
+
+  '
+enablement:
+  defaults:
+    pack: sred-canada
+    # fiscal_year_end is deliberately absent: the setup step stays todo until the operator sets it
+    # and the memory layer's enable verb refuses without it. Everything anchors to it.
+    claimant_bn: TODO
+    field_of_science_default: 2.02.09
+    advisor:
+      engaged: false
+      contact: null
+  scaffold:
+  - sred/uncertainties
+  - sred/experiments
+  - sred/advancements
+  - sred/cost-tracking
+  - sred/inbox
+  - sred/evidence-log.ndjson
+  state_init:
+    schema_version: 1
+    counters:
+      tu: 0
+      ex: 0
+      adv: 0
+    fiscal_years: {}

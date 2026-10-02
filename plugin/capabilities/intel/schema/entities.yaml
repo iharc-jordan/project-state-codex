@@ -1,0 +1,110 @@
+# intel capability — schema extension registered at enable time.
+# Directories are created inside the host project-state/; kinds are accepted by the
+# memory layer while the capability is enabled (the bundled capability contract).
+schema_version: 1
+capability: intel
+
+directories:
+  - path: "intel/entities"
+    kind: intel-entity
+  - path: "intel/signals"
+    kind: intel-signal
+  - path: "intel/mandates"
+    kind: intel-mandate
+  - path: "intel/network"
+    kind: none            # relationship maps — derived documents, not entities
+  - path: "intel/reports"
+    kind: none            # generated reports — regenerable
+  # ── competitive layer (1.1, capabilities/intel/README.md) ─────────────────────────────
+  - path: "intel/claims"
+    kind: intel-claim
+  - path: "intel/changes"
+    kind: intel-change
+  - path: "intel/profiles"
+    kind: none            # projections — regenerated from claims, never edited
+  - path: "intel/battlecards"
+    kind: none
+  - path: "intel/deals"
+    kind: none            # <deal-ref>/context.md (operator) · brief.md (projection)
+  - path: "intel/answers"
+    kind: none            # kept intel-ask answers with citations
+  # ── monitor and win-loss (1.2, capabilities/intel/README.md) ────────────────────────
+  - path: "intel/winloss"
+    kind: intel-winloss
+  - path: "intel/monitor"
+    kind: none            # monitor run reports: runs/YYYY-MM-DD.md — regenerable, never state
+
+files:
+  - path: "intel/agenda.yaml"
+    template: "templates/agenda.yaml"
+  - path: "intel/watch.yaml"
+    template: "templates/watch.yaml"     # the monitor's watch list: sources per entity, the operator's to edit
+  - path: "state/intel.json"
+    seed: '{"counters":{"entity":0,"signal":0,"mandate":0,"claim":0,"change":0,"winloss":0},"cursors":{},"last_longlist":null,"last_sweep":null,"projections":{},"last_refresh":null,"last_brief":null,"monitor":{"last_run":null,"sources":{}},"last_winloss_analysis":null}'
+
+kinds:
+  intel-entity:
+    id_format: "INT-E-NNN"
+    file: "intel/entities/INT-E-NNN.yaml"
+    required: [id, type, name, priority, status, summary]
+    enums:
+      priority: [P0, P1, P2, P3]
+      status: [active_research, active_engagement, watch, inactive, archived]
+      type: "manifest: capabilities.intel.entity_types"
+    mutable: true          # entities are evolving understanding
+  intel-signal:
+    id_format: "INT-S-NNN"
+    file: "intel/signals/INT-S-NNN.yaml"
+    required: [id, signal_type, date, source, summary, intelligence_value, logged_by]
+    enums:
+      signal_type: [market_intelligence, competitive, integration, regulatory, customer, technology]
+      intelligence_value: [high, medium, low]
+      source: [web_harvest, document_inbox, slack, email, meeting, document, manual]
+      logged_by: [intel-harvester, intel-ingest, manual]
+    mutable: false         # APPEND-ONLY — supersede, never edit
+    lineage: true          # became:/cited_by edges to risks, decisions, documents
+  intel-mandate:
+    id_format: "INT-M-NNN"
+    file: "intel/mandates/INT-M-NNN.yaml"
+    required: [id, type, entity_id, status, summary]
+    enums:
+      status: [prospecting, proposed, active, completed, stalled, closed]
+      type: "manifest: capabilities.intel.mandate_types"
+    mutable: true
+  # ── competitive layer (1.1) ──────────────────────────────────────────────────────
+  intel-claim:
+    id_format: "INT-C-NNN"
+    file: "intel/claims/INT-C-NNN.yaml"
+    required: [id, subject, category, statement, material, epistemic_status, source, retrieved_at, confidence, logged_by, created]
+    enums:
+      epistemic_status: [verified, reported, inferred, hypothesis, unknown]
+      confidence: [high, medium, low]
+      category: [positioning, product, feature, pricing, packaging, integration, security, compliance, market, customer, partnership, messaging, go-to-market, objection, win-loss, sales-tactic, product-gap, leadership, funding]
+      "source.class": [vendor-primary, regulatory, buyer-direct, third-party-research, press, review-platform, internal-observation, social, inference]
+      "source.method": [web-read, document, interview, message, inference, lifted-signal]
+      logged_by: [intel-harvester, intel-deal-coach, intel-ask, intel-monitor, intel-winloss, manual]
+    extensible: [category]  # manifest competitive.categories_extra; consumers tolerate unknown values
+    mutable: false         # APPEND-ONLY — supersede, never edit; freshness is DERIVED, never stored
+    lineage: true          # became:/cited_by edges; derived_from: INT-S-NNN when lifted from a signal
+  intel-change:
+    id_format: "INT-X-NNN"
+    file: "intel/changes/INT-X-NNN.yaml"
+    required: [id, subject, detected_at, change_type, before, after, significance, detected_by]
+    enums:
+      change_type: [launch, pricing, packaging, positioning, integration, customer, partnership, leadership, acquisition, funding, hiring-pattern, sentiment-shift]
+      significance: [material, notable, noise]
+    extensible: [change_type]
+    mutable: false         # APPEND-ONLY — the claim delta of a supersession
+  # ── win-loss (1.2) ──────────────────────────────────────────────────────────────
+  intel-winloss:
+    id_format: "INT-W-NNN"
+    file: "intel/winloss/INT-W-NNN.yaml"
+    required: [id, deal_ref, outcome, closed_at, seller_reported_reason, logged_by, created]
+    enums:
+      outcome: [win, loss, no-decision]
+      logged_by: [intel-winloss, manual]
+    reason_categories: [price, product-fit, feature-gap, integration, security-compliance, relationship, incumbent, execution, timing, procurement-terms, budget, trust, other]
+    extensible: [reason_categories]   # manifest competitive.winloss.reason_categories_extra
+    mutable: false         # APPEND-ONLY, except the buyer evidence that arrives after the close
+    lifecycle_fields: [buyer_evidenced_reason, claims_generated, interviews, last_modified]
+    lineage: true          # claims_generated: the win-loss, objection, product-gap and sales-tactic claims it wrote

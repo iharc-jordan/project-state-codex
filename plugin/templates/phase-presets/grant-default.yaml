@@ -12,8 +12,7 @@ description: |
   arguably the purest case for the terminal ladder in the whole system.
 
   Declaring phases.lifecycle: continuous against this preset is a validation ERROR, not a warning.
-  A grant project that continues is a new grant. The terminal model remains
-  distinct from continuous facilities and is never generalized into one.
+  A grant project that continues is a new grant. See skills/project-phase-gate/SKILL.md — the terminal model is joined by the continuous one, never generalised into it.
 
 phases:
   - id: "01-loi"

@@ -1,0 +1,87 @@
+# Measure set: portco — the investor's question: what have we put in, what is coming back,
+# and does it still fit the thesis? The most valuable set and the least measurable today:
+# money the substrate does not carry shows as not-measurable, which is the first finding
+# this set produces and the argument for the member field or capability that fixes it.
+#
+# The `declared_on_member_row` measures are the ONE exception to "never hand-entered":
+# thesis fit, stage and committed investment live on the portfolio's own member row,
+# labelled declared, because the portfolio knows them about a member that the member
+# cannot know about itself.
+schema_version: 1
+set: portco
+version: "1.0.0"
+question: "What have we put in, what is coming back, and does it still fit the thesis?"
+measures:
+  - id: portco.non-dilutive-captured
+    question: "How much non-dilutive funding has this project brought in?"
+    formula: "sum(grant claims approved) + sred eligible estimate from cost tracking"
+    requires: [funder_reporting | capability:sred]
+    unit: CAD
+    direction: higher_is_better
+    thresholds: { green: "on plan", amber: "<=20% under", red: ">20% under" }
+    basis: declared
+  - id: portco.pipeline-value
+    question: "What revenue or pursuit value is attached to it?"
+    formula: "sum(tender pipeline value at stage >= qualified) + invoices issued last 90d"
+    requires: [capability:tender | invoices]
+    unit: CAD
+    direction: higher_is_better
+    thresholds: { green: ">0 and rising", amber: "flat", red: "falling" }
+    basis: declared
+  - id: portco.funded-milestone-delivery
+    question: "Are the milestones a funder is paying for landing on time?"
+    formula: "on-time share of milestones referenced by a claim, last 2 quarters"
+    requires: [funder_reporting]
+    unit: ratio
+    direction: higher_is_better
+    thresholds: { green: ">=0.9", amber: ">=0.7", red: "<0.7" }
+    basis: declared
+  - id: portco.investment-to-date
+    question: "What have we put in so far?"
+    formula: "sum(costs) since member.added ; or member row committed_investment when declared"
+    requires: [costs | member_row.investment.committed]
+    unit: CAD
+    direction: context
+    thresholds: { green: "within committed", amber: "<=10% over", red: ">10% over" }
+    basis: declared
+  - id: portco.runway
+    question: "How long can it run on what is secured?"
+    formula: "(funding secured - spent) / burn"
+    requires: [costs, funding_secured]
+    unit: months
+    direction: higher_is_better
+    thresholds: { green: ">=6", amber: ">=3", red: "<3" }
+    basis: declared
+  - id: portco.stakeholder-engagement
+    question: "Are the people who matter still showing up?"
+    formula: "review meetings held / scheduled last 90d ; external comms items last 90d"
+    requires: [reporting_matrix, promise_scoreboard]
+    unit: ratio
+    direction: higher_is_better
+    thresholds: { green: ">=0.9", amber: ">=0.6", red: "<0.6" }
+    basis: declared
+  - id: portco.thesis-fit
+    question: "Does this project still serve the portfolio's thesis?"
+    formula: "member_row.investment.thesis_fit (1-5), declared by the portfolio"
+    requires: [member_row.investment.thesis_fit]
+    declared_on_member_row: true
+    unit: score
+    direction: higher_is_better
+    thresholds: { green: ">=4", amber: "3", red: "<=2" }
+    basis: declared
+  - id: portco.stage
+    question: "Where is it on the portfolio's own stage ladder?"
+    formula: "member_row.investment.stage"
+    requires: [member_row.investment.stage]
+    declared_on_member_row: true
+    unit: "explore | validate | build | scale | harvest | exit"
+    direction: context
+    basis: declared
+  - id: portco.risk-adjusted-exposure
+    question: "Where is the most money sitting under the most risk?"
+    formula: "health.risk-exposure.max_score * portco.investment-to-date"
+    requires: [risks, portco.investment-to-date]
+    unit: "score × CAD"
+    direction: lower_is_better
+    thresholds: { green: "bottom third of portfolio", amber: "middle", red: "top third" }
+    basis: inferred-from-owners

@@ -1,0 +1,9 @@
+# Tiered research agenda — the questions that decide strategy, by priority.
+# intel-harvester `agenda <tier>` and `longlist` work through these; a question is
+# closed by an intel.agenda.answered event citing the signal that answered it.
+schema_version: 1
+tiers:
+  p0: []    # decides strategy now — e.g. "Does vendor X have a partner API program?"
+  p1: []    # shapes the next quarter
+  p2: []    # useful context
+  p3: []    # background

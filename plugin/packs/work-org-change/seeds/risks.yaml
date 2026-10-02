@@ -1,0 +1,21 @@
+risks:
+  - slug: resistance
+    title: "People resist or quietly work around the change"
+    likelihood: high
+    impact: high
+    mitigation: "Involve the affected groups in the pilot; make the old way harder to fall back on."
+  - slug: leadership-misalignment
+    title: "Leaders send mixed messages about the change"
+    likelihood: medium
+    impact: high
+    mitigation: "One agreed narrative; leaders brief their teams from the same material."
+  - slug: change-fatigue
+    title: "Too many changes at once for the same people"
+    likelihood: medium
+    impact: medium
+    mitigation: "Check what else is landing on these teams; sequence where possible."
+  - slug: key-people-leave
+    title: "Key people leave during the transition"
+    likelihood: medium
+    impact: high
+    mitigation: "Identify them early; talk to them before the announcement."

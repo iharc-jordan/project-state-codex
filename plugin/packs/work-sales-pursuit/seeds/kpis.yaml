@@ -1,0 +1,20 @@
+# KPI suggestions — never written by onboarding. project-goal-tracker offers these in the `project-goal-tracker` workflow.
+kpis:
+  - slug: deal-value
+    title: "Deal value"
+    unit: "$"
+    direction: up
+  - slug: win-probability
+    title: "Win probability"
+    unit: "%"
+    direction: up
+    hint: "The team's honest estimate, reviewed weekly."
+  - slug: days-to-decision
+    title: "Days to decision"
+    unit: "days"
+    direction: down
+  - slug: pursuit-cost
+    title: "Cost of pursuit"
+    unit: "$"
+    direction: down
+    hint: "Time and spend invested in winning this deal."

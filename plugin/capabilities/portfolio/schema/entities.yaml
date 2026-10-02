@@ -1,0 +1,83 @@
+# portfolio capability — schema extension registered at enable time (lean V1).
+# Directories are created inside the PORTFOLIO project's project-state/; kinds are accepted by
+# the memory layer while the capability is enabled (the bundled capability contract).
+# Normative source: capabilities/portfolio/README.md
+schema_version: 1
+capability: portfolio
+
+directories:
+  - path: "portfolio/members"
+    kind: portfolio-member
+  - path: "portfolio/snapshots"
+    kind: portfolio-snapshot     # one subdirectory per member, one dated file per capture
+  - path: "portfolio/index"
+    kind: none                   # the cross-member index — derived, one file per entity kind (spec §4.4)
+  - path: "portfolio/understanding"
+    kind: none                   # one regenerated page per member (spec §6.2)
+  - path: "portfolio/dependencies"
+    kind: portfolio-dependency
+  - path: "portfolio/findings"
+    kind: portfolio-finding
+  - path: "portfolio/answers"
+    kind: none                   # kept query answers (spec §6.3)
+  - path: "portfolio/reports"
+    kind: none                   # the weekly change note — regenerable
+
+files:
+  - path: "portfolio/registry.yaml"
+    derived: true                # compiled by portfolio-collector from members + latest snapshots
+  - path: "state/portfolio.json"
+    seed: '{"schema_version":1,"counters":{"dependency":0,"finding":0},"cursors":{},"last_collect":null,"last_index":null}'
+
+kinds:
+  portfolio-member:
+    id_format: "<member-slug>"   # the member project's own slug; canonical, never reused
+    file: "portfolio/members/<member-slug>.yaml"
+    required: [id, name, member_kind, status, priority, location, added]
+    enums:
+      member_kind: [delivery, pursuit, pilot, internal, research, community, other]
+      status: [proposed, active, paused, closing, closed, retired]
+      priority: [P0, P1, P2, P3]
+      location.type: [local, registry, server, hub, appliance, none]   # registry / server carry location.ref: "org/project"
+    invariants:
+      - "status in [active, paused, closing] requires location.type != none"
+      - "status == retired requires retired: <date>"
+    mutable: true
+
+  portfolio-snapshot:
+    id_format: "<member-slug>/<YYYY-MM-DD>"
+    file: "portfolio/snapshots/<member-slug>/<YYYY-MM-DD>.yaml"
+    required: [kind, member_id, captured_at, reachable]
+    invariants:
+      - "reachable == false requires unreachable.reason"
+      - "reachable == true requires project, milestones, risks, decisions, deadlines, activity, harvest"
+    mutable: false               # NEVER edited — a correction is a new dated snapshot
+    written_by: [portfolio-collector]
+
+  portfolio-dependency:
+    id_format: "PF-D-NNN"
+    file: "portfolio/dependencies/PF-D-NNN.yaml"
+    required: [id, type, from, to, status, summary]
+    enums:
+      type: [blocks, informs, shares-resource, shares-deadline]
+      status: [open, satisfied, broken, withdrawn]
+    references:
+      - "from.member and to.member resolve to portfolio-member ids"
+    mutable: true
+
+  portfolio-finding:
+    id_format: "PF-F-NNN"
+    file: "portfolio/findings/PF-F-NNN.yaml"
+    required: [id, type, question, severity, members, summary, basis, evidence, first_seen, last_seen, status, logged_by]
+    enums:
+      type: [synthesis, emerging-project]
+      severity: [urgent, soon, ondeck]
+      basis: [declared, inferred-from-owners, inferred-from-activity]
+      status: [open, acknowledged, promoted, resolved, dismissed]
+      logged_by: [portfolio-reviewer, manual]
+    lifecycle_fields: [last_seen, status, became, dismissed_reason]   # the only fields that change after creation
+    references:
+      - "members[] resolve to portfolio-member ids"
+      - "evidence[].member resolves; evidence[].path is relative to that member's project-state/"
+    mutable: false               # append-only except lifecycle_fields
+    lineage: true                # became: [{member, entity, at}] — proposals accepted, hopper rows written

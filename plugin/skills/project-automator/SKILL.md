@@ -1,17 +1,26 @@
 ---
 name: project-automator
-description: "Compile confirmed enabled reporting-matrix entries into automation/tasks.yaml. Invoke only when the operator explicitly requests automation work, onboarding confirms applicable automation, or an active pack/capability requires a matrix entry. Preserve operator reschedules, classify cadence versus event triggers, and support plan/generate/update/status/preset modes. Never register a scheduler or call report generators."
+description: "Compile the reporting matrix into the automation schedule (automation/tasks.yaml) — 'generate the schedule', 'update automation', 'why isn't this report scheduled', 'automation status'."
+map:
+  tier: P2
+  stage: control
+  requires: [memory]
+  reads: [reporting-matrix]
+  writes: [automation-tasks]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # project-automator
+
+Read the shared Codex adapter (`plugin/CODEX.md`) once per task. This skill compiles
+`reporting-matrix.yaml` into the canonical project cadence registry,
+`automation/tasks.yaml`. It preserves operator reschedules and never registers a
+Codex automation; use `project-scheduler` for an explicitly requested host trigger.
 
 ## Purpose
 
 The reporting matrix is the source of truth for *what* runs. This skill is the compiler
 that turns the matrix into the **canonical cadence registry** — `project-state/automation/tasks.yaml` —
-the single file every configured scheduling host reads and any compatible editor updates.
+the project file read by its scheduler and calendar.
 
 Two tracks:
 
@@ -21,11 +30,11 @@ Two tracks:
 | **Achievement** | Matrix entries with `kind: ad-hoc \| post-event \| on-publish \| event-driven` | Event tasks (no fire time) that the scheduler's activity-log event hooks fire |
 
 Output: `project-state/automation/tasks.yaml`. The matrix stays the source of *what*;
-the registry owns *when* — including operator reschedules made by any compatible
-editor, which this skill **must never overwrite** (see `update`).
+the registry owns *when* — including any reschedules the operator makes by dragging
+cards on the calendar, which this skill **must never overwrite** (see `update`).
 
-> **Retired:** `automation/schedule.yaml` (v2.0 output). No host ever consumed it.
-> If `status` finds one, report it as legacy and offer to delete it.
+`automation/schedule.yaml` is a legacy file. If `status` finds one, report
+it; do not delete it without a request.
 
 ---
 
@@ -51,11 +60,9 @@ editor, which this skill **must never overwrite** (see `update`).
 3. Read `project-state/automation/tasks.yaml` if present → existing `tasks[]`.
 4. Read `project-state/state.json` → phase, milestone pointers, `sprint_calendar`.
 5. Window: args, then `manifest.yaml:automation.window`, then default `23:00–05:00`.
-6. Timezone: `manifest.yaml:automation.timezone`. For `status` or plan-only
-   inspection, a null value is a reconciliation finding and remains read-only.
-   For `generate`, `update`, preset apply, or enabling scheduled work, **REFUSE
-   if absent**. Do not default to UTC, read the host machine's timezone, or
-   compile a partial schedule.
+6. Timezone: `manifest.yaml:automation.timezone`. **REFUSE if absent** — report the missing key and
+   stop. Do not default to UTC, do not read the host machine's timezone, and do not compile a partial
+   schedule.
 
    The window at step 5 is expressed in LOCAL time, so a guessed timezone does not produce a slightly
    wrong schedule, it produces a confidently wrong one: `23:00–05:00` interpreted as UTC fires the
@@ -67,19 +74,16 @@ editor, which this skill **must never overwrite** (see `update`).
    value, do not substitute a plausible default, and do not write a partial block"*, because a guessed
    value produces a confidently wrong filing date. Same shape, same answer.
 
-   Existing disabled facilities may legitimately retain `~`. Report it as a
-   missing scheduling answer, not a broken facility:
+   `manifest-v2.yaml` has marked this key REQUIRED since it shipped while shipping it as `~`, and
+   nothing collected it (FB-002). `project-onboarding` Q1.8 now asks and `project-scaffolder` writes
+   it, so absence should be rare — but rare is not never, and an existing facility predating that
+   question will hit this refusal. Report it as a missing answer, not as a broken facility:
 
    ```
    automation.timezone is not set in manifest.yaml. Scheduling needs it — the 23:00–05:00 window is
    local time, and guessing would fire the nightly jobs at the wrong hour.
    Set it to an IANA name (e.g. America/Vancouver) and re-run.
    ```
-
-7. If `automation/tasks.yaml` exists, compare its top-level `timezone` with the
-   manifest. A mismatch is projection drift. Report it in plan/status and refuse
-   mutation until the operator explicitly reconciles the manifest authority;
-   never pick the tasks value merely because it is non-null.
 
 
 ## Step 1 — Classify and normalize
@@ -103,6 +107,19 @@ Normalize the matrix's rich cadence into the registry shape
 | `sprint-aligned` | `{kind: sprint-aligned, hour}` — fires last day of sprint; inert until `state.json:sprint_calendar` (`{length_days, anchor}`) exists. If absent, note it in the output: "sprint-aligned tasks compiled but dormant — set sprint_calendar". |
 | `deadline` | One dated task **per anchor instance** (per fiscal year for `recur: annual`): `{kind: deadline, due, hard?, escalation?, lead_days, hour}` + top-level `fy` — id `auto-<entry.id>-<FY>`. Resolve `anchor` (manifest path / state pointer / literal); `due = instance + offset_months`; `hard = instance + hard_offset_months`. New instances added on `update` when a new FY opens; tasks for FYs with terminal claim status (`filed \| waived \| forfeited`) are marked retired, never deleted — **except** FYs registered as an archive tail, which stay live post-archive. The `hard` date is not operator-editable — reschedules apply to fire timing only. Copy `after`/`review_gate` from the entry onto the task verbatim. |
 
+**One-shot deadlines** (a `deadline` with **no `recur`**, anchored to a single date — typically
+`phases.anchor_date` on a countdown facility): compile to one task `{kind: once, start: <anchor +
+offset_days>, hour}`, id `auto-<entry.id>`. `offset_days` may be negative (a run of show 7 days before
+the event). If the anchor does not resolve to a date, compile nothing and report the entry as
+*waiting for an anchor* — never schedule it on a guessed date. Use the
+selected pack's bundled reporting-matrix defaults for its anchor contract.
+
+**Phase gating:** a matrix entry may declare `active_phases: [<phase-id>, …]`. Compile it exactly as
+above and copy nothing extra — the gate is read from the matrix entry at fire time (the matrix entry
+is the enable authority for matrix tasks). The scheduler skips the task while `state.json:current_phase`
+is not in the list, without recording a run, so it fires for the current period as soon as the phase
+arrives. In `plan`/`status` output, mark gated tasks `gated: <phases>`.
+
 **Window placement:** assign each task an `hour` spread across the window (deadline-bound
 first, then weekly, monthly, quarterly, annual) so jobs don't stack on one hour.
 `lead_time_days`/`lead_time_hours` subtract from the natural due date (e.g. monthly due
@@ -113,13 +130,14 @@ the 1st with `lead_time_days: 2` → `dom: 28`).
 `ad-hoc`, `post-event`, `on-publish`, and `event-driven` all compile to a task whose
 cadence is just `{kind: <matrix kind>}` — no fire time. The scheduler's activity-log
 event hooks fire them on `on_event` / `on` / `trigger` matches (`phase.transition`,
-    `milestone.completed`, `documents/published/`). Preserve the trigger verbatim on the task as `trigger: <value>`
+`milestone.completed`, `documents/published/`); the calendar renders them in the
+event-driven tray. Preserve the trigger verbatim on the task as `trigger: <value>`
 so the hook matcher needs no matrix lookup.
 
 ## Step 2 — Write discipline (the override-preservation rule)
 
-`tasks.yaml` is **shared-write**: this skill and any configured scheduling editor or
-proposal engine may write it. Non-negotiable rules:
+`tasks.yaml` is **shared-write**: this skill, the calendar UI, and the scheduler's
+proposal engine all write it. Non-negotiable rules:
 
 1. Take the advisory lockfile (`automation/tasks.yaml.lock`, 300s TTL) before writing.
 2. **Never modify an existing task.** If `auto-<entry.id>` already exists, leave it —
@@ -129,22 +147,22 @@ proposal engine may write it. Non-negotiable rules:
 3. Never touch `status: proposed` tasks, adhoc tasks, or action tasks — they belong to
    the proposal engine, the operator, and presets.
 4. Keep `schema_version: 1`, `manifest_kind: automation_tasks`.
-5. On a write, set top-level `timezone` to the confirmed manifest timezone.
-   This is a projection, not an independent scheduling authority.
 
 ## Step 3 — Output by mode
 
-- **`plan`** — print the compiled task list (new / existing-preserved / orphaned), no writes.
+- **`plan`** — print the compiled task list (new / existing-preserved / orphaned).
+  Do not create a lock, write files, append an activity event, dispatch work,
+  or register a Codex automation.
 - **`generate`** — write additively per Step 2; append `automator.generate` to `logs/activity.ndjson`.
 - **`update`** — same as generate plus a diff summary; confirm before deleting orphans.
 - **`status`** — task counts by kind/status, dormant sprint tasks, orphans, last
-  `orchestrator.tick`, and any legacy `schedule.yaml` (offer deletion).
+  `orchestrator.tick`, and any legacy `schedule.yaml`.
 
 ## Presets — typical cadences as bundles
 
 A preset is a named op-list applied additively (skip refs that already have tasks).
-Sources: built-ins below, `templates/cadence-presets/*.yaml`, and the active pack's
-`reporting-matrix-defaults.yaml` (each pack is a de-facto preset).
+Sources: the built-ins below and the active pack's bundled
+`reporting-matrix-defaults.yaml`.
 
 | Preset | Adds |
 |---|---|
@@ -154,21 +172,24 @@ Sources: built-ins below, `templates/cadence-presets/*.yaml`, and the active pac
 | `agile-default` | sprint-aligned retro + planning set (needs `sprint_calendar`) |
 | `milestone-checkins` | per `--milestone <id>`: weekly review + due-minus-7 review, scoped `{milestone, until: due}` so they retire when it completes |
 
-Compatible scheduling hosts may expose the same presets, but none is bundled in
-the public package. This skill is the portable Project State entrypoint.
+Apply presets additively to `automation/tasks.yaml`, preserving existing
+tasks and operator reschedules.
 
 ## What this skill does NOT do
 
-- Does not register crons or fire tasks. Hosts fire; the orchestrator `tick` dispatches.
+- Does not register Codex automations or fire tasks. `project-orchestrator tick`
+  dispatches due project work when invoked by a user or configured host trigger.
 - Does not call generators directly.
-- Does not modify the reporting matrix; enable toggles remain an explicit matrix edit.
+- Does not modify the reporting matrix (single exception: nothing — enable toggles go
+  through the UI's comment-preserving matrix write, not this skill).
 - Does not overwrite operator reschedules (Step 2 rule 2).
 - Does not send, post, or draft anything.
 
 ## Integration
 
-- **`project-intake` / `project-scaffolder`** call `project-automator generate` as their
-  final step, so a new project's calendar is populated and armed out of the gate.
-- **Configured hosts** fire from `tasks.yaml` and may detect changes by mtime.
-- An optional compatible calendar may render and edit the same registry. The public
-  package does not include a scheduler, server endpoint, or calendar application.
+- **`project-intake` / `project-scaffolder`** may call `project-automator generate`
+  to populate a new project's calendar. Generation does not install a recurring host job.
+- **Codex** uses `mcp__codex_app__automation_update` only on a direct scheduling request.
+  A task in `tasks.yaml` alone does not prove that a host trigger is active.
+- **The kanban Calendar view** (`/calendar`) renders the registry with next-due/last-run,
+  edits cadences by drag, and applies presets — all against the same file this skill writes.

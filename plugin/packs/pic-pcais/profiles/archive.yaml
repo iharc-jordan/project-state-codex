@@ -11,7 +11,13 @@ closeout_workflow:
 required_artifacts:
   - id: pic-final-report-per-member
     description: "PIC final report, one per consortium member, per PIC template"
-    template: "templates/pic-final-report.docx"
+    # PIC distributes Final Report Templates ~90 days before project close (PM Guide, "Project
+    # Closure and Final Reporting") — the form does not exist until PIC issues it, so nothing
+    # ships here. When received: register it in the document index with kind: template (stored
+    # read-only under documents/pic-templates/) and reference it by document id from the
+    # facility's matrix entry — the Ai26.10 facility's production pattern.
+    # Trimmed 2026-08-21 (FB-014 / issue #17); was templates/pic-final-report.docx.
+    template: ~
     one_per: "consortium member"
     cover_delivery:
       surface: gmail.draft
@@ -26,7 +32,13 @@ required_artifacts:
   - id: fte-confirmation
     description: "Confirmed FTE counts per member, per PIC requirement"
     format: "xlsx; PIC-supplied template"
-    template: "templates/pic-fte-confirmation.xlsx"
+    # A real closure obligation — "Confirmation of full-time equivalent (FTE) staff numbers...
+    # required after financial reporting has concluded" (PM Guide) — but PIC supplies the form
+    # near closeout; no such file exists yet anywhere, including the project Drive (verified
+    # 2026-08-21). When issued, register it in the document index (kind: template,
+    # documents/pic-templates/) and reference by document id — the Ai26.10 production pattern.
+    # Was templates/pic-fte-confirmation.xlsx.
+    template: ~
 
   - id: final-financial-reconciliation
     description: "Final claim covering closeout period; reconciliation against MPA budget"

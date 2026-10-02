@@ -1,11 +1,21 @@
 ---
 name: project-doc-suite
-description: "Own the full unified documentation bundle by merging Project State with a live codebase scan. Invoke only for an explicit full-suite request, a due enabled matrix entry, or a required active-pack event trigger. Replaces project-doc-suite-generator and preserves the unified-suite outputs. Generate once per source event and period; do not also invoke status, onepager, or tech-report generators for the same request."
+description: "Generate the project documentation suite (governance docs plus software docs) from project-state/ and the codebase — 'generate the doc suite', 'regenerate the documentation', 'build the baseline reports'."
+map:
+  tier: P2
+  stage: generate
+  requires: [memory, python, local-fs]
+  inputs: [codebase]
+  reads: [manifest, milestones, risks, phases, reporting-matrix]
+  writes: [reports]
+  produces: [doc-suite]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project Doc Suite
+
+> **When to use.**
+>
+> Unified documentation suite generator. Merges project-state/ substrate (milestones, risks, phases, manifest, reporting matrix) with a live codebase scan to produce one non-overlapping report bundle. Replaces and supersedes project-doc-suite-generator (governance Office bundle) and doc-suite-generator-v2 (software markdown suite). Use whenever the user says 'generate docs', 'unified suite', 'report bundle', 'full documentation', 'document this project', 'build the suite', 'create the docs', or any request for structured project documentation. Also triggered by phase transitions, milestone completions, and the orchestrator baseline routine.
 
 ## Purpose
 
@@ -51,13 +61,6 @@ All files land in `project-state/reports/unified-suite/YYYY-MM-DD/`.
 
 ### Phase 0 — Context assembly (required before any document)
 
-This deep scan is authorized only by the explicit full-suite request or its due
-configured trigger. Begin with bounded Project State summaries, then open only
-entities selected into the suite; the live codebase scan remains read-only.
-Before scanning, compute the deterministic report identity from owner, canonical
-suite path, reporting period, and exact source revision. Return an existing
-complete suite for an exact repeat without regenerating or logging again.
-
 ```
 0.1  Read project-state/ via project-state skill
      → manifest.yaml (identity, budget, dates, funder, packs_loaded)
@@ -67,7 +70,7 @@ complete suite for an exact repeat without regenerating or logging again.
      → phases/*/manifest.yaml
      → reporting-matrix.yaml
 
-0.2  Inspect the live source directly, read-only
+0.2  Run codebase scan (project-scanner from doc-suite-generator-v2 pipeline)
      → tech stack, architecture patterns, components, entry points
      → dependencies, API surface, config model, test coverage
      → deployment signals, code quality patterns, existing docs quality
@@ -78,7 +81,7 @@ complete suite for an exact repeat without regenerating or logging again.
      → technical_risks: scan readiness gaps → candidate risk entries (R-NN format)
      → readiness_by_milestone: for each in-progress milestone, score its delivery components
 
-0.4  Assemble the unified_context object from the fields listed in steps 0.1–0.3
+0.4  Assemble unified_context object
 ```
 
 Context assembly is the most important step. If the context is wrong, all documents are wrong. Check:
@@ -88,8 +91,7 @@ Context assembly is the most important step. If the context is wrong, all docume
 
 ### Phase 1 — README standardization (first pass)
 
-Update the root `README.md` directly from verified context using its existing
-structure (or a conventional project overview when it has no structure), with:
+Call `readme-standardizer` with:
 - Project name and one-liner from `substrate.project`
 - Tech stack from `scan.tech_stack`
 - Current phase and health from `substrate.current_phase`
@@ -158,7 +160,7 @@ Structure:
 ## Configuration and environment model
 ```
 
-Generate both halves directly from verified `substrate.*` and `scan.*` evidence.
+Input from both `substrate.*` and `scan.*`. Call the `technical-specification` specialist skill for the codebase half; generate the substrate half from the project-state data directly.
 
 **3.2 — `06-strategic-roadmap.md`**
 
@@ -172,7 +174,7 @@ Structure:
 
 ## Business value analysis
   ### Target users and use cases (from scan — user personas, UX patterns)
-  ### Value propositions (from verified source and stakeholder evidence)
+  ### Value propositions (from scan — business-benefit-analysis specialist)
   ### Cost implications and ROI framing
   ### Competitive advantages
 
@@ -190,32 +192,30 @@ Structure:
   ### Where the technical foundation is strongest (high readiness components)
 ```
 
-Generate the business-value sections directly from evidence in both layers.
+Input from both layers. Call the `business-benefit-analysis` specialist skill for the business value sections.
 
 ### Phase 4 — Software insight documents
 
-Generate each document directly from `unified_context` using the requirements in
-this table. The public package does not bundle the former helper skills, and this
-skill must not reconstruct or depend on them.
+Call each specialist skill from the `doc-suite-generator-v2` pipeline, passing `unified_context` so each skill has substrate metadata available.
 
-| Step | Analysis | File | Substrate context passed |
+| Step | Skill | File | Substrate context passed |
 |------|-------|------|--------------------------|
-| 4.1 | Technical readiness | `07-technical-readiness.md` | Milestone completion criteria — flag readiness gaps that block specific milestones |
-| 4.2 | Innovation themes | `08-innovation-themes.md` | `substrate.project.funder` — note which innovations are funded deliverables |
-| 4.3 | Extensibility | `09-extensibility.md` | Pack system model from substrate |
+| 4.1 | `technical-readiness` | `07-technical-readiness.md` | Milestone completion criteria — flag readiness gaps that block specific milestones |
+| 4.2 | `innovation-themes` | `08-innovation-themes.md` | `substrate.project.funder` — note which innovations are funded deliverables |
+| 4.3 | `extensibility-analysis` | `09-extensibility.md` | Pack system model from substrate |
 | 4.4 | (derived) | `10-features-capabilities.md` | Milestone deliverables as authoritative feature names |
-| 4.5 | Work-zone mapping | `11-work-zones.md` | Phase boundaries — map work zones to phases |
+| 4.5 | `work-zone-mapper` | `11-work-zones.md` | Phase boundaries — map work zones to phases |
 | 4.6 | (multi-project only) | `12-portfolio-position.md` | Other projects' substrate data for comparison |
-| 4.7 | Worksona themes | `13-worksona-themes.md` | None required |
-| 4.8 | Worksona first principles | `14-worksona-first-principles.md` | None required |
+| 4.7 | `worksona-themes` | `13-worksona-themes.md` | None required |
+| 4.8 | `worksona-first-principles` | `14-worksona-first-principles.md` | None required |
 
 ### Phase 5 — README enrichment pass
 
-Enrich the same root `README.md` directly:
+Re-call `readme-standardizer` in enrichment mode:
 - Update Description with value propositions from `06-strategic-roadmap.md`
 - Update User Experience section with user persona data from business-benefit-analysis
 - Update Light Spec with key technical decisions from `05-architecture-and-tech-spec.md`
-- Add cross-links from Resources to `project-state/reports/unified-suite/YYYY-MM-DD/`
+- Add cross-links from Resources section to `docs/unified-suite/` files
 - Update Last Updated timestamp
 
 ### Phase 6 — Index generation
@@ -231,16 +231,13 @@ Generate `00-suite-index.md`:
 
 Copy the bundle to `project-state/website/public/downloads/unified-suite/YYYY-MM-DD/`.
 Update the website reports page with download links.
-Log one canonical `report.generated` event through `project-state` with the
-deterministic event `id` and a summary naming the unified-suite path and document
-count. Do not use a parallel event representation.
+Log `report.generated` to `logs/activity.ndjson` with `target: "unified-suite"` and `doc_count: 15`.
 
 ### Phase 8 — Notification (optional)
 
-If a delivery surface is configured, offer a `project-notifier` handoff after
-generation. Post only with explicit operator authorization; Gmail remains a draft.
-Use the configured alerts channel for an authorized internal notice, and offer a
-PIC PM Gmail draft when a phase transition or claim cycle triggered the suite.
+Via `project-notifier`:
+- Slack post to `alerts` channel: "Unified suite generated — 15 documents in reports/unified-suite/YYYY-MM-DD/"
+- Offer Gmail draft to PIC PM if the suite was triggered by a phase transition or claim cycle
 
 ## Pack extensions
 
@@ -277,12 +274,13 @@ The skill checks `substrate.packs_loaded` and loads the corresponding `doc-suite
 - **project-website-publisher** — serves generated files as static downloads
 - **project-notifier** — routes "suite generated" notification
 - **project-status-reporter** — shares docx rendering primitives for SC packs; does not duplicate this skill's output
-- The former private/global helper pipeline is not bundled or required.
+- **doc-suite-generator-v2** — specialist skills from this global skill are called in Phase 4; that skill remains the correct tool for projects with no `project-state/` substrate
 
 ## Deprecation notice
 
 `project-doc-suite-generator` is deprecated as of v3.0. It will be removed in v3.1. Use `project-doc-suite` instead. The output path changes from `reports/baseline/Baseline-Reports-YYYY-MM-DD/` to `reports/unified-suite/YYYY-MM-DD/`.
 
-The document map and generation phases in this skill are the public suite
-contract. The private design document and legacy baseline script are not bundled;
-do not invoke or reconstruct them.
+## Reference files
+
+- This skill owns the report bundle and its generated output layout.
+- `scripts/generate-baseline-reports.py` — v2 governance rendering script (reference only; v3 will supersede it)

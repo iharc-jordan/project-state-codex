@@ -1,11 +1,21 @@
 ---
 name: project-intake
-description: "Source-first fast-path initialization from supplied proposals, agreements, schedules, or repository files. Extract only attributed facts, confirm applicable packs, group unresolved required routing questions, and preserve the standard manifest, reporting matrix, automation registry, and scaffold. Never infer objectives, milestones, contacts, eligibility, capabilities, or external surfaces beyond explicit source content. Use for intake, setup from documents, quick init, or re-analysis."
+description: "Set up a project from its documents — 'set up from these docs', 'intake this project', 'init from the proposal/SOW'. Infers the work type and packs, then fills the manifest and matrix."
+map:
+  tier: P0
+  stage: ingest
+  requires: [memory, local-fs]
+  inputs: [files, operator]
+  reads: [documents]
+  writes: [manifest, reporting-matrix, automation-tasks, log]
+  calls: [project-automator]
 ---
 
-> Codex adapter: Read [CODEX.md](../../../CODEX.md) before using this skill.
-
 # project-intake
+
+> **When to use.**
+>
+> Doc-driven intake: read supplied documents, infer supported pack choices, fill `manifest.yaml` and `reporting-matrix.yaml` from evidence and pack defaults, then call `project-automator` to compile `automation/tasks.yaml`. Show the resolved choices and ask only about material missing inputs. Use for 'intake this project', 'set up from docs', 'configure from documents', or 'init from proposal'.
 
 ## Purpose
 
@@ -17,12 +27,6 @@ docs + pack → extract → propose → confirm → manifest + matrix + schedule
 ```
 
 Three phases, one confirmation screen, zero repeated questions.
-
-Apply the adapter's scale routing before gathering. Routine task-local work does
-not initialize Project State. Epic intake captures one shared outcome and only
-meaningful milestones/references/risks. Program intake may populate the full
-facility. Scale is runtime policy, not a manifest field; an explicit initialize
-request still uses the established standard tree and schema.
 
 The output is identical to what project-scaffolder + project-onboarding produce —
 a valid `project-state/` with a filled manifest, a seeded reporting matrix, and a
@@ -72,30 +76,41 @@ If no documents are provided: ask once — "Drop your project documents here (pr
 
 If user skips: proceed with pack defaults and empty manifest fields (valid-but-thin).
 
-### 1b. Detect and confirm a pack
+### 1b. Infer or select packs
 
-Use explicit source signals to propose a candidate pack before asking:
+Infer from the documents before asking, on the three axes of `plugin/skills/project-scaffolder/SKILL.md`: one **work
+type** (`axis: work`), any **accountability** packs, and the phase preset that follows from them.
 
-| Signal in documents | Candidate pack or follow-up |
-|--------------------|---------------|
-| "Protein Industries Canada", "PCAIS", "PIC" | `pic-pcais` |
-| "NSERC", "IRAP", "Mitacs", "CFI", "SIF" | `grant-canada` |
+**The signals live in the packs, not here.** Read every `packs/*/manifest.yaml` and match the documents
+against each pack's `picker.signals` — then use judgement; the phrases are hints, not a keyword gate.
+Consider only `picker.listed: true` packs unless the operator names another. Never consider an
+`axis: capability` pack. (This section used to carry its own signal table, which is how a pack's
+presence in the product and its presence in intake drifted apart.) One signal stays here because it is a
+capability hand-off, not a pack:
+
+| Signal in documents | Result |
+|--------------------|--------|
 | "SR&ED", "T661", "experimental development" | *(not a pack)* → set `sred_interest: yes` and hand off to `sred-onboarding` after intake completes |
-| Sprint cadence, story points, backlog | `agile-default` |
-| "board of directors", "investors", "cap table" | `board-investor` |
-| SOW, "Statement of Work", "client deliverables" | `client-services` |
 
-If a candidate pack is detected, present it with its source as a one-line
-confirmation. Do not load it until confirmed, and do not run a pack selection
-wizard.
+If packs are inferred: present them as one confirmation line —
+"Detected: **Event** (work-event) for **Partner Summit**, reporting to **your exec sponsor**
+(sponsor-internal). Correct?" — and proceed unless corrected. Do not run a selection wizard. When no
+accountability signal is found, assume `sponsor-internal` (decision D3) and say so in the same line.
 
-If no pack is inferable and none was provided: show a compact pack list and ask for selection (not a wizard — a single prompt):
+If no work type is inferable and none was provided: show one compact prompt generated from the listed
+packs' `picker.label`s, grouped by axis, and ask once:
 ```
-Pack options: pic-pcais / grant-canada / client-services / board-investor / agile-default / open-source / none
-Which fits? (you can pick multiple, e.g. "grant-canada agile-default"):
+What is this?   General project / Campaign or launch / Event / Operating cycle / Software product
+Reports to?     My manager or exec sponsor ✓ / A client / Board or investors / Canadian grant / PIC (PCAIS) / Just me
+Pick one of the first and any of the second (e.g. "event, sponsor, board"):
 ```
 
-Multiple packs are additive — load all selected packs' reporting-matrix-defaults.yaml.
+Then take the preset from the primary work pack's `defaults.preset` (ask only when none is declared),
+and ask each `asks:` entry the loaded packs declare that the documents did not answer — a countdown
+preset's `phases.anchor_date` above all. Never guess a date.
+
+Multiple packs are additive — `project-scaffolder seed-pack` loads every selected pack's
+reporting-matrix defaults and queues its seeds for review.
 
 **SR&ED is deliberately absent from the pack list.** `sred-canada` exists, but it is the *bundled*
 pack of the `sred` capability and is loaded by that capability's enable step, not selected here.
@@ -115,9 +130,8 @@ Run the extraction pass. Do not ask questions during extraction. Extract:
 - `project.start_date` — YYYY-MM-DD (look for: "project start", "commencement date", "effective date")
 - `project.end_date` — YYYY-MM-DD
 - `project.budget_total_cad` — total budget figure if present (optional, skip if not found)
-- `project.kind` — classify only when the governing source states enough to
-  support one of: grant_consortium | client_engagement | startup | open_source |
-  generic; otherwise record a gap
+- `project.kind` — the primary work pack id from §1b (`work-general`, `work-campaign`, `work-event`,
+  `work-ops-cycle`, `agile-default`, …). Legacy free-text values are no longer written.
 
 **Milestones** — for each milestone found:
 - `id` — assign sequentially M01, M02... if not already numbered
@@ -129,8 +143,7 @@ Run the extraction pass. Do not ask questions during extraction. Extract:
 
 **People / stakeholders**
 - Name, organization, role (look for signature blocks, "Parties", role tables, org charts)
-- Preserve the source role. Map it to a pack-defined role only when the mapping is
-  explicit or unambiguous; otherwise ask in the grouped routing questions.
+- Map roles to pack-defined role taxonomy where possible (e.g. "Principal Investigator" → `project_lead`, "Project Manager" → `funder_pm`)
 - Flag which stakeholder_group they belong to: internal.team | funder.{id} | customer.{id} | board | consortium.all
 
 **Cadence overrides** — look for explicit schedule statements that override pack defaults:
@@ -145,7 +158,7 @@ Record each field not found as a gap: `{key, blocks: [...]}`.
 
 ## Phase 2 — Propose
 
-Present a single confirmation screen. Nothing has been written yet.
+Present the extracted values, sources, pack defaults, and material gaps. Proceed with a directly requested intake when required inputs are resolved; ask only about a material unresolved choice.
 
 **Codex Markdown format:**
 
@@ -179,18 +192,12 @@ Options:
   [s] Skip all gaps and confirm
 ```
 
-Keep the same Extracted / Pack defaults / Gaps grouping in Markdown. Label each
-extracted field with `[doc: source]`, each pack entry with `[pack-id]`, and each
-gap with `[fill later]` before the confirmation prompt.
-Milestones render as a compact inline table (id | title | owner | date).
-People render as role chips.
-
 ### Editing a field
 
-If the user types `e project.name` or clicks an edit button:
+If the user corrects a field:
 - Show the current value and source
 - Accept the correction inline
-- Update the proposal screen and confirm again
+- Update the proposal screen and continue
 
 Do not re-run the full extraction for a single edit.
 
@@ -250,18 +257,13 @@ Always include `internal.team` as the baseline stakeholder.
 3. Merge entries from multiple packs — deduplicate by `report` name if the same report appears in two packs.
 4. Write to `project-state/reporting-matrix.yaml`.
 
-### 3d. Project automation projection
+### 3d. Call project-automator generate
 
-After writing the matrix, run `project-automator generate` only when automation
-was explicitly confirmed enabled, an applicable active pack requires scheduled
-work, and a project timezone is confirmed. Otherwise write/retain a disabled
-`automation/tasks.yaml` registry with an empty `tasks` list whose top-level
-timezone exactly mirrors `manifest.yaml:automation.timezone`, including `~`.
-Do not create scheduled work merely because matrix entries exist.
+After writing the matrix, immediately run `project-automator generate` to compile
+`automation/tasks.yaml` (the canonical cadence registry). This makes the schedule ready without a separate step.
 
-If scheduling is enabled and no timezone was found in documents or manifest,
-ask once — "What timezone for scheduled jobs? (e.g. America/Vancouver)" — before
-calling. If scheduling is disabled, leave it unresolved and consistent.
+If project-automator needs a timezone and none was found in documents or manifest:
+ask once — "What timezone for scheduled jobs? (e.g. America/Vancouver)" — before calling.
 
 ### 3e. Write milestone files
 
@@ -269,12 +271,6 @@ For each extracted milestone, write `project-state/milestones/M<NN>-<slug>.yaml`
 ```yaml
 schema_version: 1
 id: M01
-kind: milestone
-created: "[ISO-8601]"
-created_by: project-intake
-last_modified: "[ISO-8601]"
-last_modified_by: project-intake
-phase: "[current phase id]"
 title: "[extracted title]"
 description: "[extracted description]"
 owner_org: "[extracted or gap: TODO]"
@@ -282,6 +278,7 @@ planned_end: "[YYYY-MM-DD or gap: TODO]"
 completion_criteria: "[extracted or gap: TODO]"
 percent_complete: 0
 status: not_started
+last_modified: "[ISO-8601]"
 # source: doc:[filename]
 ```
 
@@ -311,23 +308,17 @@ fields:
 
 Append to `project-state/logs/activity.ndjson`:
 ```json
-{"ts":"[ISO-8601]","actor":"project-intake","event":"project.intake.completed","id":"evt-<deterministic-id>","summary":"Processed N source documents; extracted N fields with N unresolved gaps; automation <compiled|left disabled>."}
+{"ts":"[ISO-8601]","event":"project.intake.completed","actor":"<actor>","data":{"docs_processed":N,"fields_extracted":N,"gaps":N,"packs":[...],"schedule_compiled":true}}
 ```
-
-Use the adapter's deterministic identity inputs (source document identities,
-confirmed pack set, and normalized resulting intake facts). An exact re-analysis
-of unchanged inputs returns the existing event and does not append, increment,
-or fan out again.
 
 ### 3h. Git initialization
 
 If the directory is not already inside a git repo:
 1. Run `git init`
 2. Write `.gitattributes` with `project-state/logs/*.ndjson merge=union`
-3. Leave the facility uncommitted and offer `project-git checkpoint` separately.
+3. `git add . && git commit -m "project-state: facility initialized via intake — [project.name]"`
 
-If already in a git repo: skip init and add the `.gitattributes` entry if missing.
-Never stage or commit as part of intake.
+If already in a git repo: skip init, add `.gitattributes` entry if missing, stage + commit.
 
 ---
 
@@ -344,13 +335,13 @@ After all files are written, show a status summary:
   ✅  project-state/milestones/              [N files]
   ✅  project-state/logs/activity.ndjson     [project.intake.completed]
   ✅  .gitattributes                         [logs merge=union]
-  ⬜  git checkpoint                         [operator decides when]
+  ✅  git commit                             [initial commit]
 
   Gaps recorded (N): run /project-state gaps to review
   Schedule ready:    run /project-automator status to verify
 
 Next:
-  /project-automator status      — verify cadence registry
+  /project-automator status      — verify cron schedule
   /project-state gaps            — review and fill recorded gaps
   /project-milestone-manager     — update milestone progress
   /project-orchestrator          — see what's due this week
@@ -371,7 +362,7 @@ presents a diff for user review.
 ── Re-analysis diff ─────────────────────────────────────────────
 
   NEW FINDINGS (not in current manifest)
-    M08.owner_org   →  "Example Lead Org" [doc: schedule-v2.pdf]
+    M08.owner_org   →  "Atomic47 Labs"   [doc: schedule-v2.pdf]
     M09.planned_end →  2027-03-15        [doc: schedule-v2.pdf]
 
   GAPS NOW FILLED (found in new documents)
@@ -394,15 +385,10 @@ On confirmation, patches only the changed fields and appends an
 - **Never overwrite an existing `project-state/` without explicit `--force`.** Offer `re-analyze` instead.
 - **Never ask questions that documents have already answered.** If the doc contains the project name, don't ask for it.
 - **Never ask questions that pack defaults cover.** Reporting cadence is set by the pack; don't confirm each entry.
-- **Group unresolved questions.** Ask only fields required by the schema, an
-  active pack, or routing; one prompt may accept multiple answers.
-- **Non-required gaps don't block.** Record them without inventing values.
-- **Do not infer activation.** Objectives, milestones, contacts, eligibility,
-  capabilities, automation, connectors, and delivery surfaces require explicit
-  source support and any applicable confirmation.
+- **One question only if both docs and pack defaults are silent.** Not a series of questions — one prompt that accepts multiple answers.
+- **Gaps don't block.** A facility with gaps is valid and operational. Gaps are recorded, not asked about.
 - **Source attribution always.** Every manifest field written by intake carries a comment noting its source.
-- **Compile only applicable automation.** Call `project-automator` when the
-  confirmed matrix has enabled entries; otherwise leave automation disabled.
+- **project-automator is always called at the end.** The schedule must be ready without a separate step.
 
 ---
 
@@ -411,8 +397,7 @@ On confirmation, patches only the changed fields and appends an
 - **project-state** — all writes route through it; intake-record.yaml, activity.ndjson appended
 - **project-automator** — called automatically at end of Phase 3 to compile automation/tasks.yaml
 - **project-milestone-manager** — milestone files written by intake are ready for progress updates immediately
-- **project-orchestrator** — reads the compiled `automation/tasks.yaml`; works
-  immediately after intake
+- **project-orchestrator** — reads the compiled automation/tasks.yaml; works immediately after intake
 - **project-onboarding** — the deep interview path; use when documents are unavailable or a guided tour is preferred
 - **project-scaffolder** — the manual wizard path; intake calls its directory-creation logic internally
 
@@ -424,6 +409,6 @@ On confirmation, patches only the changed fields and appends an
 |-----------|-----|
 | Have docs (proposal, MPA, SOW, schedule) | **project-intake** ← this skill |
 | No docs, want guided questions | project-onboarding |
-| No docs, explicit standard initialization | project-scaffolder |
-| Known manifest or intake record supplied | project-scaffolder using that supplied record |
+| No docs, want fast bare init | project-scaffolder instant |
+| Deterministic from a known manifest | project-scaffolder --config |
 | Existing facility, new docs arrived | project-intake re-analyze |

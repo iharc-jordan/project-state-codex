@@ -1,11 +1,22 @@
 ---
 name: project-archive
-description: Project closeout and archival drive. Generic core handles final reports, lessons summary assembly, archive directory creation, audit-trail finalization. Funder/customer-specific closeout items (PIC final reports, FTE confirmation, holdback release, MPA close) come from the active pack's archive profile. PIC pack ships the v1.x closeout flow. Client-services pack ships customer-final-deliverable + sunset workflow. Use whenever the user says 'close the project', 'closeout', 'final report', 'wrap up', 'submit final reports', 'archive the project', 'ready to close', 'holdback release', 'project end', or any request related to the closeout phase.
+description: "Close out and archive a project — 'close the project', 'archive this project', 'final report', 'closeout checklist'. Assembles final reports and lessons, freezes the audit trail; funder specifics come from the pack."
+map:
+  tier: P3
+  stage: generate
+  requires: [memory]
+  reads: [milestones, decisions, lessons, log]
+  writes: [reports, manifest]
+  calls: [project-lessons, project-funder-reporting]
+  produces: [closeout]
+  profile_driven: true
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project Archive (v2.0 — generic core + pack-driven closeout)
+
+> **When to use.**
+>
+> Project closeout and archival drive. Generic core handles final reports, lessons summary assembly, archive directory creation, audit-trail finalization. Funder/customer-specific closeout items (PIC final reports, FTE confirmation, holdback release, MPA close) come from the active pack's archive profile. PIC pack ships the v1.x closeout flow. Client-services pack ships customer-final-deliverable + sunset workflow. Use whenever the user says 'close the project', 'closeout', 'final report', 'wrap up', 'submit final reports', 'archive the project', 'ready to close', 'holdback release', 'project end', or any request related to the closeout phase.
 
 Drives the closeout phase: final reports, lessons-learned summary, IP final reporting, financial reconciliation, archive directory creation, audit-trail finalization.
 
@@ -44,14 +55,6 @@ In v2.0 the skill splits into a **generic closeout core** and **pack-driven clos
 
 Branch once, on `state.json:lifecycle`.
 
-First run the `project-state` reconciliation dry-run. Terminal closeout requires
-consistent required objectives, milestones, gates, phase authority, and reports.
-Continuous closeout requires a meaningful current increment and freezes only
-that increment. Missing, stale, or contradictory data is a finding and blocks
-the close; never derive a convenient phase or invent an increment. Exact repeat
-requests for an already closed boundary return its existing records without
-another report, snapshot, counter change, or activity event.
-
 **`terminal` (or absent) — unchanged in every respect.** Final report at
 `reports/final-report-<date>.md`, archive directory at `project-state/archive-<closeout-date>/`, the
 full pack-driven closeout. This is the overwhelming majority of facilities and nothing about their
@@ -83,7 +86,7 @@ that this closure was a formality, and it is the single cheapest thing in the wh
 continuous facility can still actually end. Reaching those phases runs the full terminal closeout,
 archive directory and all. Continuous means *not necessarily ending*, not *unable to end*.
 
-The lifecycle and increment rules above are authoritative for the public package.
+Spec: `plugin/skills/project-phase-gate/SKILL.md`
 
 ## Migration from v1.x
 

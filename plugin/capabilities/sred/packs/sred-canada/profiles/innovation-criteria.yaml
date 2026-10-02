@@ -7,7 +7,7 @@
 # └──────────────────────────────────────────────────────────────────────────────┘
 # Single-company deployments fill this in place. Multi-company: fork the pack
 # (sred-canada → sred-<co>) so each company carries its own criteria profile —
-# packs are the portable org-level unit (CAPABILITY-PLUGINS.md §2).
+# packs are the portable org-level unit (the bundled capability contract).
 profile_id: "sred-canada.innovation-criteria"
 layer: 1
 

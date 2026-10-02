@@ -1,11 +1,19 @@
 ---
 name: project-goal-tracker
-description: "Track project objectives, goals, and KPIs as the outcome layer over milestones. Use for setting or reviewing goals, recording KPI readings, checking progress against targets, linking milestones to objectives, or supplying outcome snapshots to reports. All writes route through project-state; attainment and trend are derived on read rather than stored."
+description: "Set and track objectives and KPIs — 'set a goal', 'add a KPI', 'record this month's numbers', 'are we on track', 'what should we measure'. Offers the work type's common KPIs; always asks for baseline and target."
+map:
+  tier: P1
+  stage: keep
+  requires: [memory]
+  reads: [objectives, milestones, manifest]
+  writes: [objectives]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project Goal Tracker
+
+> **When to use.**
+>
+> Track objectives, goals, and KPIs — the outcome layer over milestones. Milestones track outputs (did we ship it); this skill tracks outcomes (did shipping it move the number). Use whenever the user says 'set a goal', 'add an objective', 'track a KPI', 'what are our goals', 'how are we tracking against target', 'add a reading for <metric>', 'update the cycle-time metric', 'are we on track for the annual objective', 'set a north-star', 'record this month's numbers', 'link this milestone to a goal', or any request to read or write objectives/KPIs. Objectives live in objectives/O<NN>-<slug>.yaml (the aim), KPIs in kpis/KPI-<NN>-<slug>.yaml (baseline → current → target with a dated history). Also trigger when project-funder-reporting (board/investor packs) needs the KPI snapshot for a metrics section, or project-status-reporter wants outcome progress. All writes route through project-state; attainment and trend are computed on read, never stored.
 
 ## Purpose
 
@@ -14,7 +22,7 @@ Milestones are **outputs** — "did we ship the thing." Objectives and KPIs are 
 layer: high-level objectives (meta / leadership / north-star), the KPIs that quantify them,
 and the dated readings that show the trend.
 
-Two file-per-entity kinds, with their public fields defined below:
+Two file-per-entity kinds (full schema in `project-state/SCHEMA.md`):
 
 - **Objective** `objectives/O<NN>-<slug>.yaml` — the qualitative aim. Owns a basket of KPIs
   (`key_results`), an explicit operator `status`, and optionally the `milestones` that
@@ -48,9 +56,7 @@ key-result scoring — just baseline → current → target, a trend, and a stat
 ## Operations
 
 ### Read — "what are our goals / how are we tracking?"
-1. Read bounded objective/KPI summary fields first (`limit=50`, stable cursor,
-   optional status/horizon/category filters). Open full entities only for named
-   details or the selected report scope.
+1. Read `objectives/*.yaml` and `kpis/*.yaml`.
 2. For each objective, gather its KPIs (those in `key_results` **or** any KPI whose
    `delivers_to` points back to it). Compute each KPI's **attainment** and **trend**;
    the objective's attainment is the mean of its KPIs'.
@@ -58,31 +64,29 @@ key-result scoring — just baseline → current → target, a trend, and a stat
    and any **unassigned** KPIs. Headline **coverage** = % of objectives with ≥1 KPI.
 
 ### Create an objective
-Apply the materiality gate. Create only a shared outcome/commitment or an
-explicit reasoned operator record; task-local implementation goals stay in the
-active Codex task.
-
 Emit an `objective.created` intent to `project-state` with `title`, `horizon`
 (north-star|annual|quarterly), `category` (leadership|growth|operational|financial|mission),
 `status` (default `on-track`), and optional `narrative`, `key_results`, `milestones`,
 `confidence` (0..1), `target_date`. The id is `O<NN>-<slug>` (next NN).
 
 ### Create a KPI
-Apply the same gate: the metric must be a durable shared/reporting outcome or an
-explicit override, not a temporary task counter.
-
 Emit a `kpi.created` intent with `metric`, `unit`, `baseline`, `target`, `current`
 (defaults to baseline), `direction` (up|down), `cadence`, and optional `delivers_to`. The
 id is `KPI-<NN>-<slug>`.
+
+### Suggest KPIs for this kind of work
+When the operator asks "what should we track?" — or a Goals-tab suggestion chip sends *Track "<title>"…* —
+read the **primary work pack's** `seeds/kpis.yaml` (`packs/<project.kind>/seeds/kpis.yaml`;
+`plugin/skills/project-scaffolder/SKILL.md`). Offer the ones not already tracked, each with its unit and
+direction. A seed is a *metric shape*, never a number: **always ask for the baseline and target** before
+emitting `kpi.created`, and never invent them from the pack. Onboarding never writes these — goals are
+this skill's.
 
 ### Add a reading (the bread-and-butter op)
 Emit a `kpi.reading.added` intent with the KPI `id`, `value`, optional `date` (defaults to
 today) and `note`. `project-state` appends `{date, value, note?}` to `history` (one per
 date — a same-date reading replaces that day's entry), and sets `current` + `as_of`. Prior
 readings are never rewritten.
-
-An exact same-date, same-value, same-note repeat is idempotent: return the
-existing reading/event and do not append, increment, or update activity.
 
 ## Computed fields (on read — never persisted)
 
@@ -95,9 +99,8 @@ existing reading/event and do not append, increment, or update activity.
 
 ## Surfaces
 
-- **Optional Goals view** — a separately installed compatible viewer may render
-  objective cards from these canonical files. The public package does not bundle
-  that viewer; use the computed fields above in file/report workflows.
+- **Goals view** (`/goals` in the kanban) renders objective cards with KPI sparklines
+  (baseline + target guide lines), trend, attainment bars, and an "add reading" affordance.
 - **Board/investor packs** read `kpis/*.yaml` for the monthly update's metrics section
   (see `packs/board-investor/profiles/funder-reporting.yaml`).
 - **Wiki** `[[O01]]` / `[[KPI-01]]` resolve to objective/KPI entities and earn backlinks,

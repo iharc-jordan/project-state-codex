@@ -1,13 +1,13 @@
 {
   "name": "project-state",
-  "version": "4.9.0+codex.lean.4",
+  "version": "5.5.0",
   "description": "Codex adaptation of Atomic 47 Labs Project State: local-first project operations, reporting, compliance, grants, SR&ED, and tender workflows.",
   "author": {
     "name": "Atomic 47 Labs",
     "url": "https://atomic47.co"
   },
-  "homepage": "https://github.com/Atomic-47-Labs/project-state-plugin-public",
-  "repository": "https://github.com/Atomic-47-Labs/project-state-plugin-public",
+  "homepage": "https://github.com/iharc-jordan/project-state-codex",
+  "repository": "https://github.com/iharc-jordan/project-state-codex",
   "license": "MIT",
   "keywords": [
     "project-management",
@@ -19,14 +19,15 @@
     "project-state"
   ],
   "skills": "./plugin/skills/",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Project State",
     "shortDescription": "Run Atomic47's local-first project operating system in Codex.",
-    "longDescription": "A Codex adaptation of Atomic 47 Labs Project State v4.9.0, with 43 skills and bundled packs, templates, and capability resources.",
+    "longDescription": "Project State 5.5.0 for Codex: checked local state tools, shared project operations, reporting, grants, SR&ED, Tender, Intel, Portfolio, and Research workflows.",
     "developerName": "Atomic 47 Labs",
     "category": "Productivity",
     "capabilities": [],
-    "websiteURL": "https://github.com/Atomic-47-Labs/project-state-plugin-public",
+    "websiteURL": "https://github.com/iharc-jordan/project-state-codex",
     "defaultPrompt": [
       "Set up Project State for this repository.",
       "Show the current project state and priorities.",

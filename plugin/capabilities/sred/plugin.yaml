@@ -11,7 +11,7 @@ plugin:
     The system drafts only; it never files and never asserts eligibility.
   authors:
     - "David Olsson <david@atomic47.co>"
-  spec: "README.md"
+  spec: "capabilities/sred/README.md"
   released: "2026-08-17"
 
 compatibility:
@@ -22,6 +22,8 @@ namespace:
   skills:                  # suite-convention names mapped to this capability
     - project-sred-tracker
     - project-sred-reviewer
+    - sred-onboarding        # moved inside 2026-08-28 — was at repo-root skills/, reaching
+                             # the published plugin only via the wholesale mirror, undeclared
 
 payload:
   schema: "schema/"

@@ -1,11 +1,22 @@
 ---
 name: project-website-publisher
-description: "Own the public project website output. Invoke only when the operator explicitly requests website initialization/publishing, a configured website surface needs an update, or a due enabled matrix/active-pack trigger requires it. Preserve the established Next.js website contract and URLs; require explicit authorization for deployment and generate once per source event and period."
+description: "Build and deploy the project website — 'build the project site', 'publish the website', 'update the public dashboard'. Next.js on Vercel/Netlify, from project-state/."
+map:
+  tier: P2
+  stage: generate
+  requires: [memory, shell, local-fs, connector:scsiwyg]
+  inputs: [scsiwyg]
+  reads: [manifest, milestones, risks, decisions, people, documents, reports]
+  writes: [manifest, log]
+  calls: [project-notifier]
+  produces: [website]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project Website Publisher
+
+> **When to use.**
+>
+> Build and deploy a full project website (Next.js 16 App Router on Vercel/Netlify) that surfaces every dimension of the project — dashboard, Gantt, milestones, risks, decisions, people, blog (scsiwyg), wiki (scsiwyg), calendar, reporting documents, and about pages. Reads project-state/ YAML/JSON/MD at runtime via server components with ISR revalidation. Use whenever the user says "publish to the site", "update the project website", "deploy", "regenerate the website", "rebuild and deploy", "init the project website", "what URL for [doc]", or any request to surface project state on the project URL.
 
 This skill initialises, updates, and deploys a full project website from the `templates/website/` App Router starter. The website reads `project-state/` at request time — there is no static content pipeline and no rebuild needed for data changes.
 
@@ -168,13 +179,14 @@ Five-slot palette (orange, indigo, emerald, sky, violet) assigned round-robin by
 
 One-shot scaffold of `website/` for a new project:
 
-1. Place the website starter at the project root as `website/`. Resolve the
-   bundled template from the plugin payload. This public package ships
-   `templates/website.tgz`; inspect the archive and reject absolute paths,
-   parent traversal, or link entries that escape the destination before
-   extracting it beneath `website/` with the current platform's tar support.
-   If an expanded `templates/website/` exists in a later release, copy it
-   recursively instead.
+1. Place the website starter at the project root as `website/`. The starter ships from the project-state package either expanded (`templates/website/`) or, in uploaded/zip distributions, as a compressed archive (`templates/website.tgz`) — the App Router uses bracketed dynamic-route folders (`[slug]`, `[...slug]`) that some zip uploaders reject, so packaged builds tar it. Use whichever is present:
+   ```bash
+   if [ -f templates/website.tgz ]; then
+     mkdir -p website && tar xzf templates/website.tgz -C website
+   else
+     cp -R templates/website/ website/
+   fi
+   ```
 2. `cd website && npm install`.
 3. Create `website/.env.local`:
    ```

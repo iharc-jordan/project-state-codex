@@ -1,0 +1,57 @@
+# Measure set: innovation — "is new knowledge or IP being created, and captured?"
+# Members with the sred capability enabled record exactly the evidence the first three
+# measures need; members without it show them as not-measurable, which is the argument
+# for enabling it there.
+schema_version: 1
+set: innovation
+version: "1.0.0"
+question: "Is this project creating new knowledge or IP, and capturing it as it happens?"
+measures:
+  - id: innovation.uncertainty-capture
+    question: "Are the frontier areas we declared actually being recorded as uncertainties?"
+    formula: "count(open TU) ; count(criteria candidate areas with in-progress milestones and no TU)"
+    requires: [capability:sred]
+    unit: "TUs ; uncovered areas"
+    direction: context
+    thresholds: { green: "0 uncovered areas", amber: "1 uncovered", red: ">1 uncovered" }
+    basis: declared
+  - id: innovation.experiment-cadence
+    question: "Are experiments running and leaving evidence?"
+    formula: "count(EX active) ; count(EX active with no evidence entry in 14d)"
+    requires: [capability:sred]
+    unit: "experiments ; stale"
+    direction: context
+    thresholds: { green: "0 stale", amber: "<=1 stale", red: ">1 stale" }
+    basis: declared
+  - id: innovation.advancement-rate
+    question: "Is the work resolving into advancements?"
+    formula: "count(ADV recorded in the last 90 days)"
+    requires: [capability:sred]
+    unit: advancements
+    direction: higher_is_better
+    thresholds: { green: ">=1", amber: "0 with active EX", red: "0 with no active EX" }
+    basis: declared
+  - id: innovation.ip-yield
+    question: "Is anything being disclosed or protected?"
+    formula: "count(ip disclosures + foreground IP items in the last 180 days)"
+    requires: [ip]
+    unit: items
+    direction: higher_is_better
+    thresholds: { green: ">=1", amber: "0 with sred ADV present", red: "0" }
+    basis: declared
+  - id: innovation.learning-capture
+    question: "Is the project writing down what it learns?"
+    formula: "count(lessons recorded in the last 30 days)"
+    requires: [lessons]
+    unit: lessons
+    direction: higher_is_better
+    thresholds: { green: ">=2", amber: "1", red: "0" }
+    basis: declared
+  - id: innovation.external-signal
+    question: "Is the work reaching outside — publications, posts, comms through the review window?"
+    formula: "count(external comms items + blog posts in the last 90 days)"
+    requires: [external_comms]
+    unit: items
+    direction: higher_is_better
+    thresholds: { green: ">=1", amber: "0 with drafts pending", red: "0" }
+    basis: declared

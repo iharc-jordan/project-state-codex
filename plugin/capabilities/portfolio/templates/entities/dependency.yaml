@@ -1,0 +1,14 @@
+# portfolio-dependency — a declared cross-member dependency.
+id: PF-D-000
+kind: portfolio-dependency
+type: blocks                      # blocks | informs | shares-resource | shares-deadline
+from: { member: "", ref: null }   # ref: a milestone id in that member, or null for the whole project
+to:   { member: "", ref: null }
+status: open                      # open | satisfied | broken | withdrawn
+summary: ""
+declared_by: ""
+declared_on: ""
+created: ""
+created_by: ""
+last_modified: ""
+last_modified_by: ""

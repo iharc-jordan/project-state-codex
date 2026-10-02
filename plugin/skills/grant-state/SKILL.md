@@ -1,11 +1,20 @@
 ---
 name: grant-state
-description: "Canonical gateway for an existing grant-state facility, or an explicit request to inspect or validate one. Own pre-award manifest, narratives, gates, letters, budget lines, source references, findings, program, award, and ledger mutation through its write protocol. Do not activate grant workflows merely because a repository mentions a grant."
+description: "Read or write a grant application's state (grant-state/) — sections, compliance gates, letters, budget, review findings — 'grant status', 'update the budget section', 'what's left for the application'."
+map:
+  tier: grant
+  stage: keep
+  requires: [memory]
+  reads: [grant-state]
+  writes: [grant-state]
+  role: memory-layer
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Grant State
+
+> **When to use.**
+>
+> The shared memory layer for grant-submission facilities (grant-state/). Reads/writes all pre-award submission state: manifest, narrative sections, compliance gates, letters, budget lines, source documents, internal-review findings, program records, and award records. Enforces the grant-state write protocol (lock → read → write → release → log). Use when any grant-* skill needs to read or write grant submission state. Phrases: 'show grant state', 'validate grant facility', 'what phase is the submission', 'show gate status', 'list sections', 'show compliance gates'.
 
 ## Purpose
 

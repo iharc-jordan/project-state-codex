@@ -1,0 +1,16 @@
+# research-step template (spec §4.3). One atomic action. Frozen once complete; a step that produced
+# nothing is complete with no findings — a barren step is data, not a failure to hide.
+id: RES-S-NNN
+kind: research-step
+mandate_id: RES-M-NNN
+methodology_step: 1         # the mandate methodology step this executes, or ~
+mode: query                 # consult | query | compare | extract | validate
+description: "…"
+status: in-progress         # in-progress | complete | abandoned
+started_at: YYYY-MM-DDTHH:MM:SSZ
+completed_at: ~
+inputs: { refs: [], queries: [], urls: [] }
+findings_produced: []
+summary: ~                  # one sentence
+open_followups: []
+run_id: ~                   # set when an unattended walk ran it

@@ -1,11 +1,21 @@
 ---
 name: grant-ingestor
-description: "Process grant materials only when a grant-state facility exists or the operator explicitly requests grant intake. Preserve triage, strategy, coverage, verdict-with-confidence, configured-surface harvesting, and lessons outputs. Inspect supplied program sources first, never infer eligibility, and do not harvest Gmail/Slack unless those surfaces are configured and available."
+description: "Process grant documents dropped in grant-state/documents/inbox/ — program guides, RFPs, eligibility docs — 'ingest the program guide', 'are we eligible', 'map requirements'. Produces an eligibility verdict."
+map:
+  tier: grant
+  stage: ingest
+  requires: [memory, connector:gmail, connector:slack]
+  inputs: [gmail, slack, files]
+  reads: [grant-state]
+  writes: [grant-state]
+  calls: [grant-state]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Grant Ingestor
+
+> **When to use.**
+>
+> Drain grant-state/documents/inbox/ of program guides, eligibility docs, RFPs, and partner materials; produce a strategy pass that maps content to required narrative sections and compliance gates; generate an eligibility verdict. Sub-actions: triage (classify inbox docs), strategy (produce strategy pass memo + section-coverage map), verdict (eligibility verdict with confidence), harvest (pull overnight signals from Gmail/Slack for this submission), lessons (capture lessons from a rejected submission). Use for 'drain the inbox', 'run strategy pass', 'are we eligible', 'what sections do we need', 'harvest overnight grant signals'.
 
 ## Purpose
 

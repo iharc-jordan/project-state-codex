@@ -1,0 +1,32 @@
+# work-sales-pursuit — milestone seeds. Drafts only; `due` is a date expression resolved once at seed time.
+milestones:
+  - slug: qualified
+    title: "Opportunity qualified"
+    due: start+1w
+    phase: 01-define
+    acceptance: "Budget, authority, need and timeline confirmed; go/no-go recorded"
+  - slug: discovery-complete
+    title: "Discovery complete"
+    due: start+3w
+    phase: 02-plan
+    acceptance: "Buyer's problem, decision process and stakeholders mapped"
+  - slug: proposal-submitted
+    title: "Proposal submitted"
+    due: end-21d
+    phase: 03-deliver
+    acceptance: "Proposal and pricing sent to the buyer"
+  - slug: terms-agreed
+    title: "Commercial terms agreed"
+    due: end-7d
+    phase: 03-deliver
+    acceptance: "Price, scope and contract terms settled in principle"
+  - slug: decision
+    title: "Buyer decision"
+    due: end
+    phase: 04-review
+    acceptance: "Won or lost, with the buyer's stated reason"
+  - slug: handover-or-review
+    title: "Handover or win/loss review"
+    due: end+14d
+    phase: 05-close
+    acceptance: "Won: handed to delivery. Lost: win/loss review recorded"

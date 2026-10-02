@@ -18,7 +18,16 @@ reports:
       lead_time_days: 14   # draft is produced 14 days before deadline
     format:
       kind: xlsx
-      template: "templates/ms-and-financial-tracking.xlsx"
+      # The MS & financial tracking form is REAL and PIC-provided per project (PM Guide,
+      # "Milestone Tracking": due Apr/Jul/Oct/Jan 20, covering the prior quarter; claims are not
+      # processed without it). PIC's workbook is the funder's document — it never ships in this
+      # publicly-served pack. FACILITY-SUPPLIED CONVENTION (the Ai26.10 facility's production
+      # pattern): register PIC's issued blank in the document index with kind: template
+      # (e.g. doc-pic-template-qr, stored read-only under documents/pic-templates/), then have
+      # the facility's reporting-matrix entry carry `template: doc-<id>` — the pack profile
+      # stays generic and this field stays null.
+      # Trimmed 2026-08-21 (FB-014 / issue #17); was templates/ms-and-financial-tracking.xlsx.
+      template: ~
       output_naming: "reports/funder.pic/claims/{YYYY}-Q{Q}-pic-claim.xlsx"
     field_mapping:
       milestones:

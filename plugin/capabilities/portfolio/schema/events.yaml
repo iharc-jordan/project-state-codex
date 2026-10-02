@@ -1,0 +1,21 @@
+# portfolio.* event vocabulary (lean V1) — appended to the PORTFOLIO project's activity log
+# by the memory layer. Nothing here is ever written to a member's log.
+schema_version: 1
+capability: portfolio
+events:
+  - portfolio.member.added
+  - portfolio.member.updated
+  - portfolio.member.retired
+  - portfolio.snapshot.captured        # payload: member, source_rev, reachable
+  - portfolio.member.unreachable       # payload: member, reason (missing | permission | malformed | remote)
+  - portfolio.member.read-from-copy    # payload: member, copy (mirror | moved-copy), home_unreachable — the two-copy rule
+  - portfolio.index.compiled           # payload: kinds, rows, members
+  - portfolio.understanding.generated  # payload: member, path
+  - portfolio.registry.compiled        # payload: members, active, proposed
+  - portfolio.dependency.updated       # payload: id, status
+  - portfolio.finding.logged           # payload: id, type, severity, members
+  - portfolio.finding.promoted         # payload: id, member, proposal path (the inbox drop)
+  - portfolio.finding.resolved
+  - portfolio.finding.dismissed        # payload: id, reason
+  - portfolio.answer.kept              # payload: path, question, files read
+  - portfolio.report.generated         # payload: kind (week), path

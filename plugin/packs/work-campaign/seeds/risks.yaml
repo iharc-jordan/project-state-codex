@@ -1,0 +1,21 @@
+risks:
+  - slug: creative-approval-delay
+    title: "Creative or legal/brand approval runs late and squeezes production"
+    likelihood: high
+    impact: medium
+    mitigation: "Book review slots at brief approval; one named approver per asset type."
+  - slug: platform-rejection
+    title: "An ad platform or channel rejects the creative on policy grounds"
+    likelihood: medium
+    impact: medium
+    mitigation: "Submit for review a week before launch; hold a compliant fallback variant."
+  - slug: spend-pacing
+    title: "Budget under- or over-spends against the plan"
+    likelihood: medium
+    impact: medium
+    mitigation: "Weekly spend check while live; reallocation rules agreed up front."
+  - slug: attribution-gap
+    title: "Results cannot be attributed to the campaign"
+    likelihood: medium
+    impact: high
+    mitigation: "Tracking, UTMs and conversion events tested before launch, not after."

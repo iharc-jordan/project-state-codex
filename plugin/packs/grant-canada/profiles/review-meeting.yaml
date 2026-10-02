@@ -11,7 +11,8 @@ meeting_kinds:
     label: "Grant Advisory Committee"
     cadence: semi-annual
     quorum: "majority of external advisors + PI"
-    agenda_template: "templates/gac-agenda.md"
+    # templates/gac-agenda.md never shipped — trimmed 2026-08-21 (FB-014 / #17).
+    agenda_template: ~
     required_sections:
       - id: progress-vs-milestones
         title: "Technical Progress vs. Milestones"
@@ -46,7 +47,8 @@ meeting_kinds:
     label: "Steering Committee"
     cadence: quarterly
     quorum: "one representative per consortium member"
-    agenda_template: "templates/sc-agenda.md"
+    # templates/sc-agenda.md never shipped — trimmed 2026-08-21 (FB-014 / #17).
+    agenda_template: ~
     required_sections:
       - id: progress-vs-milestones
         title: "Milestone Progress"

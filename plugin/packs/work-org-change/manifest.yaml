@@ -1,0 +1,68 @@
+pack:
+  id: "work-org-change"
+  name: "Organisational Change"
+  version: "0.1.0"
+  compatible_core: ">=4.0,<6.0"
+  description: |
+    Work type for change that lands on people: a reorganisation, a new process or system rollout,
+    a policy change, a hiring or onboarding wave. Stage-gate ladder read as case for change → plan and
+    communications → pilot → rollout → adoption review, with adoption rather than delivery as the measure.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "skills/project-scaffolder/SKILL.md — second-wave work types"
+    - "templates/phase-presets/stage-gate-default.yaml — the phase ladder this pack assumes"
+  released: "2026-09-24"
+  maturity: "starter"
+  axis: work   # work | accountability | capability - the bundled pack contract
+
+# ----------------------------------------------------------------------------
+# Picker presentation - skills/project-scaffolder/SKILL.md Every front door (onboarding,
+# scaffolder, intake, kanban wizard) reads this block; none keeps its own table of packs.
+# ----------------------------------------------------------------------------
+picker:
+  listed: true
+  label: "Organisational change"
+  blurb: "A reorganisation, new process or tool rollout, or hiring wave — people have to change how they work."
+  signals:
+    - "reorganisation"
+    - "reorganization"
+    - "reorg"
+    - "restructure"
+    - "change management"
+    - "rollout"
+    - "roll out"
+    - "rolling out"
+    - "all staff"
+    - "company-wide"
+    - "process change"
+    - "adoption"
+    - "new process"
+    - "transformation"
+    - "hiring"
+    - "onboarding programme"
+    - "training"
+
+provides:
+  profiles: []
+  seeds: [milestones, risks, kpis]
+  reporting_matrix_defaults: true
+
+depends_on:
+  packs: []
+
+conflicts_with:
+  packs: []
+
+# Onboarding asks these after the rhythm question (the bundled pack contract).
+asks:
+  - key: project.end_date
+    prompt: "When should the change be fully in place?"
+    required: true
+
+# ----------------------------------------------------------------------------
+# Defaults this pack suggests (suggestions, never settings; the facility's manifest wins).
+# ----------------------------------------------------------------------------
+defaults:
+  lifecycle: terminal
+  preset: stage-gate-default

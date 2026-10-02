@@ -1,18 +1,21 @@
 ---
 name: mindmap-vibe
-description: >-
-  Generate a mindmap-vibe JSON from a user's idea and load it into MindMap Studio
-  (~/Desktop/simple-minds.html). Writes to ~/Desktop/mindmap-inbox/, opens the
-  studio in the browser, or returns a #vibe= share link. Trigger when the user
-  says vibe mindmap, mind map from idea, mindmap studio, simple-minds, map this
-  idea, brainstorm map, or wants an agent-generated map loaded into the desktop app.
+description: "Turn an idea into a mindmap and open it in MindMap Studio — 'mindmap this', 'make a mind map of', 'map out my idea'. Writes the JSON and opens the studio or a share link."
+map:
+  tier: P3
+  stage: keep
+  requires: [memory, python, shell, local-fs]
+  reads: [manifest, milestones]
+  produces: [mindmap]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
+# MindMap Vibe (Cursor → MindMap Studio)
 
-# MindMap Vibe (Codex → MindMap Studio)
+> **When to use.**
+>
+> Generate a mindmap-vibe JSON from a user's idea and load it into MindMap Studio (~/Desktop/simple-minds.html). Writes to ~/Desktop/mindmap-inbox/, opens the studio in the browser, or returns a #vibe= share link. Trigger when the user says vibe mindmap, mind map from idea, mindmap studio, simple-minds, map this idea, brainstorm map, or wants a Cursor-generated map loaded into the desktop app.
 
-Generate structured mind maps from ideas in Codex and load them into **MindMap Studio** at `~/Desktop/simple-minds.html`.
+Generate structured mind maps from ideas inside Cursor and load them into **MindMap Studio** at `~/Desktop/simple-minds.html`.
 
 ## Workflow
 
@@ -21,9 +24,12 @@ Generate structured mind maps from ideas in Codex and load them into **MindMap S
 3. **Write** — Save to:
    - `~/Desktop/mindmap-inbox/latest.vibe.json` (always)
    - `~/Desktop/mindmap-inbox/<slug>.vibe.json` (named copy)
-4. **Open** — Resolve `scripts/open-in-studio.py` from this skill directory and
-   run it with the active Python interpreter, passing
-   `~/Desktop/mindmap-inbox/latest.vibe.json`. The script is cross-platform.
+4. **Open** — Run the open script so the map appears in the browser:
+   ```bash
+   python3 skills/mindmap-vibe/scripts/open-in-studio.py ~/Desktop/mindmap-inbox/latest.vibe.json
+   ```
+   From outside the repo, use the personal install path:
+   `python3 ~/.cursor/skills/mindmap-vibe/scripts/open-in-studio.py …`
 5. **Tell the user** — Path saved, studio opened (or manual **Load Vibe** / drag-drop onto canvas if open failed).
 
 ## JSON schema (`mindmap-vibe`)
@@ -70,4 +76,4 @@ User can in MindMap Studio: **Load Vibe** → pick `~/Desktop/mindmap-inbox/late
 
 ## Full spec
 
-See `reference.md` in this skill folder for the bundled format and launcher notes.
+See `reference.md` in this skill folder.

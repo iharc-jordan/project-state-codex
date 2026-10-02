@@ -1,0 +1,15 @@
+# research-candidate template (spec §4.6) — one longlist row. Mutable (scoring evolves), but every
+# score cites the findings behind it; the total is the weighted sum under the mandate's longlist_criteria.
+id: RES-L-NNN
+kind: research-candidate
+mandate_id: RES-M-NNN
+name: "Canonical name"
+aliases: []
+type: company               # company | person | paper | site | product | programme | other
+profile: {}
+scores: []                  # - {criterion: <id>, score: 0..3, justification: "…", finding_ids: [RES-F-…]}
+total: ~
+rank: ~
+status: discovered          # discovered | enriched | scored | shortlisted | excluded
+discovered_via: ~           # operator | corpus | deepweb | import
+created: YYYY-MM-DDTHH:MM:SSZ

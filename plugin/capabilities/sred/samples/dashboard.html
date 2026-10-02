@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}</style>
+</head>
+<body>
+<title>Harbour pipeline SR&amp;ED Status</title>
+<!-- No external resources: the app renders this page under a CSP that allows only self + inline; the font stacks below fall back to system faces. -->
+
+<style>
+/* ── tokens ─────────────────────────────────────────────────────────────── */
+:root{
+  --paper:#E8EBE6; --surface:#F8FAF6; --surface-2:#EFF2EC;
+  --rule:#D2D7CE; --rule-2:#B4BAAF;
+  --ink:#1B1E1A; --ink-2:#51564E; --ink-3:#7E8479;
+  --accent:#3C3B6E; --accent-2:#5D5C97; --accent-soft:#E4E3EE;
+  --ok:#2E6A4C; --ok-soft:#DEE8E0;
+  --warn:#8B5F13; --warn-soft:#F0E5CD;
+  --crit:#8B2E2E; --crit-soft:#F0DCDA;
+  --shadow:0 1px 0 rgba(29,30,26,.04), 0 1px 3px rgba(29,30,26,.05);
+  --ui:'Archivo','Helvetica Neue',Helvetica,Arial,sans-serif;
+  --serif:'Source Serif 4',Georgia,'Times New Roman',serif;
+  --mono:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#15161A; --surface:#1D1E23; --surface-2:#24262C;
+    --rule:#32343B; --rule-2:#484B54;
+    --ink:#E7E6DF; --ink-2:#A6A79D; --ink-3:#7B7C73;
+    --accent:#A5A4E6; --accent-2:#8281C9; --accent-soft:#26263F;
+    --ok:#74B893; --ok-soft:#1B2B23;
+    --warn:#D6A75C; --warn-soft:#2F2716;
+    --crit:#DE8079; --crit-soft:#33201F;
+    --shadow:0 1px 0 rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#15161A; --surface:#1D1E23; --surface-2:#24262C;
+  --rule:#32343B; --rule-2:#484B54;
+  --ink:#E7E6DF; --ink-2:#A6A79D; --ink-3:#7B7C73;
+  --accent:#A5A4E6; --accent-2:#8281C9; --accent-soft:#26263F;
+  --ok:#74B893; --ok-soft:#1B2B23;
+  --warn:#D6A75C; --warn-soft:#2F2716;
+  --crit:#DE8079; --crit-soft:#33201F;
+  --shadow:0 1px 0 rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.35);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--ui); font-size:15px; line-height:1.5;
+  font-variant-numeric:tabular-nums;
+}
+::selection{background:var(--accent-soft); color:var(--ink)}
+a{color:var(--accent); text-underline-offset:2px}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:2px}
+
+.wrap{max-width:1160px; margin:0 auto; padding:0 28px}
+.mono{font-family:var(--mono); font-size:.86em; letter-spacing:-.01em}
+.serif{font-family:var(--serif)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ── masthead ───────────────────────────────────────────────────────────── */
+.masthead{border-bottom:1px solid var(--rule-2); background:var(--surface)}
+.masthead .wrap{padding-top:26px; padding-bottom:22px}
+.eyebrow{
+  font-family:var(--mono); font-size:11px; text-transform:uppercase;
+  letter-spacing:.14em; color:var(--ink-3); margin:0 0 10px
+}
+.masthead h1{
+  font-family:var(--ui); font-weight:700; font-size:clamp(26px,3.4vw,38px);
+  line-height:1.1; letter-spacing:-.018em; margin:0; text-wrap:balance;
+}
+.masthead .lede{
+  font-family:var(--serif); font-size:16px; color:var(--ink-2);
+  margin:10px 0 0; max-width:62ch;
+}
+.idbar{
+  display:flex; flex-wrap:wrap; gap:0 26px; margin-top:18px;
+  padding-top:14px; border-top:1px solid var(--rule);
+}
+.idbar div{display:flex; flex-direction:column; gap:2px; padding:2px 0}
+.idbar dt{font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-3)}
+.idbar dd{margin:0; font-size:13.5px; font-weight:500}
+.idbar .flagged dd{color:var(--warn)}
+.idbar .flagged dd::after{content:' ⚑'; font-size:11px}
+
+/* ── section chrome ─────────────────────────────────────────────────────── */
+section{padding:38px 0 4px}
+.sec-head{
+  display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+  border-bottom:1px solid var(--rule-2); padding-bottom:8px; margin-bottom:20px;
+}
+.sec-head h2{
+  font-size:19px; font-weight:600; letter-spacing:-.012em; margin:0;
+}
+.sec-head .note{font-family:var(--serif); font-size:14px; color:var(--ink-2); margin-left:auto; max-width:52ch; text-align:right}
+@media (max-width:720px){ .sec-head .note{margin-left:0; text-align:left} }
+
+/* ── pills / chips ──────────────────────────────────────────────────────── */
+.pill{
+  display:inline-block; font-family:var(--mono); font-size:10.5px; text-transform:uppercase;
+  letter-spacing:.08em; padding:2px 7px; border:1px solid var(--rule-2); border-radius:2px;
+  color:var(--ink-2); background:var(--surface-2); white-space:nowrap;
+}
+.pill.ok{color:var(--ok); border-color:var(--ok); background:var(--ok-soft)}
+.pill.warn{color:var(--warn); border-color:var(--warn); background:var(--warn-soft)}
+.pill.crit{color:var(--crit); border-color:var(--crit); background:var(--crit-soft)}
+.pill.accent{color:var(--accent); border-color:var(--accent-2); background:var(--accent-soft)}
+
+/* ── deadline strips ────────────────────────────────────────────────────── */
+.fy{
+  background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--rule-2);
+  border-radius:3px; padding:16px 18px; box-shadow:var(--shadow); margin-bottom:12px;
+}
+.fy[data-tier="ok"]{border-left-color:var(--ok)}
+.fy[data-tier="warn"]{border-left-color:var(--warn)}
+.fy[data-tier="crit"],.fy[data-tier="forfeit"]{border-left-color:var(--crit)}
+.fy-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.fy-head .fy-id{font-family:var(--mono); font-size:15px; font-weight:500; letter-spacing:.02em}
+.fy-head .fy-days{margin-left:auto; font-size:13px; color:var(--ink-2)}
+.fy-head .fy-days b{font-weight:600; color:var(--ink)}
+.rail{
+  position:relative; height:8px; margin:14px 0 10px; border-radius:2px;
+  background:var(--surface-2); border:1px solid var(--rule);
+}
+.rail .fill{position:absolute; inset:0 auto 0 0; background:var(--accent-2); opacity:.55; border-radius:1px}
+.rail .mark{position:absolute; top:-5px; bottom:-5px; width:2px; background:var(--ink-2)}
+.rail .mark.target{background:var(--accent)}
+.rail-legend{
+  display:flex; gap:18px; flex-wrap:wrap; font-family:var(--mono); font-size:11px; color:var(--ink-3);
+}
+.rail-legend b{font-weight:500; color:var(--ink-2)}
+.fy-pre{font-family:var(--serif); font-size:14px; color:var(--ink-2); margin:10px 0 0}
+
+/* ── tiles ──────────────────────────────────────────────────────────────── */
+.tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:3px; overflow:hidden}
+.tile{background:var(--surface); padding:15px 16px 14px; display:flex; flex-direction:column; gap:3px}
+.tile .k{font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-3)}
+.tile .v{font-size:30px; font-weight:600; letter-spacing:-.02em; line-height:1.05}
+.tile .v .unit{font-size:14px; font-weight:500; color:var(--ink-3); letter-spacing:0}
+.tile .s{font-size:12.5px; color:var(--ink-2); line-height:1.35}
+.tile[data-tone="crit"] .v{color:var(--crit)}
+.tile[data-tone="warn"] .v{color:var(--warn)}
+.tile[data-tone="ok"] .v{color:var(--ok)}
+
+/* ── chain board ────────────────────────────────────────────────────────── */
+.chain-filter{display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap}
+.chain-filter label{font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-3)}
+.chain-filter button{
+  font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+  padding:4px 10px; border:1px solid var(--rule-2); background:var(--surface); color:var(--ink-2);
+  border-radius:2px; cursor:pointer;
+}
+.chain-filter button[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--surface)}
+.board{border:1px solid var(--rule); border-radius:3px; overflow:hidden; background:var(--rule)}
+.board-head,.chain-row{display:grid; grid-template-columns:1fr 1.25fr 1fr; gap:1px}
+.board-head > div{
+  background:var(--surface-2); padding:9px 14px; font-family:var(--mono); font-size:10.5px;
+  text-transform:uppercase; letter-spacing:.11em; color:var(--ink-3);
+}
+.board-head b{color:var(--ink-2); font-weight:500}
+.chain-row{margin-top:1px}
+.cell{background:var(--surface); padding:12px; display:flex; flex-direction:column; gap:8px; min-width:0}
+.chain-row[data-state="broken"] .cell:first-child{box-shadow:inset 3px 0 0 var(--crit)}
+.chain-row[data-state="partial"] .cell:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+.chain-row[data-state="complete"] .cell:first-child{box-shadow:inset 3px 0 0 var(--ok)}
+@media (max-width:820px){
+  .board-head{display:none}
+  .chain-row{grid-template-columns:1fr}
+  .cell::before{
+    content:attr(data-label); font-family:var(--mono); font-size:10px; text-transform:uppercase;
+    letter-spacing:.11em; color:var(--ink-3);
+  }
+}
+.ent{
+  display:block; width:100%; text-align:left; font:inherit; cursor:pointer;
+  background:var(--surface-2); border:1px solid var(--rule); border-radius:2px;
+  padding:9px 11px; color:inherit;
+}
+.ent:hover{border-color:var(--accent-2); background:var(--accent-soft)}
+.ent .row1{display:flex; align-items:baseline; gap:8px}
+.ent .eid{font-family:var(--mono); font-size:12px; font-weight:500; color:var(--accent)}
+.ent .etitle{font-size:13.5px; font-weight:500; letter-spacing:-.005em}
+.ent .row2{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:6px}
+.ent .meta{font-family:var(--mono); font-size:10.5px; color:var(--ink-3)}
+.dot{display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--ok); vertical-align:middle}
+.dot.warn{background:var(--warn)} .dot.crit{background:var(--crit)} .dot.off{background:var(--rule-2)}
+.void{
+  border:1px dashed var(--rule-2); border-radius:2px; padding:9px 11px;
+  font-family:var(--serif); font-size:13px; color:var(--ink-3); font-style:italic;
+}
+.void.crit{border-color:var(--crit); color:var(--crit)}
+
+/* ── findings ───────────────────────────────────────────────────────────── */
+.findings{display:flex; flex-direction:column; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:3px; overflow:hidden}
+.find{background:var(--surface); padding:13px 16px; display:grid; grid-template-columns:106px 1fr; gap:16px}
+.find[data-sev="high"]{box-shadow:inset 3px 0 0 var(--crit)}
+.find[data-sev="medium"]{box-shadow:inset 3px 0 0 var(--warn)}
+.find[data-sev="low"]{box-shadow:inset 3px 0 0 var(--rule-2)}
+.find .sev{display:flex; flex-direction:column; gap:5px; align-items:flex-start}
+.find .sev .mono{font-size:10.5px; color:var(--ink-3); word-break:break-word}
+.find .inst{margin-top:11px; padding-top:10px; border-top:1px dotted var(--rule)}
+.find .inst:first-child{margin-top:0; padding-top:0; border-top:0}
+.find h3{margin:0; font-size:14.5px; font-weight:600; letter-spacing:-.008em}
+.find .who{font-family:var(--mono); font-size:11px; color:var(--accent); margin-top:2px}
+.find p{margin:5px 0 0; font-family:var(--serif); font-size:14px; color:var(--ink-2); max-width:78ch}
+.find .do{margin-top:6px; font-size:13px; color:var(--ink); display:flex; gap:7px}
+.find .do::before{content:'→'; color:var(--ink-3)}
+@media (max-width:620px){ .find{grid-template-columns:1fr} }
+
+/* ── gates ──────────────────────────────────────────────────────────────── */
+.gates{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:3px; overflow:hidden}
+.gate{background:var(--surface); padding:13px 15px; display:flex; gap:11px; align-items:flex-start}
+.gate .box{
+  flex:none; width:17px; height:17px; border:1.5px solid var(--rule-2); border-radius:2px; margin-top:2px;
+  display:grid; place-items:center; font-size:11px; font-weight:700; color:var(--surface);
+}
+.gate.clear .box{background:var(--ok); border-color:var(--ok); color:var(--surface)}
+.gate.open .box{border-color:var(--warn)}
+.gate .lab{font-size:14px; font-weight:500; letter-spacing:-.005em}
+.gate .det{font-family:var(--serif); font-size:13px; color:var(--ink-2); margin-top:3px}
+.gate.open .lab{color:var(--warn)}
+
+/* ── tables ─────────────────────────────────────────────────────────────── */
+.tablewrap{overflow-x:auto; border:1px solid var(--rule); border-radius:3px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; min-width:640px; font-size:13.5px}
+th,td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--rule); vertical-align:top}
+thead th{
+  font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.11em;
+  color:var(--ink-3); font-weight:400; background:var(--surface-2); white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:0}
+td.n{text-align:right; font-family:var(--mono); font-size:12.5px; white-space:nowrap}
+tbody td:first-child{min-width:200px}
+td .note{font-family:var(--serif); font-size:13px; color:var(--ink-2); display:block; margin-top:3px}
+tfoot td{background:var(--surface-2); font-weight:600; border-top:1px solid var(--rule-2)}
+
+/* ── callout ────────────────────────────────────────────────────────────── */
+.callout{
+  border:1px solid var(--rule); border-left:3px solid var(--accent-2); background:var(--surface);
+  border-radius:3px; padding:14px 16px; margin-top:14px;
+}
+.callout h4{
+  margin:0 0 6px; font-family:var(--mono); font-size:10.5px; text-transform:uppercase;
+  letter-spacing:.12em; color:var(--ink-3); font-weight:400;
+}
+.callout p{margin:0 0 8px; font-family:var(--serif); font-size:14px; color:var(--ink-2); max-width:80ch; white-space:pre-line}
+.callout p:last-child{margin-bottom:0}
+.callout.warn{border-left-color:var(--warn)}
+
+/* ── evidence log ───────────────────────────────────────────────────────── */
+.log{border-left:1px solid var(--rule-2); margin-left:8px; padding-left:0}
+.logitem{position:relative; padding:11px 0 11px 22px}
+.logitem::before{
+  content:''; position:absolute; left:-4.5px; top:17px; width:8px; height:8px;
+  border-radius:50%; background:var(--surface); border:1.5px solid var(--rule-2);
+}
+.logitem[data-type="failure"]::before{border-color:var(--crit); background:var(--crit)}
+.logitem[data-type="test"]::before,.logitem[data-type="experiment"]::before{border-color:var(--accent); background:var(--accent)}
+.logitem .lh{display:flex; gap:9px; align-items:baseline; flex-wrap:wrap}
+.logitem .ld{font-family:var(--mono); font-size:12px; color:var(--ink-2)}
+.logitem .lk{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-3)}
+.logitem .lids{font-family:var(--mono); font-size:11px; color:var(--accent)}
+.logitem p{margin:5px 0 0; font-family:var(--serif); font-size:14px; color:var(--ink-2); max-width:82ch}
+.logitem .ref{font-family:var(--mono); font-size:11px; color:var(--ink-3); margin-top:4px}
+.more{
+  margin-top:12px; font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.09em;
+  background:none; border:1px solid var(--rule-2); border-radius:2px; padding:6px 12px; color:var(--ink-2); cursor:pointer;
+}
+.more:hover{border-color:var(--accent-2); color:var(--accent)}
+
+/* ── drawer ─────────────────────────────────────────────────────────────── */
+.scrim{position:fixed; inset:0; background:rgba(20,20,18,.42); opacity:0; pointer-events:none; transition:opacity .18s; z-index:40}
+.scrim.on{opacity:1; pointer-events:auto}
+.drawer{
+  position:fixed; top:0; right:0; bottom:0; width:min(660px,100%); z-index:50;
+  background:var(--surface); border-left:1px solid var(--rule-2); box-shadow:-8px 0 32px rgba(0,0,0,.14);
+  transform:translateX(102%); transition:transform .22s cubic-bezier(.4,0,.2,1);
+  display:flex; flex-direction:column;
+}
+.drawer.on{transform:none}
+@media (prefers-reduced-motion:reduce){ .drawer,.scrim{transition:none} }
+.drawer-head{
+  padding:18px 22px 14px; border-bottom:1px solid var(--rule); display:flex; gap:12px; align-items:flex-start;
+}
+.drawer-head .eid{font-family:var(--mono); font-size:13px; color:var(--accent); font-weight:500}
+.drawer-head h3{margin:3px 0 0; font-size:20px; font-weight:600; letter-spacing:-.015em; text-wrap:balance}
+.drawer-close{
+  margin-left:auto; flex:none; background:none; border:1px solid var(--rule-2); border-radius:2px;
+  width:30px; height:30px; cursor:pointer; color:var(--ink-2); font-size:15px; line-height:1;
+}
+.drawer-close:hover{border-color:var(--accent-2); color:var(--accent)}
+.drawer-body{overflow-y:auto; padding:18px 22px 40px; -webkit-overflow-scrolling:touch}
+.dsec{margin-bottom:20px}
+.dsec h4{
+  margin:0 0 7px; font-family:var(--mono); font-size:10.5px; text-transform:uppercase;
+  letter-spacing:.12em; color:var(--ink-3); font-weight:400;
+}
+.dsec .prose{font-family:var(--serif); font-size:14.5px; line-height:1.55; color:var(--ink); white-space:pre-line; max-width:64ch}
+.dsec ul{margin:0; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:7px}
+.dsec li{font-size:13.5px; color:var(--ink-2)}
+.dsec li .mono{color:var(--ink)}
+.kv{display:flex; flex-wrap:wrap; gap:6px 20px}
+.kv div{display:flex; gap:7px; align-items:baseline; font-size:13px}
+.kv dt{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-3)}
+.kv dd{margin:0; font-family:var(--mono); font-size:12.5px}
+.rn{border-left:2px solid var(--accent-2); padding:2px 0 2px 11px; font-family:var(--serif); font-size:13.5px; color:var(--ink-2)}
+.rn.resolved{border-left-color:var(--ok)}
+.rn.high{border-left-color:var(--crit)}
+
+/* ── footer ─────────────────────────────────────────────────────────────── */
+footer{margin-top:46px; border-top:1px solid var(--rule-2); background:var(--surface)}
+footer .wrap{padding-top:22px; padding-bottom:34px}
+footer p{margin:0 0 9px; font-family:var(--serif); font-size:13.5px; color:var(--ink-2); max-width:80ch}
+footer code{
+  font-family:var(--mono); font-size:12px; background:var(--surface-2);
+  border:1px solid var(--rule); border-radius:2px; padding:2px 6px; color:var(--ink);
+}
+footer .disclaim{color:var(--ink-3); font-size:12.5px}
+
+@media print{
+  .scrim,.drawer,.chain-filter,.more{display:none !important}
+  body{background:#fff}
+  section{page-break-inside:avoid}
+}
+</style>
+
+<div class="masthead">
+  <div class="wrap">
+    <p class="eyebrow" id="m-eyebrow"></p>
+    <h1 id="m-title"></h1>
+    <p class="lede" id="m-lede"></p>
+    <dl class="idbar" id="m-idbar"></dl>
+  </div>
+</div>
+
+<div class="wrap">
+  <section id="s-deadline">
+    <div class="sec-head"><h2>Filing window</h2><span class="note">The 18-month reporting deadline is statutory. Nothing files itself.</span></div>
+    <div id="fy-list"></div>
+  </section>
+
+  <section id="s-tiles">
+    <div class="sec-head"><h2>Substrate at a glance</h2><span class="note" id="tiles-note"></span></div>
+    <div class="tiles" id="tile-list"></div>
+  </section>
+
+  <section id="s-chain">
+    <div class="sec-head"><h2>The chain</h2><span class="note">T661 argues section by section: an uncertainty (E) is investigated by experiments (F) which establish an advancement (G). An unclaimed Section G is honest while the hypotheses are still open — and a hole in the claim once they are answered.</span></div>
+    <div class="chain-filter" id="chain-filter"></div>
+    <div class="board" id="board"></div>
+  </section>
+
+  <section id="s-findings">
+    <div class="sec-head"><h2>Findings</h2><span class="note" id="findings-note"></span></div>
+    <div class="findings" id="finding-list"></div>
+  </section>
+
+  <section id="s-effort">
+    <div class="sec-head"><h2>Effort basis</h2><span class="note" id="effort-note"></span></div>
+    <div id="effort-body"></div>
+  </section>
+
+  <section id="s-gates">
+    <div class="sec-head"><h2>Advisor handoff</h2><span class="note" id="gates-note"></span></div>
+    <div class="gates" id="gate-list"></div>
+  </section>
+
+  <section id="s-inbox">
+    <div class="sec-head"><h2>Unconfirmed candidates</h2><span class="note">Harvested signals waiting on a human decision. Nothing reaches the evidence log unconfirmed.</span></div>
+    <div id="inbox-list"></div>
+  </section>
+
+  <section id="s-log">
+    <div class="sec-head"><h2>Evidence log</h2><span class="note" id="log-note"></span></div>
+    <div class="log" id="log-list"></div>
+    <button class="more" id="log-more" type="button"></button>
+  </section>
+
+  <section id="s-lens">
+    <div class="sec-head"><h2>Capture lens</h2><span class="note">What this project decided to record and investigate — a capture decision, not an eligibility argument. CRA's standard-practice test is field-level.</span></div>
+    <div id="lens-body"></div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p id="f-regen"></p>
+    <p class="disclaim">This page reports what has been captured and what is missing. It makes no eligibility determination — that is the advisor's call, and no advisor has signed off on anything shown here. The system drafts; it never files.</p>
+    <p class="disclaim" id="f-stamp"></p>
+  </div>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden>
+  <div class="drawer-head">
+    <div>
+      <div class="eid" id="drawer-eid"></div>
+      <h3 id="drawer-title"></h3>
+    </div>
+    <button class="drawer-close" id="drawer-close" type="button" aria-label="Close">✕</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</aside>
+
+<script id="sred-data" type="application/json">{"meta":{"generatedAt":"2026-09-22T06:20:15.516Z","asOf":"2026-09-22","generator":"capabilities/sred/views/build-sred-dashboard.mjs","facility":"project-state","projectName":"Harbour pipeline","projectLongName":"Harbour — shared vessel-tracking data pipeline","claimant":null,"bn":null,"fiscalYearEnd":null,"capabilityVersion":null,"pack":null,"fieldOfScience":null,"advisorEngaged":false,"sredLead":null,"manifestFlags":[]},"fiscalYears":[{"fy":"FY2026","fy_end":"2026-12-31","hard_deadline":"2028-06-30","target_date":"2028-03-31","claim_status":"capturing","last_quarterly_review":"2026-07-02","advisor_engaged":false,"escalation_tiers_fired":[],"daysToHard":647,"daysToTarget":556,"tier":"ok","railStart":"2026-01-01","pctToday":28.979143798024147,"pctFyEnd":39.95609220636663,"pctTarget":90.01097694840834,"fyEnded":false,"escalation":[]}],"counters":{"declared":{"tu":3,"ex":4,"adv":2},"actual":{"tu":3,"ex":4,"adv":2},"drift":[]},"entities":{"tu":[{"kind":"tu","id":"TU-01","slug":"out-of-order-stream-joins","status":null,"claim_fy":null,"title":"out of order stream joins","narrative":[["Uncertainty","Whether two AIS position streams with 20-40% duplicates and up to 9-minute lateness could"],["Standard-practice gap","No published technique bounds memory for keyed stream joins under this duplicate and lateness"]],"dates":[],"linked_tu":null,"linked_experiments":[],"linked_milestones":[],"evidence_records":[],"people":[],"review_notes":[],"days":null,"lastEvidence":null,"evidenceGap":null,"logCount":6,"figure":null},{"kind":"tu","id":"TU-02","slug":"late-arrival-semantics","status":null,"claim_fy":null,"title":"late arrival semantics","narrative":[["Uncertainty","Whether late positions could be merged into already-emitted tracks without invalidating downstream"],["Standard-practice gap","Standard practice re-emits whole tracks; consumers cannot tolerate that at this rate."]],"dates":[],"linked_tu":null,"linked_experiments":[],"linked_milestones":[],"evidence_records":[],"people":[],"review_notes":[],"days":null,"lastEvidence":null,"evidenceGap":null,"logCount":3,"figure":null},{"kind":"tu","id":"TU-03","slug":"replay-consistency","status":null,"claim_fy":null,"title":"replay consistency","narrative":[["Uncertainty","Whether a replayed feed could reproduce the live dashboard state bit-for-bit given nondeterministic"],["Standard-practice gap","Deterministic replay of unordered joins is not addressed by any tool we evaluated."]],"dates":[],"linked_tu":null,"linked_experiments":[],"linked_milestones":[],"evidence_records":[],"people":[],"review_notes":[],"days":null,"lastEvidence":null,"evidenceGap":null,"logCount":2,"figure":null}],"ex":[{"kind":"ex","id":"EX-01","slug":"bounded-window-join-trials","status":null,"claim_fy":null,"title":"bounded window join trials","narrative":[["Hypothesis","A keyed sliding-window join with a bounded dedupe bloom filter can hold memory under 2 GB at the observed"],["Method and trials","Trials against the recorded March feed; memory and drop rate measured per run."],["Observations and results","See evidence log."],["Limitations","Single month of recorded data."]],"dates":[],"linked_tu":"TU-01","linked_experiments":[],"linked_milestones":[],"evidence_records":[],"people":[],"review_notes":[],"days":0,"lastEvidence":"2026-05-30","evidenceGap":115,"logCount":4,"figure":null},{"kind":"ex","id":"EX-02","slug":"watermark-strategies","status":null,"claim_fy":null,"title":"watermark strategies","narrative":[["Hypothesis","Per-source watermarks with a 9-minute allowed lateness bound the join without dropping more than 0.5%"],["Method and trials","Trials against the recorded March feed; memory and drop rate measured per run."],["Observations and results","See evidence log."],["Limitations","Single month of recorded data."]],"dates":[],"linked_tu":"TU-01","linked_experiments":[],"linked_milestones":[],"evidence_records":[],"people":[],"review_notes":[],"days":0,"lastEvidence":"2026-07-22","evidenceGap":62,"logCount":2,"figure":null},{"kind":"ex","id":"EX-03","slug":"track-patch-events","status":null,"claim_fy":null,"title":"track patch events","narrative":[["Hypothesis","Emitting track patches instead of whole tracks keeps consumer state valid when a late position arrives."],["Method and trials","Trials against the recorded March feed; memory and drop rate measured per run."],["Observations and results","See evidence log."],["Limitations","Single month of recorded data."]],"dates":[],"linked_tu":"TU-02","linked_experiments":[],"linked_milestones":[],"evidence_records":[],"people":[],"review_notes":[],"days":0,"lastEvidence":"2026-09-05","evidenceGap":17,"logCount":3,"figure":null},{"kind":"ex","id":"EX-04","slug":"deterministic-replay","status":null,"claim_fy":null,"title":"deterministic replay","narrative":[["Hypothesis","A total order derived from (source, sequence) makes replayed joins reproducible."],["Method and trials","Trials against the recorded March feed; memory and drop rate measured per run."],["Observations and results","See evidence log."],["Limitations","Single month of recorded data."]],"dates":[],"linked_tu":"TU-03","linked_experiments":[],"linked_milestones":[],"evidence_records":[],"people":[],"review_notes":[],"days":0,"lastEvidence":"2026-09-19","evidenceGap":3,"logCount":2,"figure":null}],"adv":[{"kind":"adv","id":"ADV-01","slug":"bounded-memory-stream-join","status":null,"claim_fy":null,"title":"bounded memory stream join","narrative":[],"dates":[],"linked_tu":"TU-01","linked_experiments":[],"linked_milestones":[],"evidence_records":[],"people":[],"review_notes":[],"days":null,"lastEvidence":null,"evidenceGap":null,"logCount":0,"figure":null},{"kind":"adv","id":"ADV-02","slug":"track-patch-semantics","status":null,"claim_fy":null,"title":"track patch semantics","narrative":[],"dates":[],"linked_tu":"TU-02","linked_experiments":[],"linked_milestones":[],"evidence_records":[],"people":[],"review_notes":[],"days":null,"lastEvidence":null,"evidenceGap":null,"logCount":0,"figure":null}]},"chains":[{"tu":"TU-01","links":[{"ex":"EX-01","advs":[]},{"ex":"EX-02","advs":[]}],"state":"partial"},{"tu":"TU-02","links":[{"ex":"EX-03","advs":[]}],"state":"partial"},{"tu":"TU-03","links":[{"ex":"EX-04","advs":[]}],"state":"partial"}],"findings":[{"severity":"high","code":"adv-no-ex","title":"Advancement with no experimental basis","entity":"ADV-01","detail":"Section G claim with nothing in Section F beneath it.","action":"Link the experiments whose results support this advancement."},{"severity":"high","code":"adv-no-ex","title":"Advancement with no experimental basis","entity":"ADV-02","detail":"Section G claim with nothing in Section F beneath it.","action":"Link the experiments whose results support this advancement."},{"severity":"high","code":"ex-no-evidence","title":"Experiment with no evidence records","entity":"EX-01","detail":"No contemporaneous records cited. This is the first thing an audit asks for.","action":"Cite commits, test output, design docs or meeting notes dated at the time of the work."},{"severity":"high","code":"ex-no-evidence","title":"Experiment with no evidence records","entity":"EX-02","detail":"No contemporaneous records cited. This is the first thing an audit asks for.","action":"Cite commits, test output, design docs or meeting notes dated at the time of the work."},{"severity":"high","code":"ex-no-evidence","title":"Experiment with no evidence records","entity":"EX-03","detail":"No contemporaneous records cited. This is the first thing an audit asks for.","action":"Cite commits, test output, design docs or meeting notes dated at the time of the work."},{"severity":"high","code":"ex-no-evidence","title":"Experiment with no evidence records","entity":"EX-04","detail":"No contemporaneous records cited. This is the first thing an audit asks for.","action":"Cite commits, test output, design docs or meeting notes dated at the time of the work."},{"severity":"medium","code":"ex-stale","title":"Evidence capture going stale","entity":"EX-01","detail":"Last evidence-log entry 2026-05-30 — 115 days ago.","action":"Log what has happened since, or move the experiment to complete/abandoned."},{"severity":"medium","code":"ex-stale","title":"Evidence capture going stale","entity":"EX-02","detail":"Last evidence-log entry 2026-07-22 — 62 days ago.","action":"Log what has happened since, or move the experiment to complete/abandoned."},{"severity":"low","code":"ex-stale","title":"Evidence capture slowing","entity":"EX-03","detail":"Last evidence-log entry 2026-09-05 — 17 days ago.","action":"Append an entry this week to stay inside the 14-day capture rhythm."}],"gates":[{"label":"Innovation criteria reviewed","clear":true,"detail":"sred/criteria.yaml is reviewed · reviewed by ana@northline.example"},{"label":"SR&ED advisor engaged","clear":false,"detail":"No qualified advisor named in the manifest — nothing here is an eligibility determination"},{"label":"Every uncertainty has an experiment","clear":true,"detail":"3 of 3 uncertainties have at least one linked experiment"},{"label":"Every experiment cites evidence","clear":false,"detail":"0 of 4 experiments cite contemporaneous records"},{"label":"Section G has a claim","clear":true,"detail":"2 advancements recorded"},{"label":"Effort from prospective time records","clear":true,"detail":"No reconstruction basis on file"},{"label":"Evidence candidates all confirmed","clear":true,"detail":"sred/inbox/ is empty"}],"effort":null,"totals":{"recordedDays":0,"evidenceEntries":11,"backfilled":2},"evidence":[{"date":"2026-09-19","type":"meeting","tu":"TU-03","ex":"EX-04","adv":null,"description":"Design review: derive total order from (source, sequence).","record":"","recordType":"","milestone":null,"people":["Ana Ruiz"],"backfilled":false},{"date":"2026-09-05","type":"advancement","tu":"TU-02","ex":"EX-03","adv":null,"description":"Patch semantics accepted.","record":"","recordType":"","milestone":null,"people":["Ana Ruiz"],"backfilled":false},{"date":"2026-08-28","type":"iteration","tu":"TU-02","ex":"EX-03","adv":null,"description":"Patch events keep state; ordering bug found.","record":"","recordType":"","milestone":null,"people":["Ana Ruiz"],"backfilled":false},{"date":"2026-08-26","type":"test","tu":"TU-03","ex":"EX-04","adv":null,"description":"Replay diverges after 40k events.","record":"","recordType":"","milestone":null,"people":["Ana Ruiz"],"backfilled":false},{"date":"2026-07-22","type":"iteration","tu":"TU-01","ex":"EX-02","adv":null,"description":"Per-source watermarks: 0.5% drop.","record":"","recordType":"","milestone":null,"people":["Ana Ruiz"],"backfilled":false},{"date":"2026-07-15","type":"test","tu":"TU-02","ex":"EX-03","adv":null,"description":"Whole-track re-emit breaks consumer state at 3/min.","record":"","recordType":"","milestone":null,"people":["Ana Ruiz"],"backfilled":false},{"date":"2026-06-18","type":"test","tu":"TU-01","ex":"EX-02","adv":null,"description":"Global watermark drops 4% at 9-minute lateness.","record":"","recordType":"","milestone":null,"people":["Ana Ruiz"],"backfilled":true},{"date":"2026-05-30","type":"advancement","tu":"TU-01","ex":"EX-01","adv":null,"description":"Bounded-memory join accepted at 2 GB.","record":"","recordType":"","milestone":null,"people":["Ana Ruiz"],"backfilled":false},{"date":"2026-04-14","type":"iteration","tu":"TU-01","ex":"EX-01","adv":null,"description":"Two-stage filter: 1.6 GB peak, 0.4% drop.","record":"","recordType":"","milestone":null,"people":["Ana Ruiz"],"backfilled":false},{"date":"2026-03-10","type":"failure","tu":"TU-01","ex":"EX-01","adv":null,"description":"Bloom filter at 1% FPR dropped 2.3% of positions — too lossy.","record":"","recordType":"","milestone":null,"people":["Ana Ruiz"],"backfilled":false},{"date":"2026-02-24","type":"test","tu":"TU-01","ex":"EX-01","adv":null,"description":"Run 1: 3.1 GB peak with exact dedupe — over budget.","record":"","recordType":"","milestone":null,"people":["Ana Ruiz"],"backfilled":true}],"inbox":[],"criteria":{"status":"reviewed","reviewedBy":"ana@northline.example","lastRefreshed":null,"areas":[],"routine":[]}}</script>
+<script>
+(function () {
+  'use strict';
+  var D = JSON.parse(document.getElementById('sred-data').textContent);
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = text;
+    return n;
+  }
+  function kv(dl, label, value, flagged) {
+    var d = el('div', flagged ? 'flagged' : '');
+    d.appendChild(el('dt', '', label));
+    d.appendChild(el('dd', '', value));
+    dl.appendChild(d);
+  }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
+  var ALL = D.entities.tu.concat(D.entities.ex, D.entities.adv);
+  var IDX = {};
+  ALL.forEach(function (e) { IDX[e.id] = e; });
+
+  // ── masthead ────────────────────────────────────────────────────────────
+  $('m-eyebrow').textContent = 'SR&ED capture status · as of ' + D.meta.asOf;
+  $('m-title').textContent = D.meta.claimant
+    ? D.meta.claimant + ' — ' + D.meta.projectName
+    : D.meta.projectName;
+  $('m-lede').textContent = D.meta.projectLongName || '';
+  var flaggedKeys = {};
+  (D.meta.manifestFlags || []).forEach(function (f) { if (f.key) flaggedKeys[f.key] = f.note; });
+  var bar = $('m-idbar');
+  if (D.meta.bn) kv(bar, 'Business number', D.meta.bn, !!flaggedKeys.claimant_bn);
+  if (D.meta.fiscalYearEnd) kv(bar, 'Fiscal year end', D.meta.fiscalYearEnd.replace(/^--/, ''), !!flaggedKeys.fiscal_year_end);
+  if (D.meta.fieldOfScience) kv(bar, 'Field of science', D.meta.fieldOfScience);
+  if (D.meta.pack) kv(bar, 'Pack', D.meta.pack + (D.meta.capabilityVersion ? ' v' + D.meta.capabilityVersion : ''));
+  kv(bar, 'Advisor', D.meta.advisorEngaged ? 'engaged' : 'not engaged', !D.meta.advisorEngaged);
+  if (D.meta.sredLead) kv(bar, 'SR&ED lead', D.meta.sredLead.replace(/\s*<.*>$/, ''));
+
+  // ── deadlines ───────────────────────────────────────────────────────────
+  var fyBox = $('fy-list');
+  if (!D.fiscalYears.length) {
+    fyBox.appendChild(el('div', 'void', 'No open fiscal year recorded in state/sred.json.'));
+  }
+  D.fiscalYears.forEach(function (f) {
+    var s = el('div', 'fy');
+    s.setAttribute('data-tier', f.tier);
+    var h = el('div', 'fy-head');
+    h.appendChild(el('span', 'fy-id', f.fy));
+    h.appendChild(el('span', 'pill accent', f.claim_status || 'unset'));
+    if (f.escalation && f.escalation.length) h.appendChild(el('span', 'pill warn', plural(f.escalation.length, 'tier') + ' fired'));
+    var days = el('span', 'fy-days');
+    if (f.daysToHard !== null) {
+      days.appendChild(el('b', '', f.daysToHard.toLocaleString()));
+      days.appendChild(document.createTextNode(' days to the hard deadline'));
+    }
+    h.appendChild(days);
+    s.appendChild(h);
+
+    var rail = el('div', 'rail');
+    rail.title = 'From the first day of the fiscal year to the statutory deadline';
+    var fill = el('div', 'fill');
+    fill.style.width = (f.pctToday === null ? 0 : f.pctToday) + '%';
+    rail.appendChild(fill);
+    if (f.pctFyEnd !== null) {
+      var mf = el('div', 'mark');
+      mf.style.left = f.pctFyEnd + '%';
+      mf.title = 'Fiscal year end ' + f.fy_end;
+      rail.appendChild(mf);
+    }
+    if (f.pctTarget !== null) {
+      var mt = el('div', 'mark target');
+      mt.style.left = f.pctTarget + '%';
+      mt.title = 'Internal target ' + f.target_date;
+      rail.appendChild(mt);
+    }
+    s.appendChild(rail);
+
+    var lg = el('div', 'rail-legend');
+    function leg(label, value) {
+      var w = el('span');
+      w.appendChild(document.createTextNode(label + ' '));
+      w.appendChild(el('b', '', value));
+      lg.appendChild(w);
+    }
+    if (f.railStart) leg('FY start', f.railStart);
+    if (f.fy_end) leg('FY end', f.fy_end);
+    if (f.target_date) leg('target (FY+15mo)', f.target_date + (f.daysToTarget !== null ? ' · ' + f.daysToTarget.toLocaleString() + 'd' : ''));
+    if (f.hard_deadline) leg('hard (FY+18mo)', f.hard_deadline);
+    s.appendChild(lg);
+
+    if (!f.fyEnded) {
+      s.appendChild(el('p', 'fy-pre', 'The fiscal year is still open — the filing clock starts at year end. Everything captured between now and then lands in this claim.'));
+    }
+    fyBox.appendChild(s);
+  });
+
+  // ── tiles ───────────────────────────────────────────────────────────────
+  var high = D.findings.filter(function (f) { return f.severity === 'high'; }).length;
+  var med = D.findings.filter(function (f) { return f.severity === 'medium'; }).length;
+  var withEv = D.entities.ex.filter(function (e) { return e.evidence_records.length > 0; }).length;
+  var stale = D.entities.ex.filter(function (e) { return e.status !== 'complete' && (e.evidenceGap === null || e.evidenceGap > 14); }).length;
+  var tiles = [
+    { k: 'Section E · uncertainties', v: D.entities.tu.length, s: D.chains.filter(function (c) { return c.state === 'broken'; }).length + ' with no experiment' },
+    { k: 'Section F · experiments', v: D.entities.ex.length, s: withEv + ' of ' + D.entities.ex.length + ' cite evidence' + (stale ? ' · ' + stale + ' going stale' : ''), tone: stale ? 'warn' : '' },
+    { k: 'Section G · advancements', v: D.entities.adv.length, s: D.entities.adv.length === 0 ? 'nothing claimed yet' : 'recorded', tone: D.entities.adv.length === 0 ? 'crit' : 'ok' },
+    { k: 'Evidence entries', v: D.totals.evidenceEntries, s: D.totals.backfilled + ' back-filled, disclosed' },
+    { k: 'Recorded effort', v: D.totals.recordedDays.toFixed(1), unit: 'days', s: D.effort ? 'floor estimate, not timesheets' : 'from entity records', tone: 'warn' },
+    { k: 'Open findings', v: D.findings.length, s: high + ' high · ' + med + ' medium', tone: high ? 'crit' : med ? 'warn' : 'ok' }
+  ];
+  var tl = $('tile-list');
+  tiles.forEach(function (t) {
+    var n = el('div', 'tile');
+    if (t.tone) n.setAttribute('data-tone', t.tone);
+    n.appendChild(el('span', 'k', t.k));
+    var v = el('span', 'v', String(t.v));
+    if (t.unit) { var u = el('span', 'unit', ' ' + t.unit); v.appendChild(u); }
+    n.appendChild(v);
+    n.appendChild(el('span', 's', t.s));
+    tl.appendChild(n);
+  });
+  $('tiles-note').textContent = 'Counts read from the files on disk' +
+    (D.counters.drift && D.counters.drift.length ? ' — state/sred.json disagrees on ' + D.counters.drift.join(', ') + '.' : '.');
+
+  // ── chain board ─────────────────────────────────────────────────────────
+  var fys = {};
+  ALL.forEach(function (e) { if (e.claim_fy) fys[e.claim_fy] = 1; });
+  var fyKeys = Object.keys(fys).sort();
+  var activeFy = 'all';
+  if (fyKeys.length > 1) {
+    var cf = $('chain-filter');
+    cf.appendChild(el('label', '', 'Claim year'));
+    ['all'].concat(fyKeys).forEach(function (k) {
+      var b = el('button', '', k === 'all' ? 'all' : k);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(k === activeFy));
+      b.onclick = function () {
+        activeFy = k;
+        Array.prototype.forEach.call(cf.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        drawBoard();
+      };
+      cf.appendChild(b);
+    });
+  }
+
+  function entCard(e) {
+    var b = el('button', 'ent');
+    b.type = 'button';
+    b.setAttribute('data-id', e.id);
+    var r1 = el('div', 'row1');
+    r1.appendChild(el('span', 'eid', e.id));
+    r1.appendChild(el('span', 'etitle', e.title));
+    b.appendChild(r1);
+    var r2 = el('div', 'row2');
+    if (e.status) r2.appendChild(el('span', 'pill' + (e.status === 'complete' ? ' ok' : e.status === 'abandoned' ? ' crit' : ''), e.status.replace(/_/g, ' ')));
+    if (e.kind === 'ex') {
+      var d = el('span', 'meta');
+      var dot = el('span', 'dot' + (e.status === 'complete' ? ' off' : e.evidenceGap === null ? ' crit' : e.evidenceGap > 30 ? ' crit' : e.evidenceGap > 14 ? ' warn' : ''));
+      r2.appendChild(dot);
+      d.textContent = e.evidenceGap === null ? 'no log entry'
+        : (e.status === 'complete' ? 'last evidence ' + e.lastEvidence : e.evidenceGap + 'd since evidence');
+      r2.appendChild(d);
+      r2.appendChild(el('span', 'meta', '· ' + e.evidence_records.length + ' records'));
+      if (e.days) r2.appendChild(el('span', 'meta', '· ' + e.days.toFixed(1) + 'd'));
+    } else if (e.kind === 'tu') {
+      r2.appendChild(el('span', 'meta', e.logCount + ' log entries'));
+    }
+    b.appendChild(r2);
+    b.onclick = function () { openDrawer(e.id); };
+    return b;
+  }
+
+  function drawBoard() {
+    var board = $('board');
+    board.textContent = '';
+    var head = el('div', 'board-head');
+    [['Section E', 'uncertainty'], ['Section F', 'work performed'], ['Section G', 'advancement']].forEach(function (h) {
+      var c = el('div');
+      c.appendChild(el('b', '', h[0]));
+      c.appendChild(document.createTextNode(' · ' + h[1]));
+      head.appendChild(c);
+    });
+    board.appendChild(head);
+
+    var rows = D.chains.filter(function (c) {
+      if (activeFy === 'all') return true;
+      var tu = IDX[c.tu];
+      return tu && tu.claim_fy === activeFy;
+    });
+    rows.forEach(function (c) {
+      var tu = IDX[c.tu];
+      var row = el('div', 'chain-row');
+      row.setAttribute('data-state', c.state);
+
+      var e1 = el('div', 'cell');
+      e1.setAttribute('data-label', 'Section E · uncertainty');
+      e1.appendChild(entCard(tu));
+      row.appendChild(e1);
+
+      var e2 = el('div', 'cell');
+      e2.setAttribute('data-label', 'Section F · work performed');
+      if (!c.links.length) e2.appendChild(el('div', 'void crit', 'No experiment investigates this uncertainty.'));
+      c.links.forEach(function (l) { e2.appendChild(entCard(IDX[l.ex])); });
+      row.appendChild(e2);
+
+      var e3 = el('div', 'cell');
+      e3.setAttribute('data-label', 'Section G · advancement');
+      var advIds = [];
+      c.links.forEach(function (l) { l.advs.forEach(function (a) { if (advIds.indexOf(a) < 0) advIds.push(a); }); });
+      if (!advIds.length) {
+        var anyDone = c.links.some(function (l) { return (IDX[l.ex] || {}).status === 'complete'; });
+        e3.appendChild(el('div', 'void' + (anyDone ? ' crit' : ''), !c.links.length
+          ? 'Nothing to claim without an experiment beneath it.'
+          : anyDone
+            ? 'An experiment here is finished with no advancement recorded — the chain stops one section short of the claim.'
+            : 'Not yet claimed.'));
+      }
+      advIds.forEach(function (a) { e3.appendChild(entCard(IDX[a])); });
+      row.appendChild(e3);
+      board.appendChild(row);
+    });
+
+    var orphans = D.entities.ex.filter(function (e) {
+      return !D.chains.some(function (c) { return c.links.some(function (l) { return l.ex === e.id; }); });
+    });
+    if (orphans.length) {
+      var row = el('div', 'chain-row');
+      row.setAttribute('data-state', 'broken');
+      var c1 = el('div', 'cell');
+      c1.setAttribute('data-label', 'Section E · uncertainty');
+      c1.appendChild(el('div', 'void crit', 'No uncertainty declared for the work at right.'));
+      row.appendChild(c1);
+      var c2 = el('div', 'cell');
+      c2.setAttribute('data-label', 'Section F · work performed');
+      orphans.forEach(function (e) { c2.appendChild(entCard(e)); });
+      row.appendChild(c2);
+      var c3 = el('div', 'cell');
+      c3.setAttribute('data-label', 'Section G · advancement');
+      c3.appendChild(el('div', 'void', '—'));
+      row.appendChild(c3);
+      $('board').appendChild(row);
+    }
+  }
+  drawBoard();
+
+  // ── findings ────────────────────────────────────────────────────────────
+  var fl = $('finding-list');
+  if (!D.findings.length) {
+    fl.appendChild(el('div', 'find', 'No gaps found against the tracker checks.'));
+  }
+  // One card per check, however many records tripped it — the check is the finding,
+  // the records are its instances.
+  var groups = [], gmap = {};
+  D.findings.forEach(function (f) {
+    var key = f.severity + '/' + f.code;
+    if (!gmap[key]) { gmap[key] = { severity: f.severity, code: f.code, title: f.title, action: f.action, items: [] }; groups.push(gmap[key]); }
+    gmap[key].items.push(f);
+  });
+  groups.forEach(function (g) {
+    var n = el('div', 'find');
+    n.setAttribute('data-sev', g.severity);
+    var sev = el('div', 'sev');
+    sev.appendChild(el('span', 'pill ' + (g.severity === 'high' ? 'crit' : g.severity === 'medium' ? 'warn' : ''), g.severity));
+    sev.appendChild(el('span', 'mono', g.code));
+    if (g.items.length > 1) sev.appendChild(el('span', 'mono', g.items.length + ' records'));
+    n.appendChild(sev);
+    var body = el('div');
+    body.appendChild(el('h3', '', g.title));
+    g.items.forEach(function (f) {
+      var inst = el('div', 'inst');
+      if (f.entity && f.entity !== '\u2014') inst.appendChild(el('div', 'who', f.entity));
+      inst.appendChild(el('p', '', f.detail));
+      if (f.action !== g.action) inst.appendChild(el('div', 'do', f.action));
+      body.appendChild(inst);
+    });
+    if (g.items.every(function (f) { return f.action === g.action; })) body.appendChild(el('div', 'do', g.action));
+    n.appendChild(body);
+    fl.appendChild(n);
+  });
+  $('findings-note').textContent = 'Run against the gap-analysis checks in project-sred-tracker. Severity is about the record, not the work.';
+
+  // ── effort ──────────────────────────────────────────────────────────────
+  var eb = $('effort-body');
+  if (!D.effort) {
+    eb.appendChild(el('div', 'void', 'No effort basis on file. Per-experiment days come from the entity records alone.'));
+    $('effort-note').textContent = '';
+  } else {
+    var wrap = el('div', 'tablewrap');
+    var t = el('table');
+    var thead = el('thead');
+    var hr = el('tr');
+    ['Experiment', 'Recorded', 'Proportional', 'Session-inclusive', 'Basis note'].forEach(function (h, i) {
+      var th = el('th', i > 0 && i < 4 ? 'n' : '', h);
+      if (i > 0 && i < 4) th.style.textAlign = 'right';
+      hr.appendChild(th);
+    });
+    thead.appendChild(hr);
+    t.appendChild(thead);
+    var tb = el('tbody');
+    D.effort.figures.forEach(function (f) {
+      var tr = el('tr');
+      var c0 = el('td');
+      var link = el('span', 'mono', f.ex);
+      link.style.color = 'var(--accent)';
+      c0.appendChild(link);
+      var ex = IDX[f.ex];
+      if (ex) c0.appendChild(el('span', 'note', ex.title));
+      tr.appendChild(c0);
+      tr.appendChild(el('td', 'n', f.days ? f.days.toFixed(1) + ' d' : '—'));
+      tr.appendChild(el('td', 'n', f.proportional_h === null ? 'n/s' : f.proportional_h.toFixed(1) + ' h'));
+      tr.appendChild(el('td', 'n', f.session_inclusive_h === null ? 'n/s' : f.session_inclusive_h.toFixed(1) + ' h'));
+      tr.appendChild(el('td', '', f.note));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    var tf = el('tfoot');
+    var ftr = el('tr');
+    ftr.appendChild(el('td', '', 'Recorded total'));
+    ftr.appendChild(el('td', 'n', D.totals.recordedDays.toFixed(1) + ' d'));
+    var ps = D.effort.figures.reduce(function (a, f) { return a + (f.proportional_h || 0); }, 0);
+    var ss = D.effort.figures.reduce(function (a, f) { return a + (f.session_inclusive_h || 0); }, 0);
+    ftr.appendChild(el('td', 'n', ps.toFixed(1) + ' h'));
+    ftr.appendChild(el('td', 'n', ss.toFixed(1) + ' h'));
+    ftr.appendChild(el('td', '', 'n/s = not separable from the commit record'));
+    tf.appendChild(ftr);
+    t.appendChild(tf);
+    wrap.appendChild(t);
+    eb.appendChild(wrap);
+
+    if (D.effort.advisorHeld.length) {
+      var w2 = el('div', 'tablewrap');
+      w2.style.marginTop = '14px';
+      var t2 = el('table');
+      var th2 = el('thead');
+      var hr2 = el('tr');
+      ['Held for the eligibility conversation — not recorded on any entity', 'Proportional', 'Session-inclusive'].forEach(function (h, i) {
+        var th = el('th', '', h);
+        if (i) th.style.textAlign = 'right';
+        hr2.appendChild(th);
+      });
+      th2.appendChild(hr2);
+      t2.appendChild(th2);
+      var tb2 = el('tbody');
+      D.effort.advisorHeld.forEach(function (c) {
+        var tr = el('tr');
+        tr.appendChild(el('td', '', c.cluster));
+        tr.appendChild(el('td', 'n', c.proportional_h === null ? '—' : c.proportional_h.toFixed(1) + ' h'));
+        tr.appendChild(el('td', 'n', c.session_inclusive_h === null ? '—' : c.session_inclusive_h.toFixed(1) + ' h'));
+        tb2.appendChild(tr);
+      });
+      t2.appendChild(tb2);
+      w2.appendChild(t2);
+      eb.appendChild(w2);
+    }
+
+    var co = el('div', 'callout warn');
+    co.appendChild(el('h4', '', 'How these numbers were made'));
+    if (D.effort.method) co.appendChild(el('p', '', D.effort.method.trim()));
+    if (D.effort.limitations) co.appendChild(el('p', '', D.effort.limitations.trim()));
+    if (D.effort.supersession) co.appendChild(el('p', '', D.effort.supersession.trim()));
+    eb.appendChild(co);
+    $('effort-note').textContent = D.effort.title + ' · ' + D.effort.id;
+  }
+
+  // ── gates ───────────────────────────────────────────────────────────────
+  var gl = $('gate-list');
+  D.gates.forEach(function (g) {
+    var n = el('div', 'gate ' + (g.clear ? 'clear' : 'open'));
+    var box = el('div', 'box', g.clear ? '✓' : '');
+    n.appendChild(box);
+    var b = el('div');
+    b.appendChild(el('div', 'lab', g.label));
+    b.appendChild(el('div', 'det', g.detail));
+    n.appendChild(b);
+    gl.appendChild(n);
+  });
+  var clear = D.gates.filter(function (g) { return g.clear; }).length;
+  $('gates-note').textContent = clear + ' of ' + D.gates.length + ' gates clear. Every open gate is something a human decides, not something the substrate can close.';
+
+  // ── inbox ───────────────────────────────────────────────────────────────
+  var ib = $('inbox-list');
+  if (!D.inbox.length) {
+    ib.appendChild(el('div', 'void', 'Nothing waiting. sred/inbox/ is empty.'));
+  } else {
+    D.inbox.forEach(function (c) {
+      var n = el('div', 'callout');
+      var h = el('h4', '', c.date + ' · ' + (c.source || 'inbox') + ' · proposed by ' + (c.proposedBy || 'harvester'));
+      n.appendChild(h);
+      n.appendChild(el('p', '', c.description));
+      var f = el('p', '');
+      f.appendChild(el('span', 'mono', c.file));
+      if (c.people.length) f.appendChild(document.createTextNode('  ·  ' + c.people.join(', ')));
+      n.appendChild(f);
+      ib.appendChild(n);
+    });
+  }
+
+  // ── evidence log ────────────────────────────────────────────────────────
+  var shown = 6;
+  function drawLog() {
+    var box = $('log-list');
+    box.textContent = '';
+    D.evidence.slice(0, shown).forEach(function (e) {
+      var n = el('div', 'logitem');
+      n.setAttribute('data-type', e.type);
+      var h = el('div', 'lh');
+      h.appendChild(el('span', 'ld', e.date));
+      h.appendChild(el('span', 'lk', e.type));
+      var ids = [e.tu, e.ex, e.adv].filter(Boolean).join(' → ');
+      if (ids) h.appendChild(el('span', 'lids', ids));
+      if (e.backfilled) h.appendChild(el('span', 'pill warn', 'back-filled'));
+      n.appendChild(h);
+      n.appendChild(el('p', '', e.description));
+      if (e.record) n.appendChild(el('div', 'ref', (e.recordType ? e.recordType + ' · ' : '') + e.record));
+      box.appendChild(n);
+    });
+    var btn = $('log-more');
+    if (D.evidence.length <= 6) { btn.hidden = true; return; }
+    btn.textContent = shown >= D.evidence.length ? 'Show fewer' : 'Show all ' + D.evidence.length + ' entries';
+  }
+  $('log-more').onclick = function () {
+    shown = shown >= D.evidence.length ? 6 : D.evidence.length;
+    drawLog();
+  };
+  drawLog();
+  var bf = D.totals.backfilled;
+  $('log-note').textContent = D.evidence.length + ' entries, newest first' +
+    (bf ? ' · ' + bf + ' back-filled from contemporaneous records and marked as such' : '') + '.';
+
+  // ── capture lens ────────────────────────────────────────────────────────
+  var lb = $('lens-body');
+  if (!D.criteria) {
+    lb.appendChild(el('div', 'void', 'No sred/criteria.yaml on file.'));
+  } else {
+    var st = el('div', 'callout' + (D.criteria.status === 'reviewed' ? '' : ' warn'));
+    st.appendChild(el('h4', '', 'criteria.yaml · ' + D.criteria.status));
+    st.appendChild(el('p', '', D.criteria.status === 'reviewed'
+      ? 'Reviewed' + (D.criteria.reviewedBy ? ' by ' + D.criteria.reviewedBy : '') + '. Judgments below carry that review.'
+      : 'Still a draft. Until it is reviewed with the advisor, every judgment made through this lens is provisional.'));
+    lb.appendChild(st);
+
+    var w = el('div', 'tablewrap');
+    w.style.marginTop = '14px';
+    var t = el('table');
+    var thd = el('thead');
+    var r = el('tr');
+    ['Candidate uncertainty area', 'Captured as', 'Milestones'].forEach(function (h) { r.appendChild(el('th', '', h)); });
+    thd.appendChild(r);
+    t.appendChild(thd);
+    var tb = el('tbody');
+    D.criteria.areas.forEach(function (a) {
+      var tr = el('tr');
+      tr.appendChild(el('td', '', a.label));
+      tr.appendChild(el('td', 'n', a.tus.join(', ') || '—'));
+      tr.appendChild(el('td', 'n', a.milestones.join(', ') || '—'));
+      tb.appendChild(tr);
+    });
+    var uncovered = D.entities.tu.filter(function (tu) {
+      return !D.criteria.areas.some(function (a) { return a.tus.indexOf(tu.id) >= 0; });
+    });
+    uncovered.forEach(function (tu) {
+      var tr = el('tr');
+      var td = el('td', '', 'Not in the declared lens — ' + tu.title);
+      td.style.fontStyle = 'italic';
+      td.style.color = 'var(--warn)';
+      tr.appendChild(td);
+      tr.appendChild(el('td', 'n', tu.id));
+      tr.appendChild(el('td', 'n', tu.linked_milestones.map(function (m) { return m.id; }).join(', ') || '—'));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    w.appendChild(t);
+    lb.appendChild(w);
+
+    if (D.criteria.routine.length) {
+      var ro = el('div', 'callout');
+      ro.appendChild(el('h4', '', 'Declared routine — deliberately not captured'));
+      ro.appendChild(el('p', '', D.criteria.routine.join('\n')));
+      lb.appendChild(ro);
+    }
+  }
+
+  // ── footer ──────────────────────────────────────────────────────────────
+  var fr = $('f-regen');
+  fr.appendChild(document.createTextNode('Regenerate from the substrate: '));
+  var code = el('code', '', 'node ' + D.meta.generator + ' <facility> --out sred-dashboard.html');
+  fr.appendChild(code);
+  $('f-stamp').textContent = 'Generated ' + D.meta.generatedAt.replace('T', ' ').replace(/\..*/, ' UTC') +
+    ' from ' + D.meta.facility + '/sred · counts as of ' + D.meta.asOf + '.';
+
+  // ── drawer ──────────────────────────────────────────────────────────────
+  var drawer = $('drawer'), scrim = $('scrim'), lastFocus = null;
+  function section(parent, title, node) {
+    var d = el('div', 'dsec');
+    d.appendChild(el('h4', '', title));
+    d.appendChild(node);
+    parent.appendChild(d);
+  }
+  function openDrawer(id) {
+    var e = IDX[id];
+    if (!e) return;
+    lastFocus = document.activeElement;
+    $('drawer-eid').textContent = e.id + ' · ' + (e.kind === 'tu' ? 'technological uncertainty' : e.kind === 'ex' ? 'experiment' : 'technological advancement');
+    $('drawer-title').textContent = e.title;
+    var b = $('drawer-body');
+    b.textContent = '';
+
+    var meta = el('div', 'kv');
+    function m(k, v) { if (!v && v !== 0) return; var d = el('div'); d.appendChild(el('dt', '', k)); d.appendChild(el('dd', '', String(v))); meta.appendChild(d); }
+    m('status', e.status);
+    m('claim year', e.claim_fy);
+    e.dates.forEach(function (d) { m(d[0].toLowerCase(), d[1]); });
+    if (e.kind === 'ex' && e.days) m('recorded', e.days.toFixed(1) + ' d');
+    section(b, 'Record', meta);
+
+    e.narrative.forEach(function (n) {
+      section(b, n[0], el('div', 'prose', n[1]));
+    });
+
+    if (e.linked_milestones.length) {
+      var ul = el('ul');
+      e.linked_milestones.forEach(function (m2) {
+        var li = el('li');
+        li.appendChild(el('span', 'mono', m2.id));
+        li.appendChild(document.createTextNode('  ' + (m2.title || '')));
+        if (m2.status) {
+          var p = el('span', 'pill' + (m2.status === 'planned' || m2.percent === 0 ? ' warn' : ''), m2.status + ' · ' + (m2.percent === null ? '?' : m2.percent + '%'));
+          p.style.marginLeft = '6px';
+          li.appendChild(p);
+        }
+        ul.appendChild(li);
+      });
+      section(b, 'Anchored to', ul);
+    }
+
+    if (e.evidence_records.length) {
+      var ul2 = el('ul');
+      e.evidence_records.forEach(function (r) {
+        var li = el('li');
+        li.appendChild(el('span', 'mono', r.date + '  ' + r.type));
+        li.appendChild(document.createElement('br'));
+        li.appendChild(document.createTextNode(r.description));
+        if (r.reference) {
+          li.appendChild(document.createElement('br'));
+          li.appendChild(el('span', 'mono', r.reference));
+        }
+        ul2.appendChild(li);
+      });
+      section(b, 'Evidence records (' + e.evidence_records.length + ')', ul2);
+    }
+
+    var logs = D.evidence.filter(function (x) { return x.tu === e.id || x.ex === e.id || x.adv === e.id; });
+    if (logs.length) {
+      var ul3 = el('ul');
+      logs.forEach(function (x) {
+        var li = el('li');
+        li.appendChild(el('span', 'mono', x.date + '  ' + x.type + (x.backfilled ? '  (back-filled)' : '')));
+        li.appendChild(document.createElement('br'));
+        li.appendChild(document.createTextNode(x.description));
+        ul3.appendChild(li);
+      });
+      section(b, 'Evidence-log entries (' + logs.length + ')', ul3);
+    }
+
+    if (e.people.length) {
+      var ul4 = el('ul');
+      e.people.forEach(function (p) {
+        var li = el('li');
+        li.appendChild(el('span', 'mono', (p.days ? p.days.toFixed(1) + ' d' : '0 d') + '  '));
+        li.appendChild(document.createTextNode(p.name + ' — ' + p.role));
+        ul4.appendChild(li);
+      });
+      section(b, 'People and eligible days', ul4);
+    }
+
+    if (e.review_notes.length) {
+      var box = el('div');
+      box.style.display = 'flex';
+      box.style.flexDirection = 'column';
+      box.style.gap = '9px';
+      e.review_notes.forEach(function (n) {
+        box.appendChild(el('div', 'rn' + (/^RESOLVED/.test(n) ? ' resolved' : /HIGH:/.test(n) ? ' high' : ''), n));
+      });
+      section(b, 'Review notes', box);
+    }
+
+    drawer.hidden = false;
+    requestAnimationFrame(function () { drawer.classList.add('on'); scrim.classList.add('on'); });
+    $('drawer-close').focus();
+    document.addEventListener('keydown', esc);
+  }
+  function closeDrawer() {
+    drawer.classList.remove('on');
+    scrim.classList.remove('on');
+    document.removeEventListener('keydown', esc);
+    setTimeout(function () { drawer.hidden = true; }, 220);
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  function esc(ev) { if (ev.key === 'Escape') closeDrawer(); }
+  $('drawer-close').onclick = closeDrawer;
+  scrim.onclick = closeDrawer;
+})();
+</script>
+
+</body></html>

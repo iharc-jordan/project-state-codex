@@ -1,8 +1,8 @@
 # validate-sred — sred capability validator
 
-Composed with `project-state validate` when the `sred` capability is enabled and
-may only fail records in the `sred` namespace. The checks below are the complete
-public validator contract.
+Composed with `project-state validate` per the bundled capability contract: runs when the `sred`
+capability is enabled, and may only fail records in the `sred` namespace. Normative source:
+`capabilities/sred/README.md` §7.
 
 ## Checks
 

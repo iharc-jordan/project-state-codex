@@ -1,26 +1,31 @@
 ---
 name: project-feedback
-description: "Register and triage defects or requests about Project State as substrate feedback records, then project them idempotently to GitHub issues. Use for 'file a bug', 'log this bug', 'report an issue', 'capture feedback', 'sync feedback', or 'list open feedback'. Treat the substrate record as source of truth and require explicit confirmation before creating or updating an external GitHub issue."
+description: "Report a bug or request against project-state itself — 'file feedback', 'this skill got it wrong', 'feature request for project-state'. Records FB-NNN entries."
+map:
+  tier: P3
+  stage: keep
+  requires: [memory]
+  reads: [feedback]
+  writes: [feedback]
 ---
-
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
 
 # Project Feedback
 
+> **When to use.**
+>
+> Register defects and requests against the project-state product itself. Captures reports from any source — inline user report, seed-issue curation flags on harvested signals, or an opt-in skill-error log — as feedback/FB-NNN-<slug>.yaml substrate records, triages them (dedup, in-repo verification with file:line notes, type/component/severity), and projects them to GitHub issues idempotently: first filing writes github_issue back onto the record; re-runs update, never duplicate. Sync pulls issue status back (resolved/verified) via the harvester's GitHub sweep. Use whenever the user says 'file a bug', 'log this bug', 'report an issue', 'register this feedback', 'found a plugin bug', 'the skill misbehaved', 'capture feedback from signals', 'sync feedback', 'list open feedback', or when curation flags a doc with seed-issue.  Trigger: /project-feedback
+
 ## Purpose
 
-An explicitly captured, durable bug-shaped report about the Project State
-product becomes exactly one substrate record and at most one GitHub issue, with
-working links both ways. Routine task-local implementation defects stay in the
-active Codex task or configured issue tracker; do not create an FB record merely
-because coding work found a bug. The substrate record
+Any bug-shaped report about the project-state product, from any source, becomes exactly one
+substrate record and exactly one GitHub issue, with working links both ways. The substrate record
 (`feedback/FB-NNN-<slug>.yaml`) is the source of truth; the GitHub issue is its projection —
 the same relationship `project-jira-publisher` has to Jira, using the same backlink idempotency.
 
-This skill is the complete public Tier 1 contract. The private outbox
-`github_issue` action, orchestrator integration, and pilot deposit endpoint are
-not bundled and are unsupported here. Filing remains **direct**
-(`feedback.file_mode: direct`) with explicit confirmation.
+This skill
+implements spec pieces 1–4 (Tier 1). Pieces 5–7 (outbox `github_issue` queue action,
+orchestrator tick, pilot deposit endpoint) are spec'd but not built; until piece 5 lands,
+filing is **direct** (`feedback.file_mode: direct` in the manifest) with explicit confirmation.
 
 ## Trigger phrases
 
@@ -68,7 +73,7 @@ Ids allocate from `counters.feedback` under the `state.json` advisory lock, via 
 ```yaml
 feedback:
   enabled: true
-  repo: "<owner>/<repo>"                 # defaults to surfaces.github.repos[0]
+  repo: "Atomic-47-Labs/project-state"   # defaults to surfaces.github.repos[0]
   default_labels: ["bug"]
   label_map: { bug: [bug], enhancement: [enhancement], question: [question], docs: [documentation] }
   file_mode: direct          # direct until spec piece 5 (queue action) lands; then queue
@@ -77,8 +82,8 @@ feedback:
     skill_errors: false      # opt-in; drains logs/feedback-candidates.ndjson
 ```
 
-GitHub access uses an available authenticated connector or `gh` CLI. Tokens never
-touch the substrate.
+GitHub access: `gh` CLI locally/desktop; `ps_github` MCP connector on the appliance. Tokens
+never touch the substrate.
 
 ## Operations
 
@@ -87,16 +92,10 @@ touch the substrate.
 From an inline report: draft the record with the reporter's words verbatim in `description`,
 allocate FB-NNN, `status: captured`, log `feedback.captured`. Never touches GitHub.
 
-Apply the materiality gate first. Capture when the operator explicitly asks for
-Project State feedback, or when the report represents a durable cross-project
-workflow/data/safety contract. Otherwise return the configured issue-tracker
-route and leave Project State unchanged. A reasoned operator override is
-recorded in the existing description/summary fields.
-
 From signals (`capture --from-signals`): walk `documents/index.yaml` classified entries whose
 `action_flags` include `seed-issue` and that have no FB record linking them
 (`source_document` match). Draft one FB record per distinct claim (a single doc may yield
-several). Provenance: `source_document`, `reported_via: doc`
+several — Jen's kickoff doc yielded three). Provenance: `source_document`, `reported_via: doc`
 or `harvest`.
 
 ### `triage` — captured → triaged | rejected
@@ -105,7 +104,7 @@ or `harvest`.
    Duplicate → set `duplicate_of`, close as dup, never file.
 2. **Verify in repo**: grep/read the claimed files; set `verified_in_repo` +
    `verification_note` with file:line citations. Unverifiable reports still proceed, marked
-   unverified — reporters may not be able to read the code and their reports are still evidence.
+   unverified — pilot reporters can't read the code and their reports are still evidence.
 3. Classify `type`, `component`, `severity`; map labels from `feedback.label_map`.
 
 ### `file` — triaged → filed
@@ -113,11 +112,11 @@ or `harvest`.
 Render the issue body (template below). In `file_mode: direct`: show the drafted issue to the
 user, get explicit confirmation, run `gh issue create`, write `github_issue` + `github_url`
 back, `status: filed`, log `feedback.filed`. A record that already has `github_issue` is
-**updated** (`gh issue edit` / comment), never re-created. Every external create or
-update requires confirmation, including `severity: data-risk`.
+**updated** (`gh issue edit` / comment), never re-created. `severity: data-risk` records may
+file without the confirmation pause — with a loud log line — per spec §9 proposal.
 
-An internal version may later replace direct filing with a queued
-`kind: github_issue` action; that feature is unavailable in this public adapter.
+When piece 5 lands, default switches to queueing an outbox card (`kind: github_issue`) and the
+queue's approve action performs the create.
 
 ### `sync` — filed → resolved
 
@@ -128,9 +127,7 @@ harvester's GitHub signals). Closed → `status: resolved`, record `resolution`,
 
 ### `list`
 
-Return bounded FB summaries by status/component/severity with `limit=50` and a
-stable cursor. Full descriptions/reproduction details require a named record or
-explicit detail mode. Feeds the weekly report one-liner and the P-SPP
+Open FB by status/component/severity. Feeds the weekly report one-liner and the P-SPP
 workstream-G learning register.
 
 ## Issue body template
@@ -155,9 +152,6 @@ _Registered from project-state feedback record FB-NNN._
 
 - **One report, one record, one issue.** Dedup before filing; the `github_issue` backlink is
   the idempotency key — never strip it.
-- **External issue ownership is lean.** Once filed, keep the stable issue number,
-  URL, and necessary status/resolution snapshot. Do not copy issue comments or
-  later full bodies back into Project State.
 - **Reporters' words are evidence.** Keep the verbatim report in `description`; triage adds to
   the record, it doesn't rewrite the report.
 - **Verify before filing when the code is readable.** Every claim in a filed issue carries a

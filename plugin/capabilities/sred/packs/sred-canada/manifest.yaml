@@ -13,7 +13,7 @@ pack:
 
     Behavior only. Entities, skills, templates, and the validator ship with the `sred`
     capability plugin (capabilities/sred/) — this pack contains no substrate extensions
-    and no skills, per CAPABILITY-PLUGINS.md §6.
+    and no skills, per the bundled capability contract
 
     Coexists with any active project pack (pic-pcais, client-services, agile-default,
     board-investor): resolution is per-matrix-entry via the `profile:` field.
@@ -26,6 +26,7 @@ pack:
     - "Income Tax Act s.37 (SR&ED expenditures)"
   released: "2026-08-17"
   maturity: "beta"
+  axis: capability   # bundled by a capability; never listed in a project pack picker (the bundled pack contract)
 
 provides:
   profiles:

@@ -1,0 +1,27 @@
+# work-org-change — milestone seeds. Drafts only; `due` is a date expression resolved once at seed time.
+milestones:
+  - slug: case-for-change
+    title: "Case for change agreed"
+    due: start+2w
+    phase: 01-define
+    acceptance: "Why, what changes, for whom — agreed by leadership"
+  - slug: comms-plan
+    title: "Stakeholder map and communications plan"
+    due: start+4w
+    phase: 02-plan
+    acceptance: "Every affected group named with what they hear, when and from whom"
+  - slug: pilot-live
+    title: "Pilot group live"
+    due: 40%
+    phase: 03-deliver
+    acceptance: "One group working the new way; feedback channel open"
+  - slug: full-rollout
+    title: "Full rollout"
+    due: end-2w
+    phase: 03-deliver
+    acceptance: "Everyone in scope moved over; old way retired"
+  - slug: adoption-review
+    title: "Adoption review"
+    due: end
+    phase: 04-review
+    acceptance: "Adoption measured against target; follow-up actions agreed"

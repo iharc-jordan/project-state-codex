@@ -1,0 +1,19 @@
+# work-org-change — reporting matrix defaults (the bundled pack contract)
+
+defaults:
+  - id: weekly-team-update
+    stakeholder_group: internal.team
+    report: weekly-team-update
+    cadence: { kind: weekly, day: monday }
+    format: md
+    surface: slack + gmail.draft
+    generator: project-status-reporter
+
+  - id: monthly-change-pulse
+    stakeholder_group: internal.sponsor
+    report: monthly-change-pulse
+    cadence: { kind: monthly, day_of_month: "first-monday" }
+    format: md
+    surface: gmail.draft
+    generator: project-status-reporter
+    description: "Adoption so far, what people are saying, where resistance is, and what leadership needs to do next."

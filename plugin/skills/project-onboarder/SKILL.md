@@ -1,11 +1,20 @@
 ---
 name: project-onboarder
-description: "Produce a personalized onboarding brief for a new teammate joining the project, grounded in project-state/. Use whenever the user says 'onboard [name]', 'new teammate joining', 'brief for [name]', 'get [name] up to speed', 'someone new from [org]', 'onboarding doc for [person]', 'welcome pack', 'what does [role] need to know', 'bring [name] into the project', or any request to introduce someone to the project. Produces a one-pager with their role, what they own, who their key contacts are, the MPA/PIC basics they need, and a 'first week' action list. Tailors content by role (Project Lead / Finance Rep / Communications / Signing Authority / Technical Contributor / PIC liaison)."
+description: "Brief a new teammate on the project — 'onboard Sam', 'new teammate joining', 'get Priya up to speed', 'brief for the new PM'. Personalised, grounded in project-state/."
+map:
+  tier: P3
+  stage: keep
+  requires: [memory]
+  reads: [manifest, people, milestones, decisions]
+  writes: [people]
+  produces: [onboarding-brief]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project Onboarder
+
+> **When to use.**
+>
+> Produce a personalized onboarding brief for a new teammate joining the project, grounded in project-state/. Use whenever the user says 'onboard [name]', 'new teammate joining', 'brief for [name]', 'get [name] up to speed', 'someone new from [org]', 'onboarding doc for [person]', 'welcome pack', 'what does [role] need to know', 'bring [name] into the project', or any request to introduce someone to the project. Produces a one-pager with their role, what they own, who their key contacts are, the MPA/PIC basics they need, and a 'first week' action list. Tailors content by role (Project Lead / Finance Rep / Communications / Signing Authority / Technical Contributor / PIC liaison).
 
 ## Purpose
 
@@ -87,12 +96,12 @@ Everything authoritative is under `project-state/` in the shared drive folder. R
 ## Useful reference
 - PIC PM Guide (May 2025): `<path>` — section that's most relevant to your role
 - The schema reference: `project-state/SCHEMA.md`
-- The Project State Codex plugin is already installed; no project-local skill installation is required
+- Install the skills per `project-state/skills/INSTALL.md` so "what's going on?" actually tells you
 
 Any questions, ping <Project Lead name> in Slack or email.
 
 Welcome aboard.
-— <Project Lead name>
+— David (keystone: david@atomic47.co)
 ```
 
 ## Role-specific playbook excerpts

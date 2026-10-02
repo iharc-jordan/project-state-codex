@@ -33,7 +33,8 @@ reports:
       lead_time_days: 21
     format:
       kind: pdf
-      template: "templates/grant-progress-report.md"
+      # templates/grant-progress-report.md never shipped — trimmed 2026-08-21 (FB-014 / #17).
+      template: ~
       output_naming: "reports/funder/{{YYYY}}-{{period}}-progress-report.pdf"
     sections:
       - id: executive-summary
@@ -73,7 +74,8 @@ reports:
       lead_time_days: 14
     format:
       kind: xlsx
-      template: "templates/quarterly-claim.xlsx"
+      # templates/quarterly-claim.xlsx never shipped — trimmed 2026-08-21 (FB-014 / #17).
+      template: ~
       output_naming: "reports/claims/{{YYYY}}-Q{{Q}}-claim.xlsx"
     cover_delivery:
       surface: gmail.draft
@@ -96,7 +98,8 @@ reports:
       trigger: phase.closeout
     format:
       kind: pdf
-      template: "templates/grant-final-report.md"
+      # templates/grant-final-report.md never shipped — trimmed 2026-08-21 (FB-014 / #17).
+      template: ~
       output_naming: "reports/funder/final-report-{{YYYY}}.pdf"
     signoff_required:
       - role: project_lead

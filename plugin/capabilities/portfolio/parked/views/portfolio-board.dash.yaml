@@ -1,0 +1,24 @@
+# portfolio-board — one strip per active member (V1.1; declarative, not yet mounted)
+view:
+  id: portfolio-board
+  title: "Portfolio"
+  requires: "capability=portfolio"
+  kind: strips
+  source: "portfolio/registry.yaml:members"
+  exclude_where: "status in [closed, retired]"
+  order_by: [priority, next_deadline]
+  strip:
+    title: "{name} — {status} · {current_phase}"
+    fields:
+      - { label: "Milestones", value: "milestones_complete/milestones_total", bar: true }
+      - { label: "At risk", value: at_risk, badge: "amber when > 0" }
+      - { label: "Top risk", value: top_risk_title }
+      - { label: "Next deadline", value: next_deadline, countdown: true,
+          tier_colors: { red: "<=7d", amber: "<=30d", green: ">30d" } }
+      - { label: "Activity (7d)", value: "events_7d over the last 8 snapshots", sparkline: true }
+      - { label: "Collected", value: last_snapshot, countdown: false,
+          alert: "older than snapshot_cadence_days → 'stale'" }
+    alert: "reachable == false → red: 'unreachable since {last_snapshot}: {reason}'"
+  footer:
+    hopper: "count of members with status proposed — link to the Members board"
+    findings: "count of open findings by severity — link to the Findings board"

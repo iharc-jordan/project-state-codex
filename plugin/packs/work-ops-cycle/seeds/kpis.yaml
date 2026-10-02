@@ -1,0 +1,18 @@
+# KPI suggestions — never written by onboarding. project-goal-tracker offers these in the `project-goal-tracker` workflow.
+kpis:
+  - slug: days-to-close
+    title: "Days to close"
+    unit: days
+    direction: down
+  - slug: on-time-rate
+    title: "Periods closed on time"
+    unit: "%"
+    direction: up
+  - slug: adjustments-per-period
+    title: "Post-close adjustments per period"
+    unit: count
+    direction: down
+  - slug: open-reconciling-items
+    title: "Open reconciling items at close"
+    unit: count
+    direction: down

@@ -1,124 +1,87 @@
 # Project State for Codex
 
-This repository is an independent Codex adaptation of [Atomic 47 Labs' public
-Project State plugin](https://github.com/Atomic-47-Labs/project-state-plugin-public),
-based on public v4.9.0 commit
-[`c0b55ba`](https://github.com/Atomic-47-Labs/project-state-plugin-public/commit/c0b55ba52dfdca9312a1f6150039ed14d569e2db).
+Project State keeps durable project facts, milestones, decisions, risks, evidence,
+reporting obligations, and activity history in a local-first `project-state/`
+facility. This independent Codex adaptation retains Atomic 47 Labs attribution
+and the [MIT license](./plugin/LICENSE).
 
-Project State is a local-first operating system for multi-stakeholder projects.
-Its 43 skills keep shared objectives, milestones, decisions, risks, phases,
-stakeholders, compliance evidence, reporting obligations, and report provenance
-in a versionable `project-state/` ledger. Routine reports are derived from that
-state instead of being recreated from chat history.
+Version **5.5.0** incorporates the public Atomic47
+[5.5.0 baseline](https://github.com/Atomic-47-Labs/project-state-plugin-public/commit/a21f28270027b031ec718ebe44dc0fb283be50eb).
+The exact upstream revision is recorded separately in [upstream.json](./upstream.json).
+`main` is the sole maintained branch. Releases use ordinary semantic versions
+and `vX.Y.Z` tags; historical tags remain available.
 
-`main` is the public Codex variant and the repository's only long-lived branch.
-The `upstream-v4.9.0` tag preserves the exact unmodified Atomic47 public
-baseline for comparison. The Codex branch intentionally omits the upstream
-Claude marketplace and plugin manifests; Claude users should use Atomic47's
-upstream repository.
+## Install and update
 
-## What the Codex adaptation changes
-
-The adaptation makes Project State useful alongside Codex's native memory,
-repository instructions, task tracking, and external issue trackers instead of
-duplicating them:
-
-- Codex Memories own personal preferences and recurring operator habits.
-- `AGENTS.md` owns repository commands, coding rules, release requirements, and
-  execution constraints.
-- the active Codex task or Goal owns temporary implementation progress.
-- Jira, GitHub, or Linear own individual engineering work items when configured.
-- canonical repositories and drives own source-document content.
-- Project State owns durable shared project facts, rollups, reporting
-  obligations, compliance evidence, provenance, and the corresponding activity
-  ledger.
-
-It also removes process duplication:
-
-- ordinary task-local code work stays in the active task and issue tracker;
-  epic/program facilities are created or updated only for shared material facts;
-- one durable fact creates one canonical entity update and one activity event;
-- exact evidence/report/delivery repeats reuse a deterministic existing event
-  identity instead of incrementing counters or fanning out again;
-- one report owner handles a source event and reporting period;
-- optional skills activate only for an applicable pack, capability, configured
-  surface, due reporting entry, or explicit request;
-- the orchestrator is read-only unless a configured trigger or operator approval
-  authorizes a generator;
-- the deprecated document-suite generator is only a forwarding alias;
-- `automation/tasks.yaml` is the only current automation registry;
-- onboarding inspects available sources before asking grouped unresolved
-  questions; and
-- counters and last activity are mechanical projections, while phase, health,
-  lifecycle, timezone, and closeout disagreements are surfaced by read-only
-  reconciliation rather than guessed;
-- routine reads use bounded summaries and cursors before opening full entities;
-- implementation-linked state can travel with its code through the ordinary
-  protected/default-branch merge, while deliberate governance/reporting
-  state-only commits remain supported; and
-- Claude/Coworker presentation mechanics and dangling private-only references
-  are removed without deleting their underlying data, approval, or output
-  contracts.
-
-The full reasoning, affected-file matrix, compatibility impact, validation, and
-future internal-version disposition are in
-[CODEX-ADAPTATION.md](./CODEX-ADAPTATION.md).
-
-## What remains compatible
-
-The Codex branch retains all 43 skill names and automatic discovery, the
-`project-state/` and `grant-state/` schemas and paths, IDs, event names, logs,
-reports, templates, eight packs, two capabilities, reporting-matrix and
-pack-required triggers, Git sharing, provenance, and external-review safeguards.
-No alternate Project State format or Codex-only manifest field was added to the
-project ledger.
-
-## Install in Codex
-
-Clone the repository into the personal Codex marketplace and install it:
+Use Node.js 18 or newer for the bundled stdio MCP server. In a configured
+personal marketplace, clone this repository to the marketplace source directory:
 
 ```powershell
 git clone https://github.com/iharc-jordan/project-state-codex.git "$env:USERPROFILE\plugins\project-state"
-codex plugin add project-state@personal
-codex plugin list
+codex plugin add project-state@personal --json
+codex plugin list --json
 ```
 
-On macOS or Linux, use `$HOME/plugins/project-state` as the clone destination.
-If that destination already exists, update or move it deliberately rather than
-overwriting it.
+For an existing clone, update its `main` checkout, then run the same `plugin add`
+command. The personal marketplace must already point `project-state` at that
+clone. Start a fresh Codex process after an update so it discovers the new
+skills and MCP registration. The stable plugin identity is `project-state@personal`.
 
-The Codex manifest at `.codex-plugin/plugin.json` points to
-`./plugin/skills/`. Each skill links to the shared Codex adapter policy in
-`plugin/CODEX.md`.
+Installation makes the workflows available. Capability enablement, connectors,
+paid entitlements, project migrations, schedules, and external publishing remain
+per-project choices. Installation creates no facility, cache, or recurring job.
 
-Validate the package without creating a facility:
+## Use
+
+Ask for project state, a milestone update, a status report, or an explicitly
+requested initialization. Routine code work does not create a project facility.
+The selected model and reasoning settings are inherited from Codex.
+
+The checked MCP server discovers served projects through `project_list` and
+provides domain operations plus general entity operations with stale-write
+checks. A server refusal cannot be bypassed with file writes. Local projects
+that are not served can use the existing filesystem binding; cloud projects
+require their configured connector.
+
+Codex currently starts a plugin MCP in its installed directory and does not
+provide the active workspace path. To bind the local server to a selected
+facility, set the existing `PROJECT_STATE_DIR` environment variable before
+starting Codex. Without that binding, `project_list` reports no local facility
+and the skill uses the existing file binding for an unserved local project.
+This requires no global configuration change.
+
+Available workflows cover core project operations, grants, SR&ED, Tender,
+Intel, Portfolio, Research, work-type packs, reporting, scheduling, fanout,
+and local HTML snapshots. Installed capability inventory is distinct from
+paid entitlement identifiers. `automation/tasks.yaml` remains the project
+cadence registry; explicit scheduling requests use Codex native automations.
+
+## Validate and release
+
+Python with PyYAML, Node.js, and Git are needed for repository checks:
 
 ```powershell
-$env:PYTHONUTF8 = '1'
-py -3 scripts/validate_codex_adaptation.py
+python scripts/validate_codex_adaptation.py
+python -m unittest discover -s tests -v
 ```
 
-To inspect an existing facility without changing it, add
-`--facility <project-root-or-project-state-path>`. Findings are proposals only;
-repairs still require an explicit Project State apply request.
+The validator derives its inventory from the pinned upstream commit. Runtime
+tests use disposable synthetic facilities. Do not test migrations or writes
+against real projects.
 
-## Repository layout
+Commit validated changes directly on `main`, publish that revision, and tag it
+`vX.Y.Z`. Verify the remote revision and installed payload before reporting a
+release current. [CODEX-ADAPTATION.md](./CODEX-ADAPTATION.md) describes the host
+integration and validation limits.
 
-```text
-.codex-plugin/plugin.json       # Codex plugin manifest
-plugin/CODEX.md                 # Codex ownership, routing, and safety policy
-plugin/skills/                  # 43 preserved skill entrypoints
-plugin/packs/                   # 8 compliance packs
-plugin/capabilities/            # 2 capability definitions
-plugin/templates/               # preserved scaffold and report templates
-CODEX-ADAPTATION.md             # complete adaptation and validation record
-scripts/validate_codex_adaptation.py
-```
+## Layout
 
-For the original Claude plugin and its installation instructions, use the
+- `.codex-plugin/plugin.json` and `.mcp.json`: supported Codex registration.
+- `plugin/CODEX.md`: compact host adapter, read once per active task.
+- `plugin/skills/`, `capabilities/`, `packs/`, `templates/`: bundled workflows and contracts.
+- `plugin/server/`: upstream checked MCP engine and snapshot renderer.
+- `plugin/scripts/start-state-mcp.mjs`: installed-path launcher.
+- `scripts/` and `tests/`: package and synthetic runtime validation.
+
+For the original Claude distribution, use the
 [Atomic47 public repository](https://github.com/Atomic-47-Labs/project-state-plugin-public).
-
-## License and attribution
-
-Atomic47 attribution and upstream links are retained. This adaptation remains
-available under the upstream MIT license; see [LICENSE](./LICENSE).

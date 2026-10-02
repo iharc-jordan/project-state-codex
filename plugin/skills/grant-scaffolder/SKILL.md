@@ -1,11 +1,20 @@
 ---
 name: grant-scaffolder
-description: "Initialize the standard grant-state facility only on an explicit grant-scaffolding or award-handoff request. Inspect supplied program sources first, propose but do not infer the matching playbook or eligibility, and preserve narrative, gate, budget, phase, freeze, and project handoff contracts. Never create an external surface or sibling project without confirmation."
+description: "Start a new grant application workspace (grant-state/) — 'start a grant application', 'we're applying to NSERC/IRAP/SIF/Mitacs', 'set up a grant submission'. Matches 19 Canadian programs."
+map:
+  tier: grant
+  stage: ingest
+  requires: [memory, local-fs]
+  inputs: [operator]
+  writes: [grant-state]
+  calls: [project-scaffolder]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Grant Scaffolder
+
+> **When to use.**
+>
+> Initialize a new grant-submission facility (grant-state/). Matches the program against 19 Canadian playbooks (Tri-Council NSERC/SSHRC/CIHR, IRAP, SIF, PIC, CFI JELF, Mitacs, NGen, SCALE.AI, Genome Canada, PacifiCan, FedDev, FedNor, CED, ACOA, CanNor, SR&ED, agnostic-core), seeds narrative sections, compliance gates, budget scaffold, and phase manifests. On award: freezes submission, spawns sibling project-state/, carries forward people, IP, gates, milestones. Use for 'scaffold new NSERC submission', 'new grant facility', 'set up SIF submission', 'we won the grant, hand off to project-state'.
 
 ## Purpose
 
@@ -13,28 +22,11 @@ Initialize a `grant-state/` submission facility and manage the award handoff to 
 1. **At submission start** — scaffold the facility.
 2. **On award** — freeze the facility, spawn `project-state/`, carry forward artifacts.
 
-## Codex flow
+## Presentation in Codex
 
-Use ordinary Markdown. Inspect supplied program sources before this flow, then:
+Use a short Markdown progress line and tables. Match the program to a bundled playbook, collect only missing inputs, show the applicable compliance gates and facility output, then scaffold when the user has directly requested it and required inputs are resolved. On award, collect award details, show the records to carry forward, then run the requested handoff. Preserve the original grant-state records. Do not claim interactive HTML controls.
 
-1. **Program selection** — show the 19 playbooks and their matching terms in a
-   compact table. Propose the source-supported candidate with confidence and
-   require confirmation; use `_agnostic-core` when none is confirmed.
-2. **Project inputs** — summarize the fields below with attribution and group
-   unresolved required questions. Do not enable Slack, Gmail, Calendar, or any
-   other surface unless the operator confirms it and the surface is available.
-3. **Compliance preview** — render the applicable gate map as Mermaid and a
-   required / recommended / not-applicable table. Preserve every gate rule below.
-4. **Review and confirm** — show all inputs and the exact facility tree. Obtain
-   explicit confirmation before creating files or initializing Git.
-5. **Build result** — show a checklist of files created and the next intake step.
-
-For an award handoff, show the award fields and carry-forward counts in Markdown,
-including the grant-state to project-state flow. Obtain explicit confirmation
-before freezing the grant facility or creating the sibling Project State
-facility.
-
-## Inputs (ask only when unresolved after source inspection)
+## Inputs (ask only when missing)
 
 1. **Program name** — which Canadian program? (used to match playbook)
 2. **Deadline** — ISO date, or `null` for continuous-intake programs
@@ -130,8 +122,7 @@ After scaffolding, initialize a git repo in the facility's parent directory:
    ```
    grant-state/logs/*.ndjson merge=union
    ```
-4. Leave the new facility uncommitted. Offer a scoped Git checkpoint as a
-   separate, deliberate action and require explicit acceptance before staging.
+4. Initial commit: `git commit -m "grant-state: facility scaffolded — <slug>"`
 
 ## Output
 

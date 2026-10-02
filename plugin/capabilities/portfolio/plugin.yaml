@@ -1,0 +1,37 @@
+plugin:
+  id: "portfolio"
+  name: "Portfolio — cross-project understanding, query and synthesis"
+  version: "1.0.0"
+  type: capability
+  description: |
+    Teaches an org-level Project to understand a set of member projects from their own
+    substrates (a canonical registry, dated read-only snapshots, a compiled cross-member
+    index, one understanding page per member), to answer questions across them from the
+    index with citations rather than from memory, and to write down new intelligence as
+    append-only findings with evidence and lineage. Three cheap checks reach the daily
+    digest; everything else is asked for. The portfolio never writes into a member; its
+    only crossing is a proposal dropped into the member's documents/inbox/.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  spec: "capabilities/portfolio/README.md"
+  released: "2026-09-21"
+
+compatibility:
+  substrate: ">=4.9"
+
+namespace:
+  prefix: "portfolio"      # directories, entity kinds, events, state file
+  skills:
+    - portfolio-onboarding
+    - portfolio-collector
+    - portfolio-reviewer
+
+payload:
+  schema: "schema/"
+  skills: "skills/"
+  templates: "templates/"
+  validator: "validator/validate-portfolio.md"
+  views: "views/"          # home + project figures; declarative, V1.1 mount
+  packs:
+    bundled: [portfolio-default]
+  # parked/ (measure sets, card templates, V2 views) is deliberately NOT in the payload.

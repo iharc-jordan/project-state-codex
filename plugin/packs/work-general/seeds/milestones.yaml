@@ -1,0 +1,28 @@
+# work-general — milestone seeds. Drafts only: project-scaffolder seed-pack queues them for review.
+# `due` is a date expression resolved once at seed time (PACK-SPEC, project-types fields).
+milestones:
+  - slug: charter-agreed
+    title: "Charter agreed"
+    due: start+1w
+    phase: 01-define
+    acceptance: "Outcome, scope, sponsor and success measures written down and agreed"
+  - slug: plan-approved
+    title: "Plan approved"
+    due: start+3w
+    phase: 02-plan
+    acceptance: "Milestones dated, owners named, budget and initial risks recorded"
+  - slug: midpoint-review
+    title: "Midpoint review"
+    due: 50%
+    phase: 03-deliver
+    acceptance: "Progress checked against the plan; scope or dates re-baselined if needed"
+  - slug: delivery
+    title: "Delivery complete"
+    due: end-1w
+    phase: 03-deliver
+    acceptance: "All planned deliverables complete or formally descoped"
+  - slug: close-and-lessons
+    title: "Close and lessons learned"
+    due: end
+    phase: 05-close
+    acceptance: "Sponsor accepted the outcome; lessons recorded; handover done"

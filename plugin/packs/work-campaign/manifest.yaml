@@ -1,0 +1,70 @@
+pack:
+  id: "work-campaign"
+  name: "Campaign or Launch"
+  version: "0.1.0"
+  compatible_core: ">=4.0,<6.0"
+  description: |
+    Work type for a marketing campaign, a product or feature launch, or a fundraising drive:
+    work planned backwards from a launch date, then measured while it is in market. Gives the
+    project the countdown ladder anchored on the launch date, a dated milestone skeleton
+    (brief → messaging → assets → launch → readout → results), campaign risks, KPI suggestions
+    (reach, leads, conversion, cost per acquisition, spend vs plan), a weekly status, a launch
+    readiness check a week out, and a weekly performance report that runs only while live.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "skills/project-scaffolder/SKILL.md"
+    - "templates/phase-presets/countdown-default.yaml — the phase ladder this pack assumes"
+  released: "2026-09-24"
+  maturity: "starter"
+  axis: work   # work | accountability | capability - the bundled pack contract
+
+# ----------------------------------------------------------------------------
+# Picker presentation - skills/project-scaffolder/SKILL.md Every front door (onboarding,
+# scaffolder, intake, kanban wizard) reads this block; none keeps its own table of packs.
+# ----------------------------------------------------------------------------
+picker:
+  listed: true
+  label: "Campaign or launch"
+  blurb: "Marketing campaign, product launch or fundraising drive — planned back from a launch date."
+  signals:
+    - "campaign"
+    - "launch"
+    - "go-to-market"
+    - "GTM"
+    - "marketing"
+    - "brand"
+    - "creative"
+    - "media plan"
+    - "ad spend"
+    - "leads"
+    - "MQL"
+    - "fundraising drive"
+    - "announcement"
+
+provides:
+  profiles: []
+  seeds: [milestones, risks, kpis]
+  reporting_matrix_defaults: true
+
+depends_on:
+  packs: []
+
+conflicts_with:
+  packs: []
+
+# Onboarding asks these after the rhythm question (the bundled pack contract).
+asks:
+  - key: phases.anchor_date
+    prompt: "What's the launch date?"
+    required: true
+  - key: project.end_date
+    prompt: "When does the campaign come out of market? (leave blank if open-ended)"
+    required: false
+
+# ----------------------------------------------------------------------------
+# Defaults this pack suggests (suggestions, never settings; the facility's manifest wins).
+# ----------------------------------------------------------------------------
+defaults:
+  lifecycle: terminal
+  preset: countdown-default

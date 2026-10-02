@@ -1,0 +1,31 @@
+pack:
+  id: "intel-default"
+  name: "Intel Default — ecosystem and competitive intelligence cadences"
+  version: "1.2.0"
+  compatible_core: ">=4.9"
+  description: |
+    Bundled default pack of the `intel` capability. Carries the reporting-matrix defaults
+    that absorb the standalone suite's intel-runner scheduling — the overnight longlist and
+    the monthly landscape report as matrix entries compiled to the cadence registry by
+    project-automator — plus, from 1.1, the weekly claim refresh and the monthly competitive
+    brief of the competitive layer (OCI v0.1 at L1 Grounded), and from 1.2 the weekly change
+    monitor and the quarterly win-loss analysis (L2 Connected; L3 Operated where the evaluation
+    harness passes, capabilities/intel/README.md).
+
+    Behavior only. Entities, skills, templates and the validator ship with the `intel`
+    capability plugin (capabilities/intel/) — this pack contains no substrate extensions and
+    no skills, per the bundled capability contract
+
+    Swappable per project like any pack; coexists with any active project pack, resolution
+    being per-matrix-entry via the `profile:` field.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "capabilities/intel/README.md"
+    - "capabilities/intel/README.md (Open Competitive Intelligence v0.1 — L1 Grounded; from 1.2 L2 Connected and the L3 harness)"
+  released: "2026-08-28"
+  maturity: "starter"
+  axis: capability   # bundled by a capability; never listed in a project pack picker (the bundled pack contract)
+
+provides:
+  reporting_matrix_defaults: reporting-matrix-defaults.yaml

@@ -27,7 +27,7 @@ project:
 Then run:
 
 ```
-ask Codex to seed the reporting matrix from the active packs
+ask Codex: "seed reporting matrix from packs"
 ```
 
 ## Compatibility

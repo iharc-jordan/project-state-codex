@@ -1,0 +1,29 @@
+pack:
+  id: "portfolio-default"
+  name: "Portfolio Default — cross-project oversight cadence"
+  version: "1.0.0"
+  compatible_core: ">=4.9"
+  description: |
+    Bundled default pack of the `portfolio` capability. Carries one reporting-matrix default —
+    the weekly collect that snapshots members, compiles the cross-member index, regenerates the
+    understanding pages and writes the weekly change note — compiled to the cadence registry by
+    project-automator.
+
+    Behavior only. Entities, skills, templates and the validator ship with the `portfolio`
+    capability plugin (capabilities/portfolio/) — this pack contains no substrate extensions and
+    no skills, per the bundled capability contract
+
+    Enabled on an org-level Project whose subject is a set of member projects; it reads each
+    member's own project-state/ and never writes into one. Swappable per portfolio like any
+    pack; resolution is per-matrix-entry via the `profile:` field.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "capabilities/portfolio/README.md"
+    - "decision 2026-09-21-portfolio-capability (portfolio is a capability, not a facility)"
+  released: "2026-09-21"
+  maturity: "starter"
+  axis: capability   # bundled by a capability; never listed in a project pack picker (the bundled pack contract)
+
+provides:
+  reporting_matrix_defaults: reporting-matrix-defaults.yaml

@@ -1,0 +1,16 @@
+# intel-signal template — APPEND-ONLY. Never edit after creation; supersede with a new
+# signal that references this one. Distinguish confirmed fact from inference in the summary.
+id: INT-S-NNN
+signal_type: market_intelligence   # |competitive|integration|regulatory|customer|technology
+subtype: ~
+date: YYYY-MM-DD
+source: web_harvest                # |document_inbox|slack|email|meeting|document|manual
+source_url: ~
+logged_by: intel-harvester         # |intel-ingest|manual
+summary: >
+  What was learned and why it matters to the focus. Mark inferences as inferences.
+entities_referenced: []            # [INT-E-NNN, …]
+intelligence_value: medium         # high = changes strategy | medium = context | low = background
+became: []                         # lineage: risk/decision/document ids this signal was promoted into
+tags: []
+created: YYYY-MM-DD

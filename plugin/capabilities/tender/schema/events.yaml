@@ -1,0 +1,17 @@
+# tender.* event vocabulary — extracted verbatim from the four skills (the operative
+# contract). Events land in tenders/events.ndjson (full form: ts, actor, event, id, source,
+# previous_value, new_value, evidence_url, parser_version, notification_sent) and in
+# logs/activity.ndjson (summary form). NEVER rewrite or delete an event line — a wrong
+# detection is corrected by appending with superseded_ts.
+schema_version: 1
+capability: tender
+events:
+  - tender.harvest.completed      # per-connector run summary (harvester)
+  - tender.status.changed         # every lifecycle transition (pipeline)
+  - tender.dismissed              # with mandatory reason code (pipeline)
+  - tender.amended                # (monitor)
+  - tender.deadline.changed       # shortened:true flags immediate alert (monitor)
+  - tender.document.revised       # supersession recorded by the curator (monitor)
+  - tender.cancelled              # (monitor)
+  - tender.awarded                # (monitor)
+  - tender.handoff.completed      # won tender → delivery project, recorded on both sides (pipeline)

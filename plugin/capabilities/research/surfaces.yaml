@@ -1,0 +1,222 @@
+capability: research
+label: Research
+description: Question-driven research held natively — mandates (the questions and the contract for answering them), steps, append-only findings graded on tier, confidence, epistemic status and independence, challenges raised before anything ships, longlist candidates and change records. Bounded mandates answer and complete; standing mandates never complete and report what changed.
+version: 0.1.0
+entities:
+- kind: research-mandate
+  label: Mandates
+  dir: research/mandates
+  id_field: id
+  title_field: headline
+  status_field: status
+  columns:
+  - {path: id, label: ID}
+  - {path: headline, label: Question}
+  - {path: methodology_type, label: Method}
+  - {path: status, label: Status}
+  - {path: iteration, label: Iteration}
+  board:
+    lanes:
+    - {label: Draft, statuses: [draft]}
+    - {label: Locked, statuses: [locked]}
+    - {label: In progress, statuses: [in-progress]}
+    - {label: Standing, statuses: [standing]}
+    - {label: Complete, statuses: [complete]}
+    - {label: Closed negative, statuses: [closed-negative]}   # an established absence is a result
+    - {label: Killed, statuses: [killed]}
+  workspace:
+    guide: "You are on the RESEARCH MANDATE workspace — one question and the contract for answering it, grounded in research/mandates/RES-M-NNN.yaml. A draft is mutable; once locked only status, iteration, question states and lifecycle stamps advance, and changing the questions or the method is a new iteration. Locking, killing, closing negative and marking complete are a person's decisions. REPLY with the headline, status, each question with its derived state (answered · aging · stale · reopened · open), the evidence gate, open challenges, and 2-4 follow-ups (e.g. \"Run the lock checklist\", \"Show the evidence\", \"Draft the deliverable\")."
+- kind: research-finding
+  label: Findings
+  dir: research/findings
+  id_field: id
+  title_field: claim
+  status_field: status
+  columns:
+  - {path: id, label: ID}
+  - {path: claim, label: Claim}
+  - {path: source_tier, label: Tier}
+  - {path: confidence, label: Confidence}
+  - {path: epistemic_status, label: Epistemic}
+  - {path: status, label: Status}
+  - {path: independent_sources, label: Indep.}
+  board:
+    lanes:
+    - {label: Provisional, statuses: [provisional]}
+    - {label: Established, statuses: [established]}
+    - {label: Withdrawn, statuses: [withdrawn]}
+  workspace:
+    guide: "You are on the RESEARCH FINDING workspace — one append-only piece of evidence, grounded in research/findings/RES-F-NNN.yaml. It is NEVER edited: a correction is a new finding with supersedes: (same mandate, a shared question, same category) and a research-change. Only status (provisional → established, by an independent origin or a person) and became advance. Freshness is derived from the category half-life. REPLY with the claim, its evidence with excerpts, tier · confidence · epistemic status · independence, freshness with the date it goes stale, what it supersedes or is superseded by, challenges against it, and 2-4 follow-ups (e.g. \"Find an independent source\", \"Confirm it\", \"Promote to intel\")."
+- kind: research-challenge
+  label: Challenges
+  dir: research/challenges
+  id_field: id
+  title_field: kind
+  status_field: status
+  columns:
+  - {path: id, label: ID}
+  - {path: severity, label: Severity}
+  - {path: kind, label: Kind}
+  - {path: finding_id, label: Against}
+  - {path: status, label: Status}
+  board:
+    lanes:
+    - {label: Open, statuses: [open]}
+    - {label: Accepted, statuses: [accepted]}
+    - {label: Rejected, statuses: [rejected]}
+    - {label: Resolved, statuses: [resolved]}
+  workspace:
+    guide: "You are on the RESEARCH CHALLENGE workspace — one objection to a finding, raised before anything ships, grounded in research/challenges/RES-C-NNN.yaml. Its content never changes; status, resolution and resolved_by advance, and only a person rules (the walk may propose). A blocking challenge stops the deliverable. REPLY with the finding it attacks, the kind and severity, the argument, any proposed resolution, and the rulings available: accept (the finding does not hold), reject (with a reason), resolve (with the evidence that settled it)."
+- kind: research-candidate
+  label: Candidates
+  dir: research/candidates
+  id_field: id
+  title_field: name
+  status_field: status
+  columns:
+  - {path: id, label: ID}
+  - {path: name, label: Candidate}
+  - {path: mandate_id, label: Mandate}
+  - {path: total, label: Total}
+  - {path: rank, label: Rank}
+  - {path: status, label: Status}
+  board:
+    lanes:
+    - {label: Discovered, statuses: [discovered]}
+    - {label: Enriched, statuses: [enriched]}
+    - {label: Scored, statuses: [scored]}
+    - {label: Shortlisted, statuses: [shortlisted]}
+    - {label: Excluded, statuses: [excluded]}
+- kind: research-change
+  label: Changes
+  dir: research/changes
+  id_field: id
+  title_field: summary
+  status_field: significance
+  columns:
+  - {path: id, label: ID}
+  - {path: detected_at, label: Detected}
+  - {path: mandate_id, label: Mandate}
+  - {path: subject, label: Subject}
+  - {path: significance, label: Significance}
+  board:
+    lanes:
+    - {label: Material, statuses: [material]}
+    - {label: Notable, statuses: [notable]}
+    - {label: Noise, statuses: [noise]}
+reports:
+- id: at-a-glance
+  label: At a glance
+  latest: research/reports/at-a-glance.html
+  produced_by: research-walk            # python3 capabilities/research/views/build-research-glance.py <facility> — also after research-step and research-mandate
+  default: true
+  sample: samples/at-a-glance.html
+- id: evidence
+  label: Evidence
+  latest: research/reports/evidence.html
+  produced_by: research-step            # python3 capabilities/research/views/build-research-evidence.py <facility>
+  sample: samples/evidence.html
+- id: timeline
+  label: Timeline
+  latest: research/reports/timeline.html
+  produced_by: research-walk            # python3 capabilities/research/views/build-research-timeline.py <facility> — every mandate's life, the evidence runway, the walk night by night
+  sample: samples/timeline.html
+- id: library
+  label: Library
+  latest: research/reports/library.html
+  produced_by: research-brief           # python3 capabilities/research/views/build-research-library.py <facility> — studies and articles, every citation read against today's evidence
+  sample: samples/library.html
+- id: delta
+  label: What changed
+  latest: research/reports/delta.html
+  produced_by: research-brief           # python3 capabilities/research/views/build-research-delta.py <facility> — the record research-brief delta interprets
+  sample: samples/delta.html
+overview: '**Research gives this project a place to hold evidence.** Commit to a question, gather and grade evidence, attack it before anything ships, and — for a standing mandate — report each run what changed, or that nothing did.'
+flow:
+- skill: research-onboarding
+  does: Enables the capability and drafts one to three mandates from the project's brief and inbox for you to argue with; never locks. Also migrates a standalone .research-state facility.
+- skill: research-mandate
+  does: The question and its contract — propose, iterate, lock (the checklist runs first), kill, close negative, make standing, complete, promote a finding to intel.
+- skill: research-ingest
+  does: Drains research documents from the house inbox into findings, and scores each document's relevance onto the mandates.
+- skill: research-step
+  does: One atomic research action — consult, query, compare, extract or validate — writing append-only findings graded on tier, confidence, epistemic status and independence.
+- skill: research-deepweb
+  does: A deep investigation — plans queries from what the learned store says works, fans out a fetcher per query, merges and recurses to the depth cap.
+- skill: research-longlist
+  does: Discovers, enriches, scores and ranks candidates under the mandate's weighted criteria; every score cites its findings.
+- skill: research-redteam
+  does: Attacks the findings before anything ships — mechanical objections judged into challenges; a person rules on each.
+- skill: research-brief
+  does: Composes the deliverable, refusing below the evidence gate or with a blocking challenge open; for a standing mandate, the weekly delta.
+- skill: research-walk
+  does: The nightly producer — one budgeted run of the actions it may take, every decision that needs a person parked, a run record of both.
+- skill: research-retro
+  does: What a finished mandate learned, as data — query yield, domain tiers, calibration — and lessons for the next one.
+- skill: research-ask
+  does: Answers from the findings, with citations and freshness; "we have no evidence on that" is an answer.
+setup:
+  stages:
+  - stage: Enable the capability
+    intro: Research's lens is the mandate, so enabling needs no focus — but nothing runs until a mandate is locked.
+    steps:
+    - label: Capability enabled in this project's manifest
+      check: {type: manifest, path: enabled, equals: true}
+    - label: First mandate drafted
+      check: {type: entity_count, kind: research-mandate, min: 1}
+      action:
+        type: run_skill
+        button: Draft mandates
+        prompt: 'Run /research-onboarding — read the project brief and inbox, draft one to three research mandates for me to argue with; do not lock any.'
+  - stage: Commit to a question
+    intro: The mandate is the first deliverable. The lock checklist is mechanical; locking is your decision.
+    steps:
+    - label: A mandate passes the lock checklist and is locked
+      check: {type: manual}
+      hint: /research-mandate lock RES-M-NNN — it runs the checklist (questions, three concrete steps, a deliverable with format, structure and audience, success criteria, a corpus link) and refuses naming every gap.
+  - stage: Gather and attack
+    intro: Findings are graded as they are written and attacked before anything ships.
+    steps:
+    - label: First finding logged
+      check: {type: entity_count, kind: research-finding, min: 1}
+      action:
+        type: run_skill
+        button: Run the first step
+        prompt: 'Run /research-step on the locked mandate — the first methodology step; grade every finding on tier, confidence, epistemic status and independence.'
+    - label: The nightly walk armed in the reporting matrix
+      check: {type: manual}
+      hint: Enabling with the research-default pack seeds the nightly walk, the weekly sweep and delta; confirm project-automator compiled them.
+operations: '**Every morning.** The digest raises what the walk parked for you — a challenge to rule on, a draft to lock or kill, a material change to review — each with the skill that clears it.
+
+
+  **Every week.** The red-team sweep files objections against standing mandates; the Monday delta says what changed, or that nothing material did.
+
+
+  **Your part.** Lock mandates, rule on challenges, confirm single-sourced findings you have read, decide reopen versus close negative, mark complete. Nothing leaves the project without you.
+
+  '
+enablement:
+  defaults:
+    pack: research-default
+    defaults: {primary_source_min_ratio: 0.5, deliverable_format: html, citation_style: inline}
+    half_lives_days: {statistic: 365, market: 365, organisation: 365, offering: 270, pricing: 90, programme: 180, regulation: 180, technology: 270, event: 60, literature: 730, method: 1095}
+    walk: {budget_seconds: 14400, max_actions: 40, barren_run: 3}
+    learning: {path: research/learned, share_calibration: true}
+    crossings: {intel: auto}
+  scaffold:
+  - research/mandates
+  - research/steps
+  - research/findings
+  - research/challenges
+  - research/candidates
+  - research/changes
+  - research/runs
+  - research/topics
+  - research/reports
+  - research/learned
+  - research/agenda.yaml
+  state_init:
+    counters: {mandate: 0, step: 0, finding: 0, challenge: 0, candidate: 0, change: 0}
+    walk: {active: null, last_run: null}
+    last_brief: null
+    last_sweep: null

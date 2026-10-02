@@ -1,0 +1,34 @@
+# intel-claim template — the competitive layer's atom (OCI §5.1). APPEND-ONLY: never edit
+# after creation; a correction is a new claim with `supersedes:` pointing here. Freshness is
+# never written — it is derived at render time from source_date (or retrieved_at) against
+# capabilities.intel.competitive.half_lives_days[category].
+id: INT-C-NNN
+subject:
+  entity: INT-E-NNN                 # required — an intel entity (competitor, partner, adjacent, or self)
+  product: ~
+category: pricing                   # positioning|product|feature|pricing|packaging|integration|security|compliance|market|customer|partnership|messaging|go-to-market|objection|win-loss|sales-tactic|product-gap|leadership|funding
+statement: >
+  One assertion. A seller could repeat it or a leader act on it. State what the source says,
+  not what it implies; put the implication in a separate inferred claim.
+material: true                      # true → the strict rules: a cited source or an unknown status
+epistemic_status: verified          # verified|reported|inferred|hypothesis|unknown — never present inferred/hypothesis as fact
+source:
+  class: vendor-primary             # vendor-primary|regulatory|buyer-direct|third-party-research|press|review-platform|internal-observation|social|inference
+  ref: "https://…"                  # URL, document id, message permalink, interview id, or the failed search for an unknown
+  excerpt: "…"                      # short verbatim anchor — SHOULD be present on material claims
+  method: web-read                  # web-read|document|interview|message|inference|lifted-signal
+source_date: YYYY-MM-DD             # when the source was published or last updated (~ if undated)
+retrieved_at: YYYY-MM-DD            # when we read it
+confidence: medium                  # high: first-party for its category OR ≥2 independent sources, fresh · medium: one reliable source · low: anecdotal/single weak/stale/inferred
+corroborated_by: []                 # claim ids from INDEPENDENT origins (different origin, not different URL)
+conflicts_with: []                  # claim ids — symmetric; the validator checks both sides; never resolve silently
+supersedes: ~                       # the claim id this replaces
+derived_from: ~                     # INT-S-NNN when lifted from a signal
+scope:
+  segment: ~
+  geography: ~
+  persona: ~
+became: []                          # lineage: risk / decision / document ids this claim was promoted into
+logged_by: intel-harvester          # intel-harvester|intel-deal-coach|intel-ask|manual
+tags: []
+created: YYYY-MM-DD

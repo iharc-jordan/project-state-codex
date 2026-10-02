@@ -30,7 +30,9 @@ attendees:
       required: false
 
 agenda:
-  template: "templates/qbr-pack.md"
+  # templates/qbr-pack.md was referenced but never shipped — trimmed 2026-08-21
+  # (FB-014 / issue #17). The generator composes the QBR pack from state.
+  template: ~
   required_sections:
     - "Engagement status against SOW"
     - "Milestone progress and upcoming deliverables"

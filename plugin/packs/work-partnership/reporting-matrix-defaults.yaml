@@ -1,0 +1,20 @@
+# work-partnership — reporting matrix defaults (the bundled pack contract)
+
+defaults:
+  - id: monthly-partner-update
+    stakeholder_group: partner
+    report: monthly-partner-update
+    cadence: { kind: monthly, day_of_month: "first-monday" }
+    format: md
+    surface: gmail.draft
+    generator: project-status-reporter
+    description: "Joint progress, what each side delivered, what is next, and anything that needs both sides to decide."
+
+  - id: quarterly-partner-review
+    stakeholder_group: partner
+    report: quarterly-partner-review
+    cadence: { kind: quarterly, alignment: "first-month-of-quarter" }
+    format: md + meeting
+    surface: calendar.invite + gmail.draft
+    generator: project-review-meeting
+    description: "Joint review against the shared goals. Runs in generic mode until a partner review profile ships."

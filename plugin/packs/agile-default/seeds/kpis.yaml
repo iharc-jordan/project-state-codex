@@ -1,0 +1,18 @@
+# KPI suggestions — never written by onboarding. project-goal-tracker offers these in the `project-goal-tracker` workflow.
+kpis:
+  - slug: sprint-goal-hit-rate
+    title: "Sprint goals met"
+    unit: "%"
+    direction: up
+  - slug: cycle-time
+    title: "Cycle time (start to done)"
+    unit: days
+    direction: down
+  - slug: escaped-defects
+    title: "Defects found after release"
+    unit: count
+    direction: down
+  - slug: deployment-frequency
+    title: "Deployments per month"
+    unit: count
+    direction: up

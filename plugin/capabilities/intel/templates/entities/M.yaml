@@ -1,0 +1,12 @@
+# intel-mandate template — an engagement carried for its intelligence context.
+# The commercial pipeline stays in gtm-state; a mandate may cite a gtm deal.
+id: INT-M-NNN
+type: "<one of capabilities.intel.mandate_types>"
+entity_id: INT-E-NNN
+status: prospecting        # |proposed|active|completed|stalled|closed
+owner: ~
+summary: >
+  What this engagement is and its current state.
+milestones: []             # - {title: "...", status: planned|in_progress|completed, date: YYYY-MM-DD}
+tags: []
+created: YYYY-MM-DD

@@ -1,0 +1,27 @@
+# agile-default (Software product) — milestone seeds. Drafts only; dated against start/end.
+milestones:
+  - slug: discovery-complete
+    title: "Discovery complete"
+    due: start+2w
+    phase: 01-discovery
+    acceptance: "Problem, users and first release scope agreed; first sprint backlog ready"
+  - slug: first-sprint-demo
+    title: "First sprint demo"
+    due: start+4w
+    phase: 02-build-loops
+    acceptance: "Working software demonstrated to the sponsor or users"
+  - slug: feature-complete
+    title: "First release feature-complete"
+    due: 70%
+    phase: 02-build-loops
+    acceptance: "Every story in the release scope done or explicitly deferred"
+  - slug: hardening-complete
+    title: "Hardening complete"
+    due: end-2w
+    phase: 03-hardening
+    acceptance: "No open blocker defects; performance and security checks passed"
+  - slug: first-release
+    title: "First release"
+    due: end
+    phase: 04-release
+    acceptance: "Released to users; release notes published"

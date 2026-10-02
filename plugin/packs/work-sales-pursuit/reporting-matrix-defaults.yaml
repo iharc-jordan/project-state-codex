@@ -1,0 +1,20 @@
+# work-sales-pursuit — reporting matrix defaults (the bundled pack contract)
+
+defaults:
+  - id: weekly-deal-review
+    stakeholder_group: internal.team
+    report: weekly-deal-review
+    cadence: { kind: weekly, day: monday }
+    format: md
+    surface: slack + gmail.draft
+    generator: project-status-reporter
+    description: "Where the deal stands, what changed with the buyer, next step and owner, and the updated win probability."
+
+  - id: pursuit-win-loss-review
+    stakeholder_group: internal.sponsor
+    report: pursuit-win-loss-review
+    cadence: { kind: deadline, anchor: "project.end_date", offset_days: 14 }
+    format: md
+    surface: gmail.draft
+    generator: project-status-reporter
+    description: "Why we won or lost, in the buyer's words where we have them, and what to repeat or change."

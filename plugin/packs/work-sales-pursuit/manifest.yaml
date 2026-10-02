@@ -1,0 +1,67 @@
+pack:
+  id: "work-sales-pursuit"
+  name: "Sales Pursuit"
+  version: "0.1.0"
+  compatible_core: ">=4.0,<6.0"
+  description: |
+    Work type for pursuing one significant private deal or account: a strategic sale, an enterprise
+    contract, a renewal worth planning. Stage-gate ladder read as qualify → propose → negotiate →
+    decision → handover, planned back from the expected decision date. Public tenders and RFP
+    pipelines belong to the tender capability instead — this is one deal, run as a project.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "skills/project-scaffolder/SKILL.md — second-wave work types"
+    - "templates/phase-presets/stage-gate-default.yaml — the phase ladder this pack assumes"
+  released: "2026-09-24"
+  maturity: "starter"
+  axis: work   # work | accountability | capability - the bundled pack contract
+
+# ----------------------------------------------------------------------------
+# Picker presentation - skills/project-scaffolder/SKILL.md Every front door (onboarding,
+# scaffolder, intake, kanban wizard) reads this block; none keeps its own table of packs.
+# ----------------------------------------------------------------------------
+picker:
+  listed: true
+  label: "Sales pursuit"
+  blurb: "Winning one significant deal: qualify, propose, negotiate, decide."
+  signals:
+    - "deal"
+    - "sales"
+    - "prospect"
+    - "account"
+    - "opportunity"
+    - "proposal"
+    - "negotiation"
+    - "contract"
+    - "close the deal"
+    - "renewal"
+    - "enterprise customer"
+    - "pipeline"
+
+provides:
+  profiles: []
+  seeds: [milestones, risks, kpis]
+  reporting_matrix_defaults: true
+
+depends_on:
+  packs: []
+
+conflicts_with:
+  packs: []
+
+# Onboarding asks these after the rhythm question (the bundled pack contract).
+asks:
+  - key: project.end_date
+    prompt: "When do you expect the buyer's decision?"
+    required: true
+  - key: project.deal.value
+    prompt: "Roughly what is the deal worth?"
+    required: false
+
+# ----------------------------------------------------------------------------
+# Defaults this pack suggests (suggestions, never settings; the facility's manifest wins).
+# ----------------------------------------------------------------------------
+defaults:
+  lifecycle: terminal
+  preset: stage-gate-default

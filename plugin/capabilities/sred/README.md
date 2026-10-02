@@ -2,12 +2,10 @@
 
 **Hosting shape:** capability (extension *into* a project-state facility, enabled per project).
 SR&ED has no standalone existence — it rides a delivery project's milestones, people, and
-harvest — so it is enabled only inside a Project State facility. There is no
+harvest — so it does not meet the state bar (the bundled capability model). There is no
 desk-pattern variant: SR&ED intelligence belongs to the project doing the experimental work.
 
-The manifest, schema, routine, templates, validator, and hard rules in this
-directory are the authoritative public capability contract. The private design
-specification is not bundled.
+The bundled `plugin.yaml`, `schema/`, `validator/`, and skills define this capability.
 
 ## What enabling this capability adds to a project
 
@@ -38,3 +36,11 @@ seeds the reporting matrix from the bundled pack, and arms `automation/tasks.yam
 
 Disable keeps all data and refuses silently walking away from a live filing window: any
 fiscal year not in `{filed, waived, forfeited}` requires explicit confirmation.
+
+## Dashboard (declared report)
+
+`node views/build-sred-dashboard.mjs <facility>/project-state` renders `reports/adhoc/sred-dashboard.html`,
+declared in `surfaces.yaml → reports:` (scripted; the app renders it in a trusted frame). `project-sred-tracker`
+re-runs it after every write. `samples/dashboard.html` is the same dashboard rendered from
+`examples/fixture/` (a fictional stream-join project; every fact invented) — the template the app previews
+before the capability is enabled. Regenerate with `python3 scripts/build-capability-samples.py --only sred`.

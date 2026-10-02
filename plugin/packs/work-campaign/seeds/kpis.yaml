@@ -1,0 +1,23 @@
+# KPI suggestions — never written by onboarding. project-goal-tracker offers these in the `project-goal-tracker` workflow.
+kpis:
+  - slug: reach
+    title: "Reach / impressions"
+    unit: count
+    direction: up
+  - slug: leads
+    title: "Leads generated (MQLs)"
+    unit: count
+    direction: up
+  - slug: conversion-rate
+    title: "Conversion rate"
+    unit: "%"
+    direction: up
+  - slug: cost-per-acquisition
+    title: "Cost per acquisition"
+    unit: "$"
+    direction: down
+  - slug: spend-vs-plan
+    title: "Spend against plan"
+    unit: "%"
+    direction: down
+    hint: "Absolute variance from the planned spend to date."

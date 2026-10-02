@@ -1,0 +1,24 @@
+pack:
+  id: "research-default"
+  name: "Research Default — the nightly walk, the weekly delta and sweep"
+  version: "0.1.0"
+  compatible_core: ">=5.0"
+  description: |
+    Bundled default pack of the `research` capability (capabilities/research/README.md). Carries the
+    reporting-matrix defaults that schedule the research: the unattended nightly walk, the weekly red-team sweep
+    over standing mandates, the weekly delta brief for the steering audience, and the At a glance report after
+    each walk — compiled to the cadence registry by project-automator like every other entry. Scheduling stays in
+    the matrix, never in the capability.
+
+    Behaviour only. Kinds, skills, templates, the validator and the views ship with the `research` capability
+    plugin (capabilities/research/) — this pack holds no substrate extensions and no skills.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "capabilities/research/README.md"
+  released: ~
+  maturity: "starter"
+  axis: capability   # bundled by a capability; never listed in a project pack picker (the bundled pack contract)
+
+provides:
+  reporting_matrix_defaults: reporting-matrix-defaults.yaml

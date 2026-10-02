@@ -2,7 +2,7 @@ pack:
   id: "client-services"
   name: "Client Services Engagement"
   version: "0.1.0-starter"
-  compatible_core: ">=2.0,<3.0"
+  compatible_core: ">=4.0,<6.0"
   description: |
     Pack for consulting/client-engagement projects. Configures the suite to handle
     Statements of Work, milestone-based customer billing, customer change orders
@@ -10,19 +10,36 @@ pack:
     deliverables, monthly invoicing cadence, post-engagement support windows.
   authors:
     - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "Statement of Work / Master Services Agreement (generic consulting contract shape)"
+    - "templates/phase-presets/client-engagement-default.yaml — the engagement phase model this pack assumes"
   released: "2026-04-27"
   maturity: "starter — proven shape, adapt to your client contract"
+  axis: accountability   # work | accountability | capability - the bundled pack contract
+
+# ----------------------------------------------------------------------------
+# Picker presentation - skills/project-scaffolder/SKILL.md Every front door (onboarding,
+# scaffolder, intake, kanban wizard) reads this block; none keeps its own table of packs.
+# ----------------------------------------------------------------------------
+picker:
+  listed: true
+  label: "A client"
+  blurb: "A paying customer: SOW, milestone billing, change orders, QBRs, sign-off on deliverables."
+  signals:
+    - "Statement of Work"
+    - "SOW"
+    - "client deliverables"
+    - "customer sign-off"
+    - "master services agreement"
+    - "retainer"
 
 provides:
   profiles:
     - funder-reporting   # customer plays the funder role here
     - review-meeting     # QBR
-    - external-comms     # customer-confidentiality review
-    - archive            # engagement wrap
-  templates:
-    - invoice-cover-email.md
-    - qbr-pack.md
-    - engagement-final-deliverable.md
+    # external-comms and archive were declared here with no profile files behind them, and a
+    # templates: block declared three files none of which ever shipped — all trimmed 2026-08-21
+    # (FB-014 / issue #17). Re-declare each in the same change that adds its file.
   reporting_matrix_defaults: true
 
 depends_on:
@@ -39,9 +56,12 @@ conflicts_with:
 # facility's own manifest.yaml:phases.lifecycle always wins. Nothing is ever written blind, and
 # a facility that leaves its lifecycle unset stays permanently valid.
 # Resolution order: facility > pack default > terminal.
-# Lifecycle behavior is enforced by project-phase-gate and the selected preset.
+# Spec: skills/project-phase-gate/SKILL.md
 defaults:
   # Retainers renew and follow-on SOWs land against the same customer, the same risk register,
   # and the same people. client-engagement-default cycles 04-wrap -> 03-engagement and keeps
   # 05-archive for when the relationship actually ends.
   lifecycle: continuous
+  # preset is a suggestion too: it pre-fills the rhythm question and project-scaffolder Step 2
+  # resolution step 2. The facility\'s phases.preset always wins.
+  preset: client-engagement-default

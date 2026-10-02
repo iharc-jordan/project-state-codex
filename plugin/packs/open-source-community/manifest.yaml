@@ -2,15 +2,35 @@ pack:
   id: "open-source-community"
   name: "Open-Source Community Project"
   version: "0.1.0-starter"
-  compatible_core: ">=2.0,<3.0"
+  compatible_core: ">=4.0,<6.0"
   description: |
     Pack for community-governed open-source projects. Configures the suite for
     RFC/governance pipeline, contributor recognition, public-by-default visibility,
     sunset/maintenance phase model.
   authors:
     - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "RFC process conventions (IETF/Rust-style) — the governance pipeline this pack encodes"
+    - "templates/phase-presets/open-source-default.yaml — the sunset/maintenance phase model this pack assumes"
   released: "2026-04-27"
   maturity: "starter — minimal scaffold"
+  axis: accountability   # work | accountability | capability - the bundled pack contract
+
+# ----------------------------------------------------------------------------
+# Picker presentation - skills/project-scaffolder/SKILL.md Every front door (onboarding,
+# scaffolder, intake, kanban wizard) reads this block; none keeps its own table of packs.
+# ----------------------------------------------------------------------------
+picker:
+  listed: false   # section 5.1: no profile, no seed - Advanced only until it ships one (decision D2)
+  label: "An open-source community"
+  blurb: "Community-governed open source: RFC pipeline, contributor digest. Thin - no profiles yet."
+  signals:
+    - "open source"
+    - "open-source"
+    - "contributors"
+    - "RFC"
+    - "maintainers"
+    - "community-governed"
 
 provides:
   profiles: []           # planned for v0.2: external-comms (public-by-default community review), phase-gate (incubation→active→maintained→archived)
@@ -24,8 +44,11 @@ provides:
 # facility's own manifest.yaml:phases.lifecycle always wins. Nothing is ever written blind, and
 # a facility that leaves its lifecycle unset stays permanently valid.
 # Resolution order: facility > pack default > terminal.
-# Lifecycle behavior is enforced by project-phase-gate and the selected preset.
+# Spec: skills/project-phase-gate/SKILL.md
 defaults:
   # A maintained project can return to active development. open-source-default cycles
   # 03-maintained -> 02-active and keeps 04-archived for a real sunset.
   lifecycle: continuous
+  # preset is a suggestion too: it pre-fills the rhythm question and project-scaffolder Step 2
+  # resolution step 2. The facility\'s phases.preset always wins.
+  preset: open-source-default

@@ -1,15 +1,25 @@
 ---
 name: project-tech-reports
-description: "Own the 11-report technical-intelligence suite for one project. Invoke only for an explicit technical-intelligence request, a due enabled tech-report matrix entry, or a required active-pack trigger. Merge a verified live source with Project State, preserve versioned report paths and history, and run once per source event and period. Never invent unverifiable claims or fan out to another report owner."
+description: "Generate the technical report suite about this codebase and project — 'tech reports', 'technical specification', 'architecture report', 'security posture'. Eleven evidence-based reports."
+map:
+  tier: P2
+  stage: generate
+  requires: [memory, local-fs]
+  inputs: [codebase]
+  reads: [manifest, milestones]
+  writes: [reports]
+  produces: [tech-reports]
 ---
-
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
 
 # Project Tech Reports
 
+> **When to use.**
+>
+> Generate the Tech Reports intelligence suite — 11 evidence-based markdown reports about THIS project, merging a live codebase scan with the project-state/ substrate: project overview, technical specification, business benefits, innovation themes, features & capabilities, extensibility, work zones, technical readiness, Worksona leadership-runbook alignment, Worksona first-principles alignment, and an executive summary. Generate all or a selected subset; each report is written to a VERSIONED path project-state/reports/tech/<report-id>/<stamp>.md (history kept, never overwritten) and the run appended to manifest.json. Use the configured report viewer when one exists. Use whenever the user says 'tech reports', 'generate the tech suite', 'regenerate a tech report', 'document the codebase', 'technical intelligence reports', or when the Tech Reports page triggers a generation run. Single-project only — no cross-portfolio synthesis.
+
 ## Purpose
 
-Produce a focused, **single-project** intelligence suite of 11 markdown reports that explain what this project is, how it's built, and how ready/novel/extensible it is — every claim traceable to something observable in the codebase or the `project-state/` substrate. Cross-portfolio synthesis and the "portfolio position" report are intentionally excluded.
+Produce a focused, **single-project** intelligence suite of 11 markdown reports that explain what this project is, how it's built, and how ready/novel/extensible it is — every claim traceable to something observable in the codebase or the `project-state/` substrate. This is the in-substrate, refreshable home of the former `doc-suite-generator-v2` software suite (cross-portfolio synthesis and the "portfolio position" report are intentionally excluded).
 
 **Two source layers, merged before writing:**
 - **The source under study** — a codebase (the enclosing repo, or a connected GitHub repo) OR an alternative source (Jira/Confluence). Owns HOW. **Required** — see *Resolving the source*.
@@ -32,7 +42,7 @@ These reports study a **source**. Resolve it in this priority — and if none re
 ## Trigger phrases
 - "tech reports" / "generate the tech suite" / "refresh the tech reports"
 - "technical intelligence reports" / "document the codebase"
-- A **Refresh** from a separately installed compatible viewer (job id `tech-reports`)
+- A requested or configured report refresh
 
 ## The report catalog (11 types)
 
@@ -84,11 +94,7 @@ Also **append** the run to `project-state/reports/tech/manifest.json` (create it
 
 1. **Resolve & scan the source** (see *Resolving the source* — required). For a **codebase**: walk it from its root — detect languages/frameworks, map the directory structure and entry points, enumerate dependencies/integrations, read existing READMEs/docs, note config/deploy (Dockerfile, CI, vercel/netlify, tauri…). For a **Jira/Confluence** source: pull the configured projects/spaces and treat issues/pages as the corpus. Capture a structured scan you reuse for every report. If no source resolves, stop here and report it.
 
-2. **Load the substrate progressively.** Read state/phase summary,
-   active/at-risk/due entity summaries, applicable matrix entries, and bounded
-   recent activity. Open full milestone/risk/decision/phase entities only when
-   selected into a requested report. A full ledger scan requires explicit
-   full-suite scope.
+2. **Load the substrate.** Read `project-state/manifest.yaml`, `milestones/`, `risks/`, `decisions/`, `phases/`, `reporting-matrix.yaml`, and the tail of `logs/activity.ndjson`. This is the product intel — business/funder/governance context — merged with the source scan in every report.
 
 3. **Determine the scope.** The invoking prompt says either "ALL 11 reports" or "ONLY these reports: `<id>, <id>…`". Generate **only the requested ids** (default to all 11 if unspecified). Generating a subset must NOT touch the other reports' folders.
 
@@ -98,11 +104,8 @@ Also **append** the run to `project-state/reports/tech/manifest.json` (create it
 
 5. **Append the run** to `project-state/reports/tech/manifest.json` (create if missing; never drop prior runs): a `runs[]` entry with `stamp` (ISO), `git` (short HEAD if a git repo), and `reports` (the ids generated this run). Set/refresh top-level `project`.
 
-6. **Append one canonical activity event** through `project-state`:
-   `{"ts":"<ISO>","actor":"<operator>","event":"report.generated","id":"evt-<deterministic-id>","summary":"Tech Reports — generated <N> report(s): <ids>."}`
-   Derive the id from the owner, requested report IDs, shared output stamp/path,
-   reporting period, and exact source revision. If that identity and outputs
-   already exist, return them without a new run, manifest entry, or event.
+6. **Append one activity event** to `project-state/logs/activity.ndjson`:
+   `{"ts":"<ISO>","actor":"<operator>","event":"report.generated","detail":"Tech Reports — generated <N> report(s): <ids>."}`
 
 ## Report format
 

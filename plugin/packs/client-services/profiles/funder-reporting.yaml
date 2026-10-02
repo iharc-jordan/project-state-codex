@@ -18,7 +18,9 @@ reports:
       lead_time_days: 5
     format:
       kind: pdf
-      template: "templates/invoice.html"   # rendered via wkhtmltopdf or similar
+      # templates/invoice.html was referenced (with a render note) but never shipped — trimmed
+      # 2026-08-21 (FB-014 / issue #17). The generator composes the invoice from state.
+      template: ~
       output_naming: "reports/customer.{customer_id}/invoices/{YYYY}-{MM}-invoice.pdf"
     field_mapping:
       milestones_billed:
@@ -35,7 +37,8 @@ reports:
       surface: gmail.draft
       to: "{customer.{customer_id}.contacts.billing}"
       cc: ["{customer.{customer_id}.contacts.engagement_lead}"]
-      template: "templates/invoice-cover-email.md"
+      # templates/invoice-cover-email.md never shipped — trimmed 2026-08-21 (FB-014 / #17).
+      template: ~
       subject: "{project.short_name} — Invoice {YYYY}-{MM}"
     signoff_required:
       - role: project_lead
@@ -49,7 +52,8 @@ reports:
       lead_time_days: 7
     format:
       kind: docx
-      template: "templates/qbr-pack.md"
+      # templates/qbr-pack.md never shipped — trimmed 2026-08-21 (FB-014 / #17).
+      template: ~
     cover_delivery:
       surface: gmail.draft + calendar.invite
 

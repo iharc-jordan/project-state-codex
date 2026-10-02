@@ -1,0 +1,52 @@
+pack:
+  id: "sponsor-internal"
+  name: "Internal Sponsor"
+  version: "0.1.0"
+  compatible_core: ">=4.0,<6.0"
+  description: |
+    Pack for the most common accountability in general project management: a manager, executive
+    or steering group inside your own organisation who commissioned the work and needs to know how
+    it is going. Configures a weekly sponsor update (status, progress against milestones, decisions
+    needed, top risks) and a monthly steering review. The sponsor plays the funder role for
+    project-funder-reporting, the same pattern client-services uses for a customer.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "skills/project-scaffolder/SKILL.md — the pack this spec calls the missing default"
+    - "Common internal project-sponsor practice: weekly RAG status, monthly steering review"
+  released: "2026-09-24"
+  maturity: "starter"
+  axis: accountability   # work | accountability | capability - the bundled pack contract
+
+# ----------------------------------------------------------------------------
+# Picker presentation - skills/project-scaffolder/SKILL.md Every front door (onboarding,
+# scaffolder, intake, kanban wizard) reads this block; none keeps its own table of packs.
+# ----------------------------------------------------------------------------
+picker:
+  listed: true
+  preselected: true      # decision D3: pre-selected on "who needs to hear how it's going?"
+  label: "My manager or exec sponsor"
+  blurb: "Someone inside your organisation commissioned this: weekly sponsor update, monthly steering review."
+  signals:
+    - "sponsor"
+    - "executive sponsor"
+    - "steering committee"
+    - "steering group"
+    - "leadership team"
+    - "report to my manager"
+    - "internal project"
+
+provides:
+  profiles:
+    - funder-reporting   # sponsor plays the funder role
+    - review-meeting     # monthly steering review
+  reporting_matrix_defaults: true
+
+depends_on:
+  packs: []
+
+conflicts_with:
+  packs: []   # composes with any work pack and with client/funder/board packs
+
+# No defaults: accountability does not decide the shape of the work. The primary work pack
+# suggests the preset and the lifecycle (the bundled pack contract).

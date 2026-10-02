@@ -1,0 +1,19 @@
+# work-research — reporting matrix defaults (the bundled pack contract)
+
+defaults:
+  - id: weekly-team-update
+    stakeholder_group: internal.team
+    report: weekly-team-update
+    cadence: { kind: weekly, day: monday }
+    format: md
+    surface: slack + gmail.draft
+    generator: project-status-reporter
+
+  - id: monthly-research-update
+    stakeholder_group: internal.sponsor
+    report: monthly-research-update
+    cadence: { kind: monthly, day_of_month: "first-monday" }
+    format: md
+    surface: gmail.draft
+    generator: project-status-reporter
+    description: "Progress against the method, sample status, emerging findings flagged as preliminary."

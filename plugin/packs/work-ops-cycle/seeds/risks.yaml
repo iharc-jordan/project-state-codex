@@ -1,0 +1,21 @@
+risks:
+  - slug: key-person-dependency
+    title: "One person holds the knowledge to run the cycle"
+    likelihood: high
+    impact: high
+    mitigation: "Document the checklist; rotate a second person through each step."
+  - slug: late-inputs
+    title: "Inputs from other teams arrive late"
+    likelihood: high
+    impact: medium
+    mitigation: "Publish input deadlines in the cycle calendar; escalate on day one of a miss."
+  - slug: regulatory-change
+    title: "A rule or standard changes mid-year"
+    likelihood: low
+    impact: high
+    mitigation: "Quarterly check of the governing rules; owner named for monitoring."
+  - slug: period-end-outage
+    title: "A system is unavailable at period end"
+    likelihood: low
+    impact: medium
+    mitigation: "Freeze windows agreed with IT; manual fallback for the critical steps."

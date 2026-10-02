@@ -8,7 +8,7 @@
 # automation/tasks.yaml via project-automator. This file answers a different question:
 # "when the operator asks what to do today, what does SR&ED want looked at?"
 #
-# Public contract: this routine is composed only when manifest capabilities.sred.enabled is true.
+# Spec: skills/project-state/SKILL.md, capabilities/sred/README.md
 schema_version: 1
 capability: sred
 version: "1.0.0"

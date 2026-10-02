@@ -1,17 +1,26 @@
 ---
 name: tender-qualifier
-description: "Score or qualify tenders only when tender-intelligence is enabled with applicable profiles and tender records, the operator explicitly requests it, or tender-harvester emits the configured trigger. Preserve deterministic/semantic evidence, requirement extraction, dedupe, and eligibility-confidence outputs. Never infer capability activation or mark compliance without human approval."
+description: "Score and qualify a tender against our capability profiles — 'should we bid on this', 'qualify this RFP', 'check mandatory requirements'. Cited match and go/no-go evidence."
+map:
+  tier: capability
+  stage: keep
+  requires: [memory]
+  reads: [tenders, manifest]
+  writes: [tenders]
+  produces: [bid-record]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # tender-qualifier
+
+> **When to use.**
+>
+> The intelligence layer of the tender package. Score tenders against the facility's capability profiles (deterministic filter + semantic match with cited evidence), qualify them against retrieved document packages (mandatory requirements, disqualifiers, eligibility confidence), extract structured requirements from tender documents, and detect within-facility duplicates. Sub-actions: score (default), qualify, extract, dedupe. Trigger on 'score the new tenders', 'qualify t-2026-0041', 'does this tender fit us', 'extract the requirements from this RFP', 'check for duplicate tenders', 'why did this tender score 91', 'rescore against the new profile', or after tender-harvester reports new records. Never marks a tender compliant without human approval.
 
 Turn discovered tenders into scored, explained, human-decidable opportunities. Reads and writes tender entities through the `project-state` memory layer only.
 
 ## Preconditions
 
-Locate the facility; confirm the package is enabled; load enabled `tenders/profiles/*.yaml` (respect `profiles_enabled` in the package block; skip `enabled: false` profiles). If no profiles exist, stop and offer to create them from `templates/tender/tender-profile-template.yaml`.
+Locate the facility; confirm the package is enabled; load enabled `tenders/profiles/*.yaml` (respect `profiles_enabled` in the package block; skip `enabled: false` profiles). If no profiles exist, stop and offer to create them from `templates/tender-profile-template.yaml`.
 
 ## Sub-actions
 

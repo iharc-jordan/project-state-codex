@@ -1,11 +1,19 @@
 ---
 name: project-sred-reviewer
-description: "Review Canadian SR&ED T661 material only when the sred capability is enabled with its pack, or when the operator explicitly supplies draft text for review. Preserve CRA critique, traceability, cost framing, risky-language, rewrite, attack-simulation, and readiness outputs. Never activate SR&ED, assert eligibility, or file a claim."
+description: "Review and strengthen a Canadian SR&ED T661 narrative for audit resistance — 'review the T661', 'is this SR&ED claim defensible', 'critique the narrative'. CRA-reviewer critique and traceability checks."
+map:
+  tier: capability
+  stage: keep
+  requires: [memory]
+  reads: [sred]
+  produces: [t661-narrative]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project SR&ED Reviewer
+
+> **When to use.**
+>
+> Review and strengthen Canadian SR&ED T661 narratives for audit resistance. Reads from sred/ substrate (TU/EX/ADV records + evidence log) or accepts pasted T661 draft text. Produces: CRA-reviewer critique, cross-section traceability check, cost-framing assessment, risky language flags, safer rewrites for Sections E/F/G, CRA attack simulation with defenses, and a readiness verdict. Active when sred-canada pack is loaded. Use whenever the user says 'review the T661', 'SR&ED audit check', 'is our claim defensible', 'strengthen the narrative', 'CRA review simulation', 'pre-submission check', 'rewrite section E', or any request to critique or improve SR&ED submission content.
 
 ## Purpose
 
@@ -261,5 +269,5 @@ Common CRA objections to simulate:
 ## Reference
 
 - `packs/sred-canada/profiles/funder-reporting.yaml` — language guidance (preferred/risky language lists)
-- `capabilities/sred/templates/t661-narrative.md` — narrative template reviewed against
+- `packs/sred-canada/templates/t661-narrative.md` — narrative template reviewed against
 - CRA T661 Guide (current year) — advisor should confirm current CRA policy

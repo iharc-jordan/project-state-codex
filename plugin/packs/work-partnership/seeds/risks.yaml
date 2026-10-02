@@ -1,0 +1,21 @@
+risks:
+  - slug: misaligned-incentives
+    title: "The two organisations want different things from it"
+    likelihood: medium
+    impact: high
+    mitigation: "Write down each side's goals first; revisit them at every review."
+  - slug: agreement-delay
+    title: "Legal review of the agreement drags on"
+    likelihood: high
+    impact: medium
+    mitigation: "Start from a standard MOU; agree the commercial points before legal drafting."
+  - slug: contact-turnover
+    title: "Our main contact at the partner moves on"
+    likelihood: medium
+    impact: high
+    mitigation: "Keep two named contacts on each side."
+  - slug: ip-data-dispute
+    title: "Disagreement over IP or data sharing"
+    likelihood: low
+    impact: high
+    mitigation: "Settle ownership and data terms in the agreement, not later."

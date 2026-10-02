@@ -1,0 +1,21 @@
+# home — "where is everyone, and what is coming?" (the mounted Home figure; spec §10.2)
+view:
+  id: portfolio-home
+  title: "Portfolio"
+  requires: "capability=portfolio"
+  kind: lanes
+  rows: "portfolio/index/members.yaml where status in [active, paused, closing]"
+  x_axis: { source: "portfolio/index/deadlines.yaml", window: "today .. today+90d", ticks: month, today_line: true }
+  lane:
+    label: "{name}"
+    sub: "{current_phase} · {priority}"
+    pips: { source: "milestones", done: "filled", open: "outline", at_risk: "outline critical", label: "{complete} of {total}" }
+    marks:
+      dot: { source: "deadlines[] for this member", x: date, color_by: owner, radius: 6, tooltip: "{date} · {label} · {owner}" }
+      at_risk_ring: { when: "status == at_risk", stroke: critical, label: "{ref} at risk" }
+    shading:
+      collision: { when: "≥3 dots with one owner within 5 days across lanes", fill: critical-soft, label: "{n} in {days} days" }
+    silent: { when: "activity.last_event_at older than silence_threshold_days", style: hatched, label: "silent {n} days — nothing written, nothing harvested" }
+  legend: "owner colours (fixed order) · at-risk ring · done pip · silent lane"
+  counts_below: [members, in_the_hopper, days_to_next_deadline, checks_fired]
+  table_view: true

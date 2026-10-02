@@ -1,11 +1,21 @@
 ---
 name: project-onboarding
-description: "Source-first guided onboarding for a new or existing Project State facility. Inspect supplied repository files and source documents before asking questions, pre-fill only attributed facts, and group unresolved required, pack-driven, or routing-critical questions. Preserve the standard scaffold and never infer objectives, milestones, contacts, eligibility, capabilities, or external surfaces. Use for onboarding, initialization, configuration, or re-orientation."
+description: "Set up or re-orient a project — 'set up project-state', 'onboard this project', 'start the setup'. Asks what the work is, who hears about it and how it moves, then seeds a starting plan."
+map:
+  tier: P0
+  stage: ingest
+  requires: [memory]
+  inputs: [operator]
+  reads: [documents]
+  writes: [manifest, people, milestones, reporting-matrix]
+  calls: [project-inbox, sred-onboarding]
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project Onboarding
+
+> **When to use.**
+>
+> Guided onboarding experience for new project-state instances. Begins with an Inbox Orientation pre-check — if documents/inbox/ contains files, runs project-inbox triage and pre-fills context before the first question. Then runs nine chapters: project identity, document ingestion, project type (what the work is, who hears about it, how it moves), milestone capture, stakeholder mapping, examples, gap handling, substrate initialization, and orientation check. Pre-filled chapters become confirmation passes instead of blank-slate interviews. Writes references/examples/ as first-class substrate entities. Routes volunteered objectives and KPIs to `project-goal-tracker`; onboarding does not infer them. Use when starting a new project or re-orienting an existing one. Trigger on: 'set up project-state', 'onboard this project', 'initialize my project', 'I am new to project-state', 'configure this project', 'start the setup'.
 
 ## Purpose
 
@@ -14,45 +24,13 @@ Orient a new project-state instance around a specific project with enough contex
 This skill does two distinct things that `project-scaffolder` does not:
 
 1. **Intake** — collect context through guided conversation, document analysis, and goals elicitation before any files are written
-2. **Orient** — write that context into the substrate as first-class entities (`references/examples/`, `references/context.md`) so every downstream skill can read it. (Goals — objectives + KPIs — are set up separately in the Goals tab, not by onboarding.)
+2. **Orient** — write that context into the substrate as first-class entities (`references/examples/`, `references/context.md`) so every downstream skill can read it. (Volunteered objectives and KPIs route through `project-goal-tracker`.)
 
 `project-scaffolder` is the technical initializer. This skill is the user-facing experience that feeds it with content that makes the result worth having.
 
-Apply the adapter's task/epic/program routing before Chapter 0. A routine task
-inside an existing product does not need a facility. An epic captures one shared
-outcome and only meaningful milestones, references, decisions, and risks. A
-program may use the full onboarding depth. Classification comes from the
-operator request and supplied evidence and is not persisted as a required
-manifest field. An explicit initialization request preserves the standard tree;
-scale changes only what is meaningfully populated and which unresolved
-questions are necessary.
+## Presentation in Codex
 
-## Source-first intake
-
-Before asking the operator anything, inspect the repository files and source
-documents they supplied or explicitly placed in scope. Prefer governing
-agreements, signed schedules, proposals, existing manifests, and repository
-instructions over conversational recollection. Do not broaden the search to
-unrelated drives or services.
-
-Pre-fill only values directly supported by a source and retain file/section
-attribution. A source may identify an explicit milestone or contact; never
-extrapolate additional ones. Do not infer objectives, milestone commitments,
-contacts, eligibility, capabilities, or external delivery surfaces. Treat a
-keyword as a reason to ask or offer the relevant workflow, never as activation.
-
-Ask only questions that remain required by the schema, an active pack, or a
-routing decision. Group related unresolved fields into one prompt. Already
-settled chapters become compact confirmation passes; do not repeat their
-questions.
-
-## Codex interaction
-
-Use ordinary Markdown: a chapter progress line, attributed pre-filled values,
-compact tables, and grouped prompts. A chapter with all required values resolved
-becomes a confirmation row. Preserve the source design's progress, gap, synthetic
-content, quality, and navigation information as text; do not generate a separate
-interactive presentation surface.
+Use concise Markdown progress and tables in conversation. Present evidence already supplied before asking for a missing required value. Continue directly when the user's request and supplied inputs authorize setup; request a decision only for a material unresolved choice. Route a volunteered objective or KPI to `project-goal-tracker` in this same task.
 
 ## Trigger phrases
 
@@ -64,19 +42,9 @@ interactive presentation surface.
 
 ## The nine chapters
 
-Cover the chapters in sequence, but collapse source-resolved chapters into a
-compact attributed confirmation and ask only unresolved required, pack-driven,
-or routing-critical questions. Offer to return to any chapter if the operator
-wants to add more later.
+Run in sequence. Each chapter begins with prose the user sees — explaining what is being collected and why — before asking anything. Collect inputs in the order below. Do not skip chapters; offer to return to any chapter if the user wants to add more later.
 
-At the start of each chapter, render this Markdown progress marker:
-```
-── Chapter N of 9: [Chapter Name] ──────────────────────────────
-```
-
-**Before starting Chapter 0,** run the Inbox Orientation pre-check (see below). If `references/inbox-orientation.yaml` is present, onboarding becomes a confirmation pass rather than a blank-slate interview.
-
----
+At each chapter, show the current step and its outstanding inputs in concise Markdown.
 
 ### Chapter 0 — Inbox Orientation (Pre-check)
 
@@ -121,15 +89,15 @@ Display:
 Present the contents of `references/inbox-orientation.yaml` in readable form:
 
 - **Project identity hints**: short name, funder, dates, budget (where found). Mark each with `[from documents]`.
-- **Milestone hints**: show count and first 3 titles. Say "Found N milestones — will confirm in Chapter 5."
-- **Stakeholder hints**: show names found. Say "Found N contacts — will confirm in Chapter 4."
+- **Milestone hints**: show count and first 3 titles; inspect conflicts in Chapter 5.
+- **Stakeholder hints**: show names found; inspect conflicts in Chapter 4.
 - **Confidence**: show overall confidence level (high/medium/low) with a plain-English note.
   - high: "High confidence — the governing document provided complete data."
   - medium: "Medium confidence — multiple documents gave partial data; some fields may need verification."
   - low: "Low confidence — limited or ambiguous documents; most fields still need input."
 
 Present:
-> Chapters with pre-filled data will ask you to confirm rather than answer from scratch. I'll mark pre-filled fields as `[pre-filled from documents]`. You can always correct them.
+> I will use the values supported by your documents, mark their sources, and ask where they conflict or leave a required choice open. You can correct any value.
 >
 > Remaining gaps: [list fields from `orientation.gaps`]
 
@@ -177,53 +145,85 @@ Chapters with pre-filled data should:
 
 ---
 
-### Chapter 1 — Pack Selection
+### Chapter 1 — What kind of project this is
+
+Three questions, one per axis (`plugin/skills/project-scaffolder/SKILL.md`, decision
+`2026-09-24-project-types-three-axes`): **what the work is** (one primary work pack), **who needs to hear
+how it's going** (accountability packs), and **how the work moves** (a phase preset). Then the questions
+that were always here: SR&ED, whether it ends, timezone, and, for a code project, heavy downloads.
+
+**Every option comes from the catalogue, never from this file.** Read `packs/*/manifest.yaml` and
+`templates/phase-presets/*.yaml`. A pack is offered by default only when `picker.listed: true`; show
+`picker.label` and `picker.blurb`. Unlisted packs appear only when the operator asks for *advanced*,
+marked *thin*. `axis: capability` packs are never offered here. The previous version of this chapter
+asked five yes/no questions from a hardcoded list and never asked what the work was; 7 of 13 registry
+facilities ended up with no pack, and two non-open-source projects loaded `open-source-community` as
+the least-wrong option.
 
 **Prose to present:**
 
-> Project-state adapts its behavior through compliance packs. Each pack configures how the system handles a specific kind of relationship — a government funder, a paying customer, investors, or a regulatory obligation.
->
-> Packs are additive. A project funded by a government grant that also has a client and files SR&ED would load three packs. The system handles all of them simultaneously.
->
-> Let me ask a few questions to recommend the right combination.
+> Project-state shapes itself to the kind of work you're doing: the phases it tracks, the milestones it
+> starts you with, and which reports go to whom. Three quick questions.
 
-**Ask only unresolved questions, grouped by topic.** Use natural prose and preserve
-the source attribution beside every pre-filled answer. After each grouped response,
-surface only required or routing-critical gaps that remain.
+**Q1.0 — One sentence.**
 
-**Q1.1 — Government funder:**
-> Does this project receive funding from a government program, grant, or public research body?
+> In a sentence, what is this project trying to make happen?
 
-- Yes → Q1.1a: Is it a Canadian federal program?
-  - Yes → Q1.1b: Which funder program is it?
-    - Determine which funder pack applies (e.g., `pic-pcais` for PIC/PCAIS) and add it. Present a one-line description of what that pack configures. SR&ED is not a funder pack — if it comes up here, set `sred_interest: yes` and let Q1.6 handle it.
-    - If no matching pack exists: note the program name and continue. Present: "I don't have a production pack for that program yet, but the core skills still work. You can configure the funder-reporting profile manually."
-  - No → note the program; similar guidance.
-- No → skip government funder packs.
+If the inbox orientation already answers it, present the sourced one-line reading and continue unless it conflicts with the user's direction.
+Classify the answer against every listed `axis: work` pack: match its `picker.signals` phrases, then use
+judgement — the signals are hints, not a keyword gate. Use the best match when evidence is clear;
+if two matches remain plausible, present the best match and runner-up for the user's choice:
 
-**Q1.2 — Customer or client:**
-> Does this project have a paying customer or client — someone outside your organization receiving deliverables and paying for them?
+> This reads like **[picker.label]** — [picker.blurb] Is that right, or is it closer to **[runner-up]**?
 
-- Yes → add `client-services`. Present: "The Client Services pack will configure the suite for monthly invoicing, Quarterly Business Reviews, customer signoff gates, and customer-confidentiality review."
-- No → skip.
+If nothing fits well, offer **General project** (`work-general`) as a real choice: "General project gives
+you a define → plan → deliver → review → close ladder with dated starting milestones. Nothing is lost by
+choosing it."
 
-**Q1.3 — Board or investors:**
-> Does your organization report to a board of directors or investors on this project's progress?
+**Q1.A — Resolve the work type.** Write the selected pack as `work_type` on the intake record; it
+becomes `project.kind`. On *advanced*, list every work pack including unlisted ones, and allow
+*secondary* work packs (a software launch that is also a campaign): they add matrix entries and seeds but
+never the preset (decision D4).
 
-- Yes → add `board-investor`. Present: "The Board/Investor pack will configure board meeting lifecycle, monthly investor updates with KPI snapshots, and board pack assembly."
-- No → skip.
+**Q1.B — Who needs to hear how it's going?**
 
-**Q1.4 — Agile delivery:**
-> Does your team work in sprints or iterative cycles — Scrum, Kanban, or similar?
+> Who needs to hear how this is going? Pick any.
 
-- Yes → add `agile-default`. Present: "The Agile pack will configure sprint cadence, retrospective lifecycle, and a sprint phase model."
-- No → skip.
+Offer every listed `axis: accountability` pack plus **Just me**. Packs with `picker.preselected: true`
+(`sponsor-internal`, decision D3) start selected and are presented as a confirmation: "I've assumed
+there's a manager or sponsor who commissioned this — keep that?" **Just me** deselects everything.
 
-**Q1.5 — Open source:**
-> Is this project an open-source or community-governed project?
+When the operator names a **government funder or grant**, run the funder sub-questions:
+- Is it a Canadian federal program? Which one? Match against the funder packs' `picker.signals`
+  (`pic-pcais`, `grant-canada`). Present the pack's one-line blurb.
+- No matching pack → note the program and continue: "I don't have a pack for that program yet, but the
+  core skills still work. You can configure the funder-reporting profile manually." SR&ED is not a
+  funder pack — if it comes up here, set `sred_interest: yes` and let Q1.6 handle it.
 
-- Yes → add `open-source-community`. Present: "The Open-Source pack will configure community RFC review, contributor recognition, and a maintenance phase model."
-- No → skip.
+Write the confirmed list as `accountable_to` on the intake record.
+
+**Q1.C — How does the work move?**
+
+Pre-fill from the **primary work pack's** `defaults.preset` and show the resulting phase ladder. With no work pack, an accountability pack's
+`defaults.preset` pre-fills (a PIC-funded project → `grant-default`). Otherwise ask, in these words:
+
+| Answer | Preset |
+|---|---|
+| "In sprints or iterations" | `agile-default` |
+| "Through stages, with sign-off between them" | `stage-gate-default` |
+| "Toward a fixed date" | `countdown-default` |
+| "In a repeating cycle" | `cycle-default` |
+| *advanced* | `grant-default` (proposal → approval → planning → execution → closeout → archive), `client-engagement-default` (discovery → proposal & SOW → engagement → wrap → archive), `waterfall-default` (requirements → design → build → test → deploy → maintain), `open-source-default` (incubation → active → maintained → archived), custom |
+
+Write the resolved value as `phases.preset`. `project-phase-gate set_preset(name)` changes it later.
+
+Then, **in the same breath**, ask what the choices need:
+- If the preset declares `requires: [anchor_date]` (`countdown-default`), ask for the date — "What's the
+  launch date?" / "What's the event date?" — using the work pack's own `asks:` prompt when it has one.
+  Write `phases.anchor_date`. Never guess it: every countdown milestone and deadline hangs off it.
+- Ask each remaining `asks:` entry from the loaded packs' manifests, in pack order, writing each answer
+  to its `key` on the intake record. Offer `options` as the choices when declared. Skip an optional one
+  the operator leaves blank.
 
 **Q1.6 — SR&ED (Canada only):**
 > Is your organization Canadian, and does this project involve work that might qualify as Scientific Research or Experimental Development — meaning technical work where the outcome was genuinely uncertain and required systematic investigation?
@@ -250,8 +250,8 @@ belongs to the session that can refuse without wasting this one.
 
 **Q1.7 — Does this project end?**
 
-**Pre-fill from the pack before asking.** Read `defaults.lifecycle` from the manifests of the packs
-selected above. That value is a *suggestion*, and it turns this from a blank-slate interview into a
+**Pre-fill from the pack before asking.** Read `defaults.lifecycle` from the **primary work pack**
+first, then the accountability packs selected above. That value is a *suggestion*, and it turns this from a blank-slate interview into a
 confirmation pass — the same pattern as every other pre-filled chapter in this skill.
 
 - Pack suggests `terminal` → present: "The [pack] pack assumes projects of this kind end — a deadline,
@@ -282,13 +282,17 @@ vocabulary, not the operator's, and it invites a guess.
 **Never ask this question of a facility that already has a value** — re-orientation confirms, it does
 not re-interview.
 
+The preset from Q1.C usually settles it: on `stage-gate-default`, `countdown-default` or
+`grant-default` (no `cycles_back_to`) the only possible answer is *it ends* — record `terminal` without
+asking. On `cycle-default` the work pack suggests *continues*; confirm it.
+
 If `project-scaffolder` already wrote `terminal` because a selected pack declares it, skip Q1.7 —
 re-asking a settled question implies it is open. `sred-canada` is a capability pack and declares no
 lifecycle default by design: it layers onto whatever shape the project already has, so it never
 pre-fills this question and never suppresses it.
 
 
-**Q1.8 — What timezone should scheduled work use? (conditional)**
+**Q1.8 — What timezone should scheduled work use?**
 
 > Automation fires in a nightly window — 23:00 to 05:00 by default. In which timezone?
 
@@ -297,51 +301,62 @@ Ask for an IANA name (`America/Vancouver`, `Europe/Berlin`). Offer the machine's
 property of the PROJECT, not of whoever happens to run the command, and a facility worked on from two
 machines in two zones would otherwise silently reschedule itself.
 
-Ask this only when automation is enabled, an active pack requires scheduled
-work, or the operator is configuring scheduling. Never substitute a default.
-When scheduling is out of scope, retain `automation.timezone: ~` and keep any
-disabled `automation/tasks.yaml:timezone` projection equally null. The
-automator must refuse to enable or compile scheduled work until an IANA timezone
-is confirmed.
+**Never skip this question and never substitute a default.** `manifest-v2.yaml` has marked
+`automation.timezone` as REQUIRED since it shipped, while shipping the value as `~`, and no skill ever
+collected it (FB-002). `project-automator` now refuses rather than guessing, so an unanswered question
+here becomes a blocked automation run later — which is the intended trade: a 23:00–05:00 window
+interpreted as UTC fires the nightly jobs at 4pm in Vancouver, and a schedule that is confidently
+wrong is worse than one that will not start.
 
-Write a confirmed value to the working intake record as
-`automation.timezone`; otherwise record the unresolved null without asking.
+Write it to the working intake record as `automation.timezone`.
 
-**Q1.9 — Which phase ladder?**
+**Q1.9 — Which phase ladder?** Asked as Q1.C above. It exists because nothing wrote `phases.preset`
+for the first ten weeks the presets existed (FB-003); Q1.C is where it is now written. Q1.C and Q1.7
+interact: a preset that declares no `cycles_back_to` cannot host a `continuous` lifecycle. If Q1.7
+answered "work continues" and Q1.C landed on a terminal preset, say so and ask which of the two to change
+— do not silently resolve it.
 
-> Projects move through phases. Which shape fits this one?
+**Q1.10 — Does the code download anything heavy on install?** Ask only when the project's code lives
+beside this facility: the work type is software (`agile-default`), or the folder holding
+`project-state/` has `package.json`, `pyproject.toml` or `requirements*.txt` files. Otherwise skip it
+without a word and leave `caches` unset.
 
-| Preset | Shape |
-| --- | --- |
-| `grant-default` | proposal → approval → planning → execution → closeout. Terminal by design. |
-| `agile-default` | discovery → build loops → release, cycling back to build. |
-| `waterfall-default` | requirements → design → build → test → deploy → maintain. |
-| `open-source-default` | inception → active → maintained, cycling back to active. |
-| `client-engagement-default` | pitch → scoping → engagement → wrap, cycling back to engagement. |
+Look before asking. Scan those files (skip `node_modules`) for the tools in
+`skills/project-state/references/heavy-artifacts.md` (mongodb-memory-server, Playwright, Puppeteer,
+Cypress, Electron, Hugging Face, torch) and note where each caches today. Then:
 
-Pre-fill from the pack answers where they settle it — Q1.1 (government funder) implies
-`grant-default`, Q1.4 (agile delivery) implies `agile-default` — and present it as a confirmation
-rather than an open question. Write the confirmed value to the intake record as `phases.preset`;
-`project-scaffolder` writes it to the manifest.
+> Some test and build tools download something large the first time they run: a database binary, a
+> browser, model weights. I found **[mongodb-memory-server in apps/web and apps/app, caching in
+> node_modules]**. A clean install deletes that folder, so every clean install downloads it again. Shall
+> I list it, cached in one git-ignored `.cache/` at the repository root instead? Anything else like it?
 
-This question exists because nothing wrote `phases.preset` for the first ten weeks the presets
-existed (FB-003). `project-phase-gate set_preset(name)` changes it afterwards.
+For each confirmed artifact ask its rough size if it is not obvious, and write an entry (`artifact`,
+`tool`, `size`, `path`, `setting`) to the working intake record's `caches`. `path` is
+`.cache/<tool>`; `setting` is the tool's own setting from the reference's table. Never write an entry
+the operator has not seen. "Nothing heavy" writes `caches: []`, which is not asked again; "not sure"
+leaves it unset.
 
-Q1.9 and Q1.7 interact: a preset that declares no `cycles_back_to` cannot host a `continuous`
-lifecycle. If Q1.7 answered "work continues" and Q1.9 lands on `grant-default`, say so and ask which
-of the two to change — do not silently resolve it.
+Recording the entry does not change the code. The setting is the code owner's change, and saying so
+is part of the answer: "The register now says where it should live; the change itself is
+`[setting]`, made in the code."
+
+This question exists because the waiting was invisible: on CanRentPro a 780 MB binary downloaded again
+on every clean install, in each app, for days before anyone asked why (FB-001, issue #47).
 
 
 **Confirmation:**
-> Based on your answers, I recommend loading: [list]. Here's what each adds. Does this look right, or would you like to add or remove anything?
+> Here's how I'll set this project up: a **[work type]** that reports to **[accountability]**, moving
+> **[rhythm in plain words]**[, anchored on [date]]. Here's what each piece adds. Look right?
 
-Present the full recommended combination with a one-line description of each pack's contribution. Confirm before proceeding.
+Present one row per axis: the work pack (with its preset, how many draft milestones and risks it will
+queue), each accountability pack (its reports), the preset (its phases), and any capability hand-off
+flagged (`sred_interest`). Continue with choices already established by the request or source documents; ask about a material ambiguity.
 
-Present the recommended pack combination as a Markdown table:
-`| Pack | Contribution |`. Ask: "Does this look right? Reply with any packs to
-add or remove."
 
-Write the confirmed pack selection to the working intake record.
+**Present in Codex:** Present as a markdown table `| Axis | Choice | What it adds |`. Proceed with the selected inputs; ask only about unresolved material choices.
+
+Write `work_type`, `accountable_to`, `phases.preset`, `phases.anchor_date` and the `asks` answers to the
+working intake record. `packs_selected` is `[work_type, secondary work packs…, accountable_to…]`.
 
 ---
 
@@ -433,9 +448,16 @@ Write each stakeholder as a record in the working intake — they will become en
 
 **Prose to present:**
 
-> Milestones are the spine of the system. They drive claims, status reports, Steering Committee packs, and the project tracker. If you have a milestone schedule, this chapter is short. If not, we'll build one together.
+> Milestones are the spine of the system. They drive status reports, review meetings, claims where there's a funder, and the project tracker. If you have a milestone schedule, this chapter is short. If not, we'll build one together.
 
-**If milestones were extracted from documents:** Present the extracted list and ask for confirmation + corrections. "Here are the milestones I found. Do they look right? Any missing, renamed, or reordered?"
+**If the work pack ships milestone seeds** (`packs/<work_type>/seeds/milestones.yaml`): resolve their date
+expressions against the start, end and anchor dates captured so far and present them as the starting
+list — "For a [label], projects usually hit these. Keep, change, or drop any?" Merge with anything
+extracted from documents (a document's milestone outranks a seed with the same meaning). An undateable
+seed is shown undated with the missing date named, never guessed. These are still DRAFTS: Chapter 8's
+`seed-pack` queues the pack's seeds for review, and what the operator confirmed here is queued alongside.
+
+**If milestones were extracted from documents:** Present the sourced list and proceed with consistent entries. Ask about conflicting or missing material milestones; accept corrections at any point.
 
 **If no milestones were extracted:** Ask conversationally:
 
@@ -470,9 +492,9 @@ opens the file.
 
 > The system can generate technically correct reports from the data it holds. But "technically correct" and "actually useful" are different things — the gap is knowing what GOOD output looks like for this specific project. A couple of examples to model goes a long way.
 >
-> (Goals are **not** set here. Your objectives and the KPIs that prove them live in the dedicated **Goals tab** — a structured objectives + KPIs feature. If you want to define goals, do it there; this chapter is only about example outputs.)
+> This chapter captures example outputs. Objectives and KPIs are handled by `project-goal-tracker`.
 
-**Do NOT** ask about, create, or infer objectives, KPIs, or any "goals" here. Never write `references/goals.md`. If the user volunteers goals, acknowledge and point them to the Goals tab.
+Do not infer objectives or KPIs from examples or write `references/goals.md`. If the user volunteers goals, route them to `project-goal-tracker` and preserve their wording.
 
 **Question 6.1 — Positive examples:**
 > Do you have any examples of output you'd want to model? This could be a past report you thought was excellent, a claim document that worked well, a weekly update that people actually read, a presentation that landed — anything where you thought "that's what I want." Share it here, or describe it.
@@ -519,9 +541,8 @@ SYNTHETIC CONTENT OFFERED
 [List any gaps where synthesis could help, with a description of what would be generated]
 ```
 
-Render the gap report as the code block shown above. Group only unresolved
-required questions, offering: provide now, leave a non-required gap, or request
-an explicitly labelled synthetic starting point where synthesis is permitted.
+
+**Present in Codex:** Render the gap report as the code block shown above. After the block, ask for each gap in sequence: "For [field]: provide now, leave blank, or want me to synthesize a starting point?"
 
 **For each gap, offer one of three paths — ask before doing anything:**
 
@@ -552,28 +573,31 @@ Present a complete pre-flight summary:
 WILL CREATE
 ──────────────────────────────────────────
 manifest.yaml              — [N fields populated, N from documents, N from conversation, N synthetic]
-reporting-matrix.yaml      — seeded from: [pack list]
+reporting-matrix.yaml      — seeded from: [pack list] (project-scaffolder seed-pack)
+outbox/queue/*-seed-*      — [N draft milestones, N draft risks] from [work pack], for review
 milestones/                — [N milestone files]
 stakeholders/              — [N stakeholder records] (written into manifest)
 references/examples/      — [present/absent]
 references/examples/       — [N examples in good/, N in avoid/]
 references/context.md      — [present if synthesis was accepted / absent]
 
-PACKS LOADED
+PROJECT TYPE
 ──────────────────────────────────────────
-[confirmed pack list with one-line role each]
+Work:            [work pack label]  (project.kind: [id])
+Who hears:       [accountability pack labels]
+How it moves:    [preset] [· anchored on YYYY-MM-DD]
+Packs loaded:    [packs_selected, one-line role each]
+Heavy downloads: [N listed under .cache/ · none · not asked]  [+ .gitignore gets `.cache/`, if missing]
 
 SYNTHETIC CONTENT (will be labeled)
 ──────────────────────────────────────────
 [list any synthetic fields or documents]
 ```
 
-Render the pre-flight summary as the code block shown above, label every source
-and synthetic value, then ask: "Ready to initialize? Type 'yes' to proceed."
 
-Ask for explicit confirmation: "Ready to initialize? This will create the `project-state/` directory structure. You can always add to it — nothing is permanent except the activity log."
+**Present in Codex:** Render the pre-flight summary as the code block shown above. Initialize when already directly requested and all required inputs are resolved.
 
-**On confirmation:** Call `project-scaffolder` with all captured inputs, passing the working intake record as structured input. Do not re-ask questions that have already been answered.
+**Initialize:** A direct request to set up or onboard the project authorizes this local creation once the required inputs are resolved. Call `project-scaffolder` with the captured intake record as structured input. Ask only if a material choice remains unresolved; do not repeat answered questions.
 
 **Build output (after initialization):** Render a StatusRow list of every file/directory created (✓ prefix + path). Then transition directly to Chapter 9.
 
@@ -600,7 +624,8 @@ Run the following checks and present results:
 - **Goals clarity** (0–3): 0 = no goals captured, 1 = brief description, 2 = detailed goals + anti-patterns, 3 = goals + positive + negative examples
 - **Stakeholder depth** (0–3): 0 = no stakeholders, 1 = names only, 2 = names + roles, 3 = names + roles + preferences
 
-Render orientation quality and suggested next steps as the code block below:
+
+**Present in Codex:** Render as the code block below:
 
 ```
 Orientation quality
@@ -635,7 +660,7 @@ If they say yes, invoke `sred-onboarding`, passing the intake record so it can p
 `sred_candidate` milestones instead of interviewing cold. If they defer, say so plainly and stop —
 `project-orchestrator` will not nag about a capability that was never enabled.
 
-The same pattern applies to any other capability flagged during pack selection. Onboard the
+The same pattern applies to any other capability flagged during the project-type chapter. Onboard the
 project first; layer capabilities after.
 
 ---
@@ -647,6 +672,14 @@ When the user says "re-orient project-state" or runs `project-onboarding re-orie
 1. Run Chapters 6 and 7 only (goals + examples + gap check)
 2. Offer to revisit any other chapter by name
 3. Do not re-run initialization unless the user explicitly asks
+4. **Offer a work type once, if the facility has none** (decision D5). When `project.kind` is not the id
+   of a loaded `axis: work` pack — a legacy value like `grant_consortium`, or absent — run Q1.0 as a
+   *proposal*: "This project has no work type. From its manifest and milestones it reads like a
+   **[label]** — want me to add it? That would add [N] matrix entries and queue [N] draft milestones for
+   review; nothing existing changes." On yes, append the pack to `packs_loaded`, set `project.kind`,
+   and run `project-scaffolder seed-pack`. On no, record nothing and do not ask again this session. Never
+   change `phases.preset` as a side effect — a live facility's ladder moves only through
+   `project-phase-gate set_preset`.
 
 Re-orientation is appropriate when:
 - The project has changed significantly
@@ -665,7 +698,15 @@ intake:
   session_date: "YYYY-MM-DD"
   operator: "user@email"
 
-  packs_selected: []
+  work_type: ~            # primary axis:work pack id → project.kind   (PROJECT-TYPES-SPEC §4)
+  secondary_work: []      # optional extra work packs (matrix + seeds only, never the preset)
+  accountable_to: []      # axis:accountability pack ids; [] == "just me"
+  packs_selected: []      # [work_type, secondary_work…, accountable_to…] → project.packs_loaded
+  phases:
+    preset: ~             # Q1.C
+    anchor_date: ~        # Q1.C, when the preset requires it
+  asks: {}                # dotted manifest key → answer, from the packs' asks: blocks
+  caches: ~               # Q1.10: ~ not asked / [] nothing heavy / entries → manifest caches
 
   project:
     short_name: {value: "...", source: "document|conversation|synthetic"}
@@ -717,10 +758,6 @@ On initialization (Chapter 8), write:
 | `project-state/state.json` | Initial health, counters, current phase |
 | `project-state/logs/activity.ndjson` | First entry: `onboarding.completed` with summary |
 
-For epic-scale intake, create only source-supported shared outcome entities.
-For task-scale work, do not reach this write step unless the operator explicitly
-overrode routing and supplied a reason to record Project State.
-
 ---
 
 ## Discipline rules
@@ -730,13 +767,8 @@ overrode routing and supplied a reason to record Project State.
 - **Never paraphrase goals or examples.** Chapter 6 content is saved exactly as provided. Its value is the user's voice, not a cleaned-up version of it.
 - **Never invent milestone names or stakeholder contacts.** If the user says "there are five milestones but I can't remember the exact names," capture "five milestones, names TBD" rather than generating plausible names.
 - **Never present orientation as complete when it isn't.** The orientation quality card in Chapter 9 must be honest. A 1/3 grounding score should say 1/3.
-- **Checked-in facts and canonical source documents take precedence over
-  conversation.** When the same field has multiple sources, surface the conflict
-  rather than silently choosing. Synthetic text is never a source for objectives,
-  milestones, contacts, eligibility, capabilities, or external surfaces.
+- **Documents take precedence over conversation, which takes precedence over synthesis.** When the same field has multiple sources, use the highest-fidelity one and note the others.
 - **Preserve source attribution.** Every field in `manifest.yaml` that came from a document should have a comment noting it. Every synthetic field must be labeled.
-- **Enable only confirmed scope.** Load only applicable packs and enable no
-  capability, automation, connector, or delivery surface from a keyword alone.
 
 ## Integration
 
@@ -750,7 +782,7 @@ overrode routing and supplied a reason to record Project State.
 
 ## Reference files written
 
-- `references/examples/` — example outputs the user wants to model (good/) and anti-patterns to avoid (avoid/). Goals (objectives + KPIs) are set in the Goals tab, not here.
+- `references/examples/` — example outputs the user wants to model (good/) and anti-patterns to avoid (avoid/). Volunteered objectives and KPIs route to `project-goal-tracker`.
 - `references/examples/good/` — positive output examples and descriptions
 - `references/examples/avoid/anti-patterns.md` — formats and patterns to avoid
 - `references/context.md` — synthetic context (if generated)

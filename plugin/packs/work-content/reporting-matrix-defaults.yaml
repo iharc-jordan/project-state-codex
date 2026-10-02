@@ -1,0 +1,20 @@
+# work-content — reporting matrix defaults (the bundled pack contract)
+
+defaults:
+  - id: weekly-content-status
+    stakeholder_group: internal.team
+    report: weekly-content-status
+    cadence: { kind: weekly, day: monday }
+    format: md
+    surface: slack + gmail.draft
+    generator: project-status-reporter
+    description: "Where each section is, who is holding what, and days to publish."
+
+  - id: publish-readiness-check
+    stakeholder_group: internal.team
+    report: publish-readiness-check
+    cadence: { kind: deadline, anchor: "phases.anchor_date", offset_days: -7 }
+    format: md
+    surface: gmail.draft
+    generator: project-status-reporter
+    description: "Files, permissions, metadata and channel bookings checked one week before publishing."

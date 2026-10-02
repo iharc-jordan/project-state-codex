@@ -1,0 +1,67 @@
+pack:
+  id: "work-ops-cycle"
+  name: "Operating Cycle"
+  version: "0.1.0"
+  compatible_core: ">=4.0,<6.0"
+  description: |
+    Work type for recurring operational work that never finishes but whose periods do: a month-end
+    or quarter-end close, a budget cycle, a compliance calendar, a recurring reporting process.
+    Gives the project the cycle ladder (prepare → execute → review → close, then round again) with
+    one increment per period under the continuous lifecycle, set-up milestones, operational risks,
+    KPI suggestions (days to close, on-time rate, adjustments, open reconciling items), a period
+    checklist ahead of each close and a period close report to the sponsor.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "skills/project-scaffolder/SKILL.md"
+    - "templates/phase-presets/cycle-default.yaml — the phase ladder this pack assumes"
+    - "skills/project-phase-gate/SKILL.md — one increment per period"
+  released: "2026-09-24"
+  maturity: "starter"
+  axis: work   # work | accountability | capability - the bundled pack contract
+
+# ----------------------------------------------------------------------------
+# Picker presentation - skills/project-scaffolder/SKILL.md Every front door (onboarding,
+# scaffolder, intake, kanban wizard) reads this block; none keeps its own table of packs.
+# ----------------------------------------------------------------------------
+picker:
+  listed: true
+  label: "Operating cycle"
+  blurb: "Month-end close, budget cycle, compliance calendar — the same phases every period."
+  signals:
+    - "month-end"
+    - "month end close"
+    - "quarter-end"
+    - "financial close"
+    - "close process"
+    - "budget cycle"
+    - "reconciliation"
+    - "compliance calendar"
+    - "recurring"
+    - "every month"
+    - "every quarter"
+    - "finance"
+    - "operations"
+
+provides:
+  profiles: []
+  seeds: [milestones, risks, kpis]
+  reporting_matrix_defaults: true
+
+depends_on:
+  packs: []
+
+conflicts_with:
+  packs: []
+
+asks:
+  - key: project.ops.period
+    prompt: "How long is one cycle?"
+    required: true
+    options: [monthly, quarterly]
+
+defaults:
+  # Periods keep coming: cycle-default's 04-close cycles back to 01-prepare, one increment per
+  # period. A suggestion - onboarding Q1.7 confirms it; scaffolder never writes continuous blind.
+  lifecycle: continuous
+  preset: cycle-default

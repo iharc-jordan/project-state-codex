@@ -1,0 +1,46 @@
+# Internal Sponsor — funder-reporting profile (sponsor = "funder" role)
+# Loaded by: project-funder-reporting
+
+profile_id: sponsor-internal.funder-reporting
+stakeholder_group: internal.sponsor
+
+reports:
+  - id: weekly-sponsor-update
+    name: "Weekly Sponsor Update"
+    description: |
+      One screen the sponsor can read in two minutes. Written from state, never from memory:
+      the RAG call is justified by milestones and risks, and every "decision needed" names who
+      must decide and by when.
+    cadence:
+      kind: weekly
+      day: friday
+      coverage_window: "since the previous update"
+    format:
+      kind: md
+      template: ~          # composed from state; required_sections below are the contract
+      required_sections:
+        - "Overall status — green / amber / red, with the one-line reason"
+        - "Progress since last update — milestones completed or moved, with dates"
+        - "Coming up — milestones due in the next two weeks"
+        - "Decisions needed — what, from whom, by when"
+        - "Top risks — at most three, each with its mitigation owner"
+        - "Budget and schedule variance — only if either moved"
+      output_naming: "reports/sponsor/{YYYY}-W{WW}-sponsor-update.md"
+    field_mapping:
+      milestones:
+        source: "milestones/*.yaml"
+        fields:
+          - { from: "title", to: "Milestone" }
+          - { from: "planned_end", to: "Due" }
+          - { from: "status", to: "Status" }
+      risks:
+        source: "risks/*.yaml"
+        filter: "status == open"
+        order_by: "score desc"
+        limit: 3
+    cover_delivery:
+      surface: gmail.draft
+      to: "{stakeholders.sponsor.email}"
+      subject: "{project.name} — week {WW} update ({status})"
+    signoff_required:
+      - role: project_lead

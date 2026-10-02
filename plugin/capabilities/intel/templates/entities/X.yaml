@@ -1,0 +1,14 @@
+# intel-change template — the claim delta of a material supersession (OCI §5.5). APPEND-ONLY.
+# Written by intel-harvester when reconciliation supersedes a material claim; 1.2's scheduled
+# monitor writes the same record on a cadence. Change is expressed as before → after claim
+# ids, never as prose about a page having changed.
+id: INT-X-NNN
+subject: INT-E-NNN
+detected_at: YYYY-MM-DD
+change_type: pricing                # launch|pricing|packaging|positioning|integration|customer|partnership|leadership|acquisition|funding|hiring-pattern|sentiment-shift
+before: []                          # superseded claim ids
+after: []                           # the new claims
+significance: notable               # material|notable|noise — noise is suppressed from digests and briefs
+affected: []                        # teams: sales, product-marketing, product, leadership — an event nobody owns is noise
+recommended_action: "…"
+detected_by: intel-harvester

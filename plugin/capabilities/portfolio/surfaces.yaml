@@ -1,0 +1,250 @@
+capability: portfolio
+label: Portfolio
+description: Understand, query and synthesize across a set of member projects — registry, dated snapshots, a compiled cross-member index, findings.
+version: 1.0.0
+entities:
+- kind: portfolio-member
+  label: Members
+  dir: portfolio/members
+  id_field: id
+  title_field: name
+  status_field: status
+  columns:
+  - path: id
+    label: ID
+  - path: name
+    label: Name
+  - path: member_kind
+    label: Kind
+  - path: priority
+    label: Priority
+  - path: owner
+    label: Owner
+  - path: location.type
+    label: Location
+  - path: added
+    label: Added
+  board:
+    lanes:
+    - label: Proposed
+      statuses: [proposed]
+    - label: Active
+      statuses: [active]
+    - label: Paused
+      statuses: [paused]
+    - label: Closing
+      statuses: [closing]
+    - label: Closed / Retired
+      statuses: [closed, retired]
+  workspace:
+    guide: "You are on the PORTFOLIO MEMBER workspace — one registry row for a member project, grounded in its live\n\
+      YAML under portfolio/members/<slug>.yaml. A) APPLY row edits the operator asks for through substrate\n\
+      conventions (status lifecycle proposed → active → paused/closing → closed/retired; an active row needs\n\
+      a resolvable location). NEVER write into the member project itself — the portfolio is read-only\n\
+      toward members; admitting a proposed member is project-intake's job in that member's directory.\n\
+      B) REPLY with a short read from the latest snapshot in portfolio/snapshots/<slug>/ (phase, milestone\n\
+      movement, top risk, next deadline, last activity) and 2-4 ask follow-ups (e.g. \"Collect this member\n\
+      now\", \"Show open findings that name it\", \"Declare a dependency\", \"Pause this member\").\n"
+- kind: portfolio-finding
+  label: Findings
+  dir: portfolio/findings
+  id_field: id
+  title_field: summary
+  status_field: status
+  columns:
+  - path: id
+    label: ID
+  - path: type
+    label: Type
+  - path: severity
+    label: Severity
+  - path: members
+    label: Members
+  - path: basis
+    label: Basis
+  - path: first_seen
+    label: First seen
+  - path: last_seen
+    label: Last seen
+  board:
+    lanes:
+    - label: Open
+      statuses: [open]
+    - label: Acknowledged
+      statuses: [acknowledged]
+    - label: Promoted
+      statuses: [promoted]
+    - label: Resolved / Dismissed
+      statuses: [resolved, dismissed]
+  workspace:
+    guide: "You are on the PORTFOLIO FINDING workspace — one cross-project finding, grounded in its live YAML.\n\
+      Findings are append-only: only last_seen, status, became and dismissed_reason may change. A) APPLY\n\
+      lifecycle changes the operator asks for (acknowledge, dismiss with a reason, resolve). Promotion to a\n\
+      member is portfolio-reviewer's `promote` verb — it drops a proposal into that member's documents/inbox/\n\
+      and nothing else; never write into a member directly. B) REPLY with the finding's evidence by snapshot,\n\
+      its basis (declared vs inferred — say which), and 2-4 ask follow-ups (e.g. \"Promote to <member> as a\n\
+      risk\", \"Acknowledge\", \"Show the snapshots it cites\").\n"
+- kind: portfolio-dependency
+  label: Dependencies
+  dir: portfolio/dependencies
+  id_field: id
+  title_field: summary
+  status_field: status
+  columns:
+  - path: id
+    label: ID
+  - path: type
+    label: Type
+  - path: from.member
+    label: From
+  - path: to.member
+    label: To
+  - path: status
+    label: Status
+# Generated reports the app renders in place (a tab per report; the newest file wins). The app
+# reads only the declared path, inside this project's substrate; the report is plain HTML with no
+# scripts, produced by the capability's own skill. Same pattern SR&ED's dashboard builder uses.
+reports:
+- id: at-a-glance
+  label: At a glance
+  latest: portfolio/reports/at-a-glance.html
+  dated: portfolio/reports/at-a-glance-{date}.html
+  produced_by: portfolio-collector
+  default: true            # once setup is complete, the page opens here
+  sample: samples/at-a-glance.html   # fixture render — the template shown before the capability is enabled or has collected
+overview: '**Portfolio gives this Project a reliable understanding of a set of member projects.**
+
+  Each member keeps its own project-state; the collector reads it and writes a dated
+
+  snapshot here, compiles a cross-member index (every milestone, risk, decision, person,
+
+  deadline and document, tagged with member and path), and regenerates one understanding
+
+  page per member. Questions are answered from that index and the member files, with
+
+  citations, never from memory; a theme read across members is written down as a finding
+
+  with evidence. Three cheap checks reach the daily digest — unreachable, silent, harvest
+
+  stale — and everything else is asked for.
+
+
+  Nothing here writes into a member. The one crossing is a proposal file dropped into a
+
+  member''s documents/inbox/, triaged by that member''s own project-inbox.
+
+  '
+flow:
+- skill: portfolio-onboarding
+  does: Enables the capability (reach + subject REQUIRED), discovers member project-states under the workspace, imports a master log as proposed members, admits one member at a time via project-intake.
+- skill: portfolio-collector
+  does: Reads each member's own substrate and writes one dated, never-edited snapshot; compiles the cross-member index (one flat file per entity kind, every row tagged with member and path); regenerates one understanding page per member; writes the weekly change note; records unreachable members honestly.
+- skill: portfolio-reviewer
+  does: Answers questions from the index first and the member files second, with citations and an explicit 'does not know' (kept answers under portfolio/answers/); synthesizes a theme across members into one append-only finding with evidence; runs the human-gated promote crossing.
+setup:
+  stages:
+  - stage: Enable the capability
+    intro: Done at enablement — the portfolio knows where its members live and whose portfolio it is.
+    steps:
+    - label: Capability enabled in this project's manifest
+      check:
+        type: manifest
+        path: enabled
+        equals: true
+    - label: Reach declared (workspace_root)
+      check:
+        type: manifest
+        path: workspace_root
+        nonempty: true
+      hint: The directory under which member project-states live. The collector reads nothing outside it.
+      action:
+        type: manifest_set
+        path: workspace_root
+        placeholder: /Users/you/Documents/portfolio
+        button: Set workspace root
+    - label: Subject declared
+      check:
+        type: manifest
+        path: subject
+        nonempty: true
+      hint: One or two sentences — whose portfolio, of what, for whom the weekly note is written.
+      action:
+        type: manifest_set
+        path: subject
+        placeholder: Our pilot with X and the projects around it, for the two of us.
+        button: Set subject
+  - stage: Seed the registry
+    intro: Members come from discovery under the workspace, an imported master log, or the kanban registry — proposed, then confirmed.
+    steps:
+    - label: At least one member row on file
+      check:
+        type: entity_count
+        kind: portfolio-member
+        min: 1
+      action:
+        type: run_skill
+        button: Discover and import members
+        prompt: 'Run /portfolio-onboarding: discover member project-states under workspace_root, offer to import my master log, and propose the registry for confirmation.'
+  - stage: Collect and verify
+    intro: The first collect gives the digest something to say; the schedule keeps it current.
+    steps:
+    - label: First collect run (member cursors initialized)
+      check:
+        type: state_file
+        key: cursors
+        nonempty: true
+      action:
+        type: run_skill
+        button: Collect all members now
+        prompt: 'Run /portfolio-collector all — snapshot every active member, compile the index, regenerate the understanding pages, report per-member reachability.'
+    - label: Weekly collect armed in the reporting matrix
+      check:
+        type: manual
+      hint: Enabling with the portfolio-default pack seeds portfolio-weekly-collect; confirm project-automator compiled it into automation/tasks.yaml.
+operations: '**Weekly rhythm.** Sunday night the collector snapshots every active member, compiles
+
+  the index, regenerates the understanding pages and writes the weekly change note. The
+
+  daily digest carries the strip and, when they fire, the three checks.
+
+
+  **Your part.** Ask the portfolio questions (/portfolio-reviewer query); keep the answers
+
+  worth citing; synthesize a theme when several members share one; acknowledge, promote or
+
+  dismiss findings with a reason; admit hopper members one at a time. Anything that needs a
+
+  plan change happens inside the member, through its own skills.
+
+  '
+enablement:
+  defaults:
+    pack: portfolio-default
+    # workspace_root and subject are deliberately absent: the app's setup steps stay 'todo' until
+    # the operator sets them (manifest_set scalars), and the collector refuses to run without them.
+    discovery: auto
+    snapshot_cadence_days: 7
+    silence_threshold_days: 14
+    harvest_stale_after_days: 3
+    index:
+      activity_window_days: 30
+      deadline_window_days: 90
+    answers:
+      keep: ask
+  scaffold:
+  - portfolio/members
+  - portfolio/snapshots
+  - portfolio/index
+  - portfolio/understanding
+  - portfolio/dependencies
+  - portfolio/findings
+  - portfolio/answers
+  - portfolio/reports
+  state_init:
+    schema_version: 1
+    counters:
+      dependency: 0
+      finding: 0
+    cursors: {}
+    last_collect: null
+    last_index: null

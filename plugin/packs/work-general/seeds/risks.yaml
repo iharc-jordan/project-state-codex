@@ -1,0 +1,16 @@
+risks:
+  - slug: scope-creep
+    title: "Scope grows without the dates or budget moving"
+    likelihood: medium
+    impact: medium
+    mitigation: "Every scope change goes through the change register with its date and cost impact."
+  - slug: resource-availability
+    title: "Key people are pulled onto other work"
+    likelihood: medium
+    impact: high
+    mitigation: "Name owners per milestone; agree their time with their managers at plan approval."
+  - slug: stakeholder-misalignment
+    title: "Stakeholders disagree on what done looks like"
+    likelihood: low
+    impact: high
+    mitigation: "Success measures in the charter, signed off before planning."

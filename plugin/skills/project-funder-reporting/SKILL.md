@@ -1,11 +1,22 @@
 ---
 name: project-funder-reporting
-description: Generic funder/customer reporting owner. Invoke only for an explicit stakeholder-bound claim/report request, a due enabled reporting-matrix entry, or a required trigger from an active pack with a matching funder-reporting profile. Preserve the profile's form, deadlines, format, cover-email, signoff, and established output paths. Drafts only; never submits, and never runs in parallel with another report owner for the same period.
+description: "Draft reports for whoever the project answers to — funder claims, sponsor updates, customer invoices — 'draft the quarterly claim', 'sponsor update', 'funder report'. Format comes from the pack's profile."
+map:
+  tier: P2
+  stage: generate
+  requires: [memory]
+  reads: [manifest, milestones, changes, people]
+  writes: [reports]
+  calls: [project-milestone-manager, project-notifier]
+  produces: [claim, deliverable-handover, stakeholder-update, closeout]
+  profile_driven: true
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project Funder Reporting (v2.0 — was project-claim-prep)
+
+> **When to use.**
+>
+> Generic funder/customer reporting engine. Reads funder-specific behavior from a profile YAML loaded by the active pack — claim form template, deadlines, format spec, cover-email template, signoff routing. The PIC pack ships a profile that reproduces v1.x quarterly claim behavior (Apr/Jul/Oct/Jan 20, MS & financial xlsx, percent_complete + technical_progress mapping). Other packs ship customer-invoicing profiles, board-pack profiles, and stage-gate profiles. Use whenever the user says 'draft the [stakeholder] report', 'quarterly claim', 'monthly invoice', 'board pack', 'funder report', 'customer billing', 'prepare the report', or any request to produce a stakeholder-bound recurring report. Also trigger when the orchestrator detects an upcoming reporting deadline from the stakeholder reporting matrix. Drafts only — never submits.
 
 This skill produces stakeholder-bound recurring reports — anything that one named recipient (or recipient group) needs at a defined cadence in a defined format. Funder claims are one case; customer invoices, board packs, milestone-billing reports, and stage-gate submissions are others.
 
@@ -22,8 +33,6 @@ The skill itself is generic. Funder/customer/recipient-specific behavior comes f
 - Filling the configured template (xlsx / docx / pdf / md)
 - Generating the cover delivery (Gmail draft via `project-notifier`)
 - Writing the report artifact to `reports/<stakeholder>/<YYYY-QN>-<report-kind>.<ext>`
-- For a quarterly claim profile, also writing the established
-  `reports/claims/YYYY-QN.yaml` claim record through `project-state` locking
 - Emitting an outbox card (`gmail_draft` with deep-link) into `outbox/queue/` for review
 - Logging the deliverable and signoff to the activity log
 
@@ -32,14 +41,6 @@ The skill itself is generic. Funder/customer/recipient-specific behavior comes f
 - Authoring funder-specific templates — those live in the pack
 - Submitting reports — always stops at a draft for human signoff
 - Defining the cadence — that's in the stakeholder reporting matrix
-
-## Idempotent report ownership
-
-Before drafting, compute the deterministic `report.generated` identity from the
-source event, reporting period, this owner, canonical output path, and exact
-source revision when available. If the event and artifact already exist, return
-the existing draft/outbox card and do not regenerate, increment, finalize, or
-notify. One source event and period has one report owner invocation.
 
 ## Sub-actions
 
@@ -54,12 +55,12 @@ Marks a draft as PL-signed-off, writes signoff event to activity log, hands to `
 
 ## Outbox emission (queue the draft for review)
 
-When `draft` produces a funder report, **emit an outbox card** for human review and
-action. A separately installed compatible UI may render the queue. Unlike internal status reports, funder
+When `draft` produces a funder report, **emit an outbox card** so it surfaces in the
+`/queue` UI for human review and action. Unlike internal status reports, funder
 reports usually end in an *external send the human performs* — so the card is a
 `gmail_draft` carrying the deep-link to the already-created Gmail draft. Card files
 live in `project-state/outbox/queue/` as a `<id>.md` + `<id>.meta.yaml` pair
-using the card fields defined below.
+(contract: `plugin/skills/project-external-comms/SKILL.md`).
 
 Two-part pattern for a quarterly claim:
 1. **The deliverable** — the filled `.xlsx` stays under `reports/pic-submissions/`.
@@ -85,7 +86,7 @@ expires: 2026-07-20
 ```
 
 The card is always `status: queued`. The Gmail draft already exists (notifier made
-it); approval only reveals the deep-link — it never sends. If
+it); approving in the UI only reveals the deep-link — it never sends. If
 `project-notifier` hasn't produced a draft yet (no deep-link available), still emit
 the card with `surface: gmail` and `action_required` describing the manual step, and
 omit `deep_link`. Board-pack and invoice profiles follow the same shape with their own
@@ -99,11 +100,6 @@ omit `deep_link`. Board-pack and invoice profiles follow the same shape with the
 
 ## Migration from v1.x
 
-The v1.x `project-claim-prep` skill was hard-wired to the PIC quarterly form.
-The public v4.9.0 archive does not include the proprietary MS & financial
-tracking workbook referenced by the PIC profile. Require the operator to supply
-the governing workbook path before producing a PIC claim; never synthesize or
-silently substitute a compliance form. Existing claim drafts in
-`reports/claims/` remain unchanged.
+The v1.x `project-claim-prep` skill was hard-wired to the PIC quarterly form. v2.0 reads the same form template — now living at `packs/pic-pcais/templates/ms-and-financial-tracking.xlsx` — through the profile system. Same xlsx output; new authoring path. Existing claim drafts in `reports/claims/` are unchanged and continue to be referenced.
 
 If you load only the PIC pack, behavior is identical to v1.x. Loading a customer pack alongside adds new reporting matrix entries (customer invoices, customer reports) without affecting the PIC claim flow.

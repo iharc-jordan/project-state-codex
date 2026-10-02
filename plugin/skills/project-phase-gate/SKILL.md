@@ -1,23 +1,39 @@
 ---
 name: project-phase-gate
-description: "Manage project lifecycle phase transitions using bundled or custom phase presets plus active pack overrides. Check required gate evidence and refuse transitions when artifacts are missing. Supports terminal and continuous lifecycles, including opening, closing, and freezing increments without overwriting prior gate evidence. Use for phase status, gate checklists, transition readiness, moving to another phase, continuous-project conversion, or increment boundaries."
+description: "Check or move the project's phase — 'what phase are we in', 'can we move to the next phase', 'what's blocking the gate', 'gate checklist'. Refuses to transition while gate criteria are unmet."
+map:
+  tier: P1
+  stage: keep
+  requires: [memory]
+  reads: [phases, state, milestones]
+  writes: [phases, state]
+  calls: [project-milestone-manager]
+  profile_driven: true
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project Phase Gate (v2.1 — user-defined phases, terminal or continuous)
+
+> **When to use.**
+>
+> Manage lifecycle phase transitions for any project. Phase ladders come from presets in templates/phase-presets/ — grant, agile, waterfall, client-engagement, open-source, stage-gate, countdown (back from phases.anchor_date), cycle (one increment per period) or custom. Active pack can override gate-in/gate-out criteria per phase. Enforces required artifacts; refuses to transition if gate artifacts missing. v2.1 adds the lifecycle declaration (terminal | continuous) and the increment layer for facilities that continue past closeout — opening, closing, and freezing increments so phase re-entry never clobbers a prior pass's gate evidence. Use whenever the user says 'what phase are we in', 'can we move to execution', 'what's blocking the gate', 'transition to the next phase', 'gate status', 'gate checklist', 'this project doesn't end', 'we shipped v1 but there's a v1.1', 'close the increment', 'start the next increment', 'make this continuous', 'the project continues after closeout'.
 
 Manages the lifecycle phase transitions of a project. Each phase has a gate-in (what must be true to enter) and a gate-out (what must be true to leave). The skill refuses transitions when gate artifacts are missing.
 
 In v2.0, phase definitions are no longer hard-coded. They come from a preset (`templates/phase-presets/<preset-name>.yaml`) selected in the manifest, with optional overrides from active pack profiles.
 
-## Available presets (ship in v2.0)
+## Available presets
+
+The rhythm axis of onboarding (plugin/skills/project-scaffolder/SKILL.md) offers `agile-default`, `stage-gate-default`,
+`countdown-default` and `cycle-default` as plain answers; the rest sit behind *Advanced*.
 
 - **`grant-default`** — LOI → Approval → Planning → Execution → Closeout → Archive. Reproduces v1.x lifecycle. Used by grant projects (PIC, NSERC, NIH, EU Horizon, etc.).
 - **`agile-default`** — Discovery → Build-loops (recurring) → Hardening → Release. For engineering teams running Scrum/Kanban with release trains.
 - **`waterfall-default`** — Requirements → Design → Build → Test → Deploy → Maintain. For traditional waterfall projects.
 - **`client-engagement-default`** — Discovery → Proposal → Engagement → Wrap. For consulting/client-services work.
 - **`open-source-default`** — Incubation → Active → Maintained → Archived. For community-governed projects.
+- **`stage-gate-default`** — Define → Plan → Deliver → Review → Close. The generic ladder for work that is neither software- nor funder-shaped. Terminal.
+- **`countdown-default`** — Plan → Build-out → Final countdown → Live → Wrap. Planned backwards from a fixed date; `requires: [anchor_date]`, and `04-live` opens on `phases.anchor_date`. Terminal. Used by `work-campaign` and `work-event`.
+- **`cycle-default`** — Prepare → Execute → Review → Close, cycling back to Prepare. One increment per period (month-end close, budget cycle). Continuous-capable. Used by `work-ops-cycle`.
 - **Custom** — write your own preset YAML; reference it from `manifest.yaml` as `phases.preset: "your-preset"`.
 
 ## Pack overrides
@@ -26,8 +42,7 @@ A pack can ship a `phase-gate.yaml` profile that adds or modifies gate criteria 
 
 ## What it owns
 
-- Reading the current phase from authoritative
-  `manifest.yaml:phases.current_phase`, with `state.json` as a checked mirror
+- Reading the current phase from `state.json`
 - Enforcing gate-in and gate-out checklists per the active preset + pack overrides
 - Refusing transitions with clear errors when checklists are incomplete
 - Writing transition events to `logs/activity.ndjson`
@@ -43,12 +58,6 @@ A pack can ship a `phase-gate.yaml` profile that adds or modifies gate criteria 
 - Writing any file directly — every write routes through `project-state` for locking and logging
 - Deciding whether a project continues — only the operator knows that
 
-Every lifecycle or phase mutation is material by definition, but routine task
-progress is not a reason to invoke one. Before writing, run read-only
-reconciliation for manifest/state/transition phase, required objective and
-milestone status, gates, lifecycle, increments, and required reports. Surface
-contradictions and refuse to guess through them.
-
 ---
 
 # The lifecycle (v2.1)
@@ -57,8 +66,8 @@ A phase ladder assumes the project ends. Most do. Some don't — a product ships
 a retainer renews, an ops facility never closes. For those, the terminal ladder loses gate history on
 phase re-entry, dilutes the rollup, and offers no correct forward move.
 
-The lifecycle declaration says which kind of thing this facility is. The rules in
-this skill and the selected phase preset are authoritative for the public package.
+The lifecycle declaration says which kind of thing this facility is. Spec:
+The phase and lifecycle rules below apply.
 
 ## `get_lifecycle()`
 
@@ -98,9 +107,11 @@ shipped and nothing ever wrote `phases.preset`, so selecting one meant hand-edit
 
 ## `set_preset(name)`
 
-Selects the phase ladder. `name` must be a preset that exists — one of the five shipped in
+Selects the phase ladder. `name` must be a preset that exists — a file in
 `templates/phase-presets/` (`grant-default`, `agile-default`, `waterfall-default`,
-`open-source-default`, `client-engagement-default`) or a custom preset YAML the facility provides.
+`open-source-default`, `client-engagement-default`, `stage-gate-default`, `countdown-default`,
+`cycle-default`) or a custom preset YAML the facility provides. A preset that declares
+`requires: [anchor_date]` (countdown) is refused until `phases.anchor_date` is set — ask for it.
 Refuse on an unresolvable name; do not create a preset as a side effect of selecting one.
 
 **This operation is FB-003 itself.** The paragraph above under `set_lifecycle` cites that record as
@@ -174,28 +185,21 @@ reader keeps working (spec §4.2).
 
 ## `open_increment(label)`
 
-1. Refuse if `current_increment` is already set and open — one open increment at a time. If the same
-   normalized request already produced that open increment, return it without
-   another event or counter update.
+1. Refuse if `current_increment` is already set and open — one open increment at a time.
 2. Allocate the next `INC-<NN>` from `state.json:counters.increments`.
 3. Write `increments/INC-<NN>-<label>/manifest.yaml` with `status: open`, `opened: <today>`.
 4. Reset `phases/` from the active preset: every phase back to `status: pending`, `started`/`ended`
    nulled, every `gate_out.checklist[].done` back to `false`, all `evidence` cleared. **Only safe
    because the outgoing increment's records were frozen first** — see `close_increment` step 5.
-5. Clear `state.json:gates`, set `current_increment`, set
-   `manifest.yaml:phases.current_phase` to the `cycles_back_to` target of the phase that closed the
-   previous increment (or the preset's first phase for `INC-01`), and mirror that value to
-   `state.json:current_phase`.
+5. Clear `state.json:gates`, set `current_increment`, set `current_phase` to the `cycles_back_to`
+   target of the phase that closed the previous increment (or the preset's first phase for `INC-01`).
 6. Log `increment.opened`.
 
 ## `close_increment(closed_what, label_of_next?)`
 
 The whole point of the design, and the operation that fixes the data loss.
 
-1. Refuse unless the current increment exists and the current phase's
-   `gate_out` checklist is satisfied — same rule as any transition. Also require
-   consistent objective/milestone/gate/report state for the increment; report
-   stale or contradictory data rather than inventing closure.
+1. Refuse unless the current phase's `gate_out` checklist is satisfied — same rule as any transition.
    A criterion may be closed `closed_unmet: true` with a reason; that satisfies the gate and is
    **preserved verbatim**, never rewritten.
 2. **Refuse without `closed_what`.** No default, no generated text, no "same as last increment". Ask:
@@ -203,8 +207,8 @@ The whole point of the design, and the operation that fixes the data loss.
    ```
    What did this closeout close? One or two sentences. Say what it did NOT close too.
 
-   Example: "This increment closes the validated release workflow. It does not
-   close the continuing product roadmap."
+   Example, from CC4PS: "The loop: triage, dispatch, execute, reconcile — proven across fourteen
+   workloads and packaged as a plugin. Does NOT close the product."
    ```
 
    This is the cheapest thing in the whole design and, on its own, removes most of the practical
@@ -232,9 +236,10 @@ cancelled is not one that closed, and recording it as closed recreates "the hist
 backwards" one level down. `closed_what` is still required; for a cancelled increment it records what
 was and was not delivered before the stop. Logs `increment.cancelled`.
 
-**`cancelled`, not `abandoned`.** Milestones already use `cancelled` for this
-exact idea. A second word for a concept the substrate already names would split
-the vocabulary.
+**`cancelled`, not `abandoned`.** Milestones already use `cancelled` for this exact idea and one is in
+live use in this repo's own facility. A second word for a concept the substrate already names is how a
+vocabulary splits — the same way phase `status` ended up with three of them (`SCHEMA.md`, phase
+manifest).
 
 ## `convert_to_continuous(label?)`
 
@@ -246,22 +251,17 @@ no startup check that rewrites state. Nothing happens until asked.
    facility already has becomes increment 1.**
 3. **If the facility is at or past its closeout-equivalent phase:** ask for `closed_what` (the one
    thing only a human knows), freeze `phases/` and `gates` into `INC-01`, mark it `closed`, then open
-   `INC-02`, set `manifest.yaml:phases.current_phase` to the boundary phase's `cycles_back_to`
-   target, and mirror it to `state.json:current_phase`.
+   `INC-02` and set `current_phase` to the boundary phase's `cycles_back_to` target.
    **If it is mid-flight:** `INC-01` stays `open`, nothing is frozen, no `closed_what` is needed yet.
 4. If a `reports/final-report-<date>.md` exists, reference it from `closeout_report` **in place**. It
    is not moved and not renamed. The word *final* stays in the filename of the report that was, at the
    time, final.
 5. Log `lifecycle.converted`, then `increment.opened` / `increment.closed` as applicable.
 
-If a facility already declares `continuous` but has no meaningful current or
-closed increment, do not pretend conversion succeeded earlier. Return a
-reconciliation finding and require an explicit repair/open operation.
-
-**No historical record is edited.** One directory is created, the lifecycle/current-increment keys
-are written, and `phases/` is copied — never moved. Afterwards the manifest remains phase authority
-and `state.json:current_phase` remains its projection, so a reader that knows nothing about
-increments still sees a facility that is executing.
+**No pre-existing record is edited.** One directory is created, two manifest keys are written, and
+`phases/` is copied — never moved. Afterwards `state.json:current_phase` is read from the same place
+as before, so a reader that knows nothing about increments sees a facility that is executing, exactly
+as it would have.
 
 ## `revert_to_terminal()`
 
@@ -287,13 +287,13 @@ and any criterion closed unmet, and the history records that the project went ba
 **After (continuous):**
 
 ```
-close_increment(closed_what: "v1: the validated release workflow shipped as a plugin. It does not
-                             close the continuing product roadmap.",
+close_increment(closed_what: "v1: the loop proven across fourteen workloads and packaged as a
+                             plugin. Does NOT close the product.",
                 label_of_next: "v1.1")
 ```
 
 - `increments/INC-01-v1/` now holds a frozen `phases/` and `gates.json`. The release gate's evidence
-  survives, including any criterion deliberately closed unmet with its recorded reason.
+  survives, including `execution.spec_without_material_defect` closed unmet after six assessments.
 - `phases/` is reset, `current_phase` is `02-build-loops`, `current_increment` is `INC-02-v1.1`.
 - `health.overall_percent` still reads all-time; `health.increment.percent` reads v1.1 only.
 - The activity log shows an increment closing and another opening — forward, which is what happened.

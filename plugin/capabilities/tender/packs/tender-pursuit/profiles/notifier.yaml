@@ -1,0 +1,59 @@
+profile_id: tender-pursuit.notifier
+
+# Consumed by project-notifier for facilities with the tender package enabled.
+# Spec §17. Notifier dedupes on event id — a tender never double-alerts for
+# the same event.
+
+score_bands:
+  act_now:      { min: 85, action: immediate }     # Slack + email, at once
+  review:       { min: 70, action: daily_digest }
+  watch:        { min: 55, action: watch_list }    # digest section, no ping
+  low_priority: { min: 35, action: retain }        # no notification
+  dismiss:      { min: 0,  action: retain }
+
+immediate_rules:
+  - id: high-score            # relevance ≥ 85 on tender.scored
+    on: tender.scored
+    when: "matching.relevance_score >= 85"
+  - id: mandatory-meeting-near
+    on: sweep                 # evaluated each monitor sweep / orchestrator run
+    when: "dates.mandatory_meeting_at within 7 days"
+  - id: question-deadline-near
+    on: sweep
+    when: "dates.questions_due_at within 5 days"
+  - id: closing-near
+    on: sweep
+    when: "dates.closing_at within 10 days and workflow.status in [pursue, preparing_response]"
+  - id: deadline-shortened
+    on: tender.deadline.changed
+    when: "shortened == true"
+  - id: material-addendum
+    on: tender.amended
+    when: "workflow.status in [qualified, bid_no_bid_pending, pursue, preparing_response, submitted]"
+  - id: pursued-cancelled
+    on: tender.cancelled
+    when: "workflow.status in [pursue, preparing_response, submitted]"
+  - id: new-disqualifier
+    on: tender.disqualified
+    when: "previous qualification.status == qualified"
+  - id: connector-failing
+    on: tender.harvest.completed
+    when: "any connector consecutive_failures >= 3"
+  - id: mandatory-issue        # spec §26: escalate regardless of score
+    on: tender.disqualified
+    when: "always"
+
+channels:
+  immediate: [slack, email]
+  daily_digest: [email]
+  weekly: [email]
+
+daily_digest:
+  include:
+    - new_tenders
+    - act_now_tenders
+    - review_tenders
+    - amendments_last_24h
+    - deadlines_within_14_days
+    - unassigned_opportunities
+    - failed_connectors

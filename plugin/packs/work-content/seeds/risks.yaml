@@ -1,0 +1,21 @@
+risks:
+  - slug: reviewer-delay
+    title: "Reviewers are slow or disagree"
+    likelihood: high
+    impact: medium
+    mitigation: "Name one decision-maker; give reviewers a fixed window."
+  - slug: scope-creep
+    title: "The piece keeps growing"
+    likelihood: medium
+    impact: medium
+    mitigation: "Freeze the outline at approval; new material goes to a follow-up."
+  - slug: permissions
+    title: "Rights, permissions or legal clearance missing at the end"
+    likelihood: medium
+    impact: high
+    mitigation: "Track every third-party asset from the first draft."
+  - slug: production-slip
+    title: "Design or production takes longer than planned"
+    likelihood: medium
+    impact: medium
+    mitigation: "Book production time at outline approval."

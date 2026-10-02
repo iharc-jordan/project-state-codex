@@ -1,11 +1,21 @@
 ---
 name: project-external-comms
-description: "Run the external-communication review pipeline only for an explicit review request or when an active pack supplies the applicable external-comms profile. Preserve content-class review windows, acknowledgements, confidentiality, patent-delay, and approval rules. If no profile applies, report the feature as unconfigured; never publish or send automatically."
+description: "Review outgoing publications, talks, press releases or posts before they go public — 'can we publish this', 'review this press release', 'publication review'. Review windows come from the pack."
+map:
+  tier: P3
+  stage: generate
+  requires: [memory]
+  reads: [documents]
+  writes: [documents, log]
+  produces: [comms-review]
+  profile_driven: true
 ---
 
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
-
 # Project External Comms (v2.0 — was project-publications)
+
+> **When to use.**
+>
+> Generic external-communication review pipeline — proposed publications, presentations, press releases, blog posts crossing the audience boundary. Reads review-window-by-content-class from a profile in the active pack. PIC pack ships profile that reproduces v1.x MPA-mandated 30-day full-publication and 14-day abstract review with PIC + ISED funding acknowledgement enforcement and patent-filing-delay coordination. Other packs ship corporate-PR profiles, customer-confidentiality profiles, etc. Use whenever the user says 'we want to publish', 'submit an abstract', 'press release', 'media interview', 'external talk', 'publication review', 'clear for external' — or any request to route external content through review. Replaces v1.x project-publications.
 
 The publication-review-clock pattern, generalized. Anything that crosses the project's audience boundary — papers, abstracts, presentations, press releases, blog posts marked public, marketing-side announcements — runs through this skill's review pipeline. The clock window and review authority come from the profile loaded by the active pack.
 
@@ -50,7 +60,7 @@ Reviewer pauses the clock. Common reasons: confidentiality concern, patent-filin
 This skill does not author content, so it emits at a different moment than the
 generators: **when an item flips to `cleared`** (clock elapsed AND signoffs
 complete), emit an outbox card into `project-state/outbox/queue/` announcing the
-content is now safe to send externally. Use the outbox fields defined below; always
+content is now safe to send externally. The following outbox rules apply; always
 `status: queued`.
 
 - `kind` mirrors the content class: `paper`/`abstract`/`talk` → `doc`,

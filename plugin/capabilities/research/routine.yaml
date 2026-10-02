@@ -1,0 +1,106 @@
+# research — capability routine (capabilities/research/README.md).
+#
+# What research contributes to project-orchestrator's read phase, composed into the one digest for every ENABLED
+# capability. There is no second orchestrator and no advisor: the decisions the unattended walk parks reach a person
+# through research.walk-gated, and the numbers behind every check come from the scripts (validator/scripts/check.py,
+# scripts/walk.py) and the shared model (views/_research.py), never from prose. Scheduling is NOT here — the
+# research-default pack's matrix entries carry the nightly walk, the weekly delta and the weekly sweep.
+schema_version: 1
+capability: research
+version: "0.1.0"
+
+state:
+  runtime: "state/research.json"
+  manifest_block: "capabilities.research"
+  agenda: "research/agenda.yaml"
+
+checks:
+  # ── Blocking / urgent ────────────────────────────────────────────────────────
+  - id: "research.not-initialized"
+    when: "capability enabled AND no research-mandate on file"
+    severity: urgent
+    message: "Research is enabled but no question is on file — the mandate is the first deliverable."
+    action: "Run /research-onboarding: it drafts one to three mandates from the project's brief and inbox for you to argue with."
+    handler: research-onboarding
+
+  - id: "research.walk-halted"
+    when: "the last walk run record has status halted (validator/scripts/check.py reported errors)"
+    severity: urgent
+    message: "The nightly walk refused to work: the research records do not validate ({n} error(s))."
+    action: "Run python3 <plugin>/capabilities/research/validator/scripts/check.py <facility> and fix what it names; the walk resumes on the next night."
+    handler: project-state
+
+  - id: "research.blocking-challenge"
+    when: "any open research-challenge with severity blocking"
+    severity: urgent
+    message: "{n} blocking challenge(s) — {mandates} cannot ship: {ids}."
+    action: "Rule on it with /research-redteam rule {id} (accept, reject with a reason, or resolve with evidence). Only a person rules."
+    handler: research-redteam
+
+  # ── This week ────────────────────────────────────────────────────────────────
+  - id: "research.walk-gated"
+    when: "the last walk run record has open gates"
+    severity: soon
+    message: "The walk parked {n} decision(s) for you — one line each: {gates}."
+    action: "Each names the skill that clears it (lock or kill, reopen or close negative, rule, review a material change, confirm candidates)."
+    handler: research-walk
+
+  - id: "research.inbox-waiting"
+    when: "documents/inbox/ holds files classified research and not yet drained"
+    severity: soon
+    message: "{n} research document(s) waiting in the inbox."
+    action: "Run /research-ingest."
+    handler: research-ingest
+
+  - id: "research.draft-drifting"
+    when: "any draft mandate at iteration ≥ 2"
+    severity: soon
+    message: "{id} has been a draft for {iteration} iterations — {lock_failures}."
+    action: "Lock it (/research-mandate lock {id}, which runs the checklist) or kill it. Locking is a person's decision."
+    handler: research-mandate
+
+  - id: "research.questions-stale"
+    when: "any answered question whose answering established findings are all stale (derived: 2× the category half-life)"
+    severity: soon
+    message: "{n} question(s) rest on stale evidence — {questions}."
+    action: "A standing mandate's walk re-plans against them overnight; for a bounded one, /research-step validate."
+    handler: research-walk
+
+  - id: "research.provisional-backlog"
+    when: "any live material finding with status provisional on a mandate that is not closed"
+    severity: soon
+    message: "{n} material finding(s) wait for corroboration — they do not count toward the gate."
+    action: "Find an independent origin (/research-step validate) or confirm them yourself (research.finding.established by a person)."
+    handler: research-step
+
+  # ── On deck ──────────────────────────────────────────────────────────────────
+  - id: "research.below-gate"
+    when: "a mandate with every question answered whose primary share of established findings is below primary_source_min_ratio"
+    severity: ondeck
+    message: "{id}: every question answered but the primary share is {share} against a {threshold} gate."
+    action: "Raise it with /research-step validate on the secondary findings, or lower the ratio on purpose, recorded on the mandate."
+    handler: research-step
+
+  - id: "research.walk-abandoned"
+    when: "state/research.json walk.active has expired without a close"
+    severity: ondeck
+    message: "Walk {run_id} opened {started} and never closed."
+    action: "Look at its run record; the next walk clears the stale marker."
+    handler: research-walk
+
+  - id: "research.retro-missing"
+    when: "a complete or closed-negative mandate with no research.retro.recorded event"
+    severity: ondeck
+    message: "{id} finished with no retrospective — what it learned is not yet data."
+    action: "Run /research-retro {id}."
+    handler: research-retro
+
+  - id: "research.library-moved"
+    when: "a shipped or living study, or an article, cites a finding since superseded, withdrawn or missing (views/_research.py library())"
+    severity: ondeck
+    message: "“{title}” cites {ids}, since superseded — it no longer says what the research holds."
+    action: "Articles: /research-brief article {slug} recompiles it. A study: /research-brief draft {mandate} writes the next issue; a shipped study is never edited."
+    handler: research-brief
+
+quiet_when: "no check fires"
+quiet_message: "Research is current."

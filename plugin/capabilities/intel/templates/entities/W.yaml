@@ -1,0 +1,30 @@
+# intel-winloss template (intel 1.2, OCI §5.5 win-loss record). APPEND-ONLY, except the buyer
+# evidence that arrives after the close (buyer_evidenced_reason, interviews, claims_generated).
+# The seller's reason and the buyer's are NEVER merged: seller-reported loss reasons lean toward
+# price and away from execution, and a record that blends them teaches the organisation the wrong lesson.
+id: INT-W-NNN
+deal_ref: "<tender id | intel/deals/<ref> | a CRM id>"
+outcome: loss                        # win | loss | no-decision
+closed_at: YYYY-MM-DD
+competitor: ~                        # INT-E-NNN who won (on a loss) or was beaten (on a win); ~ when unknown
+segment: ~                           # e.g. municipal | enterprise | mid-market — patterns are segmented before they are generalised
+geography: ~
+deal_size: ~                         # optional band, e.g. "<50k" | "50-250k" | ">250k"
+seller_reported_reason:              # what the rep recorded — reported, internal-observation
+  statement: "..."
+  category: price                    # reason taxonomy (schema/entities.yaml intel-winloss.reason_categories)
+  recorded_by: ~
+  source: {ref: "<CRM field | context.md | tender debrief note>"}
+buyer_evidenced_reason: ~            # what the buyer actually said — ~ until there is buyer evidence
+#  statement: "..."
+#  category: execution
+#  source: {class: buyer-direct, ref: "interview-YYYY-MM-DD | debrief letter"}
+#  epistemic_status: reported
+decision_criteria: []                # - {criterion: "...", explicit: true}  explicit = the buyer's words; false = our inference
+objections_encountered: []           # short strings; each also becomes an objection claim
+product_gaps: []                     # each also becomes a product-gap claim
+interviews: []                       # - {date: YYYY-MM-DD, with: "role, not a name unless consented", ref: "..."}
+claims_generated: []                 # INT-C ids written from this record (win-loss, objection, product-gap, sales-tactic)
+context_read: []                     # what was read: tender, deals-dir, inbox, deals.read
+logged_by: intel-winloss
+created: YYYY-MM-DD

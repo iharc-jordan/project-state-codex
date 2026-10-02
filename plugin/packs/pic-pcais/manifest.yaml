@@ -10,7 +10,7 @@ pack:
   id: "pic-pcais"
   name: "Protein Industries Canada — PCAIS"
   version: "1.0.0"
-  compatible_core: ">=2.0,<3.0"
+  compatible_core: ">=4.0,<6.0"
   description: |
     Funder pack for Protein Industries Canada PCAIS-funded consortium projects.
     Encodes PIC PM Guide requirements: quarterly claim cadence (Apr/Jul/Oct/Jan 20),
@@ -25,6 +25,22 @@ pack:
     - "PIC PM Guide (Protein Industries Canada Project Management Guide)"
     - "Master Project Agreement template"
   released: "2026-04-27"
+  maturity: "production"
+  axis: accountability   # work | accountability | capability - the bundled pack contract
+
+# ----------------------------------------------------------------------------
+# Picker presentation - skills/project-scaffolder/SKILL.md Every front door (onboarding,
+# scaffolder, intake, kanban wizard) reads this block; none keeps its own table of packs.
+# ----------------------------------------------------------------------------
+picker:
+  listed: true
+  label: "Protein Industries Canada (PCAIS)"
+  blurb: "PIC-funded consortium: quarterly claims, Steering Committee, publication and IP review."
+  signals:
+    - "Protein Industries Canada"
+    - "PCAIS"
+    - "PIC PM Guide"
+    - "Master Project Agreement"
 
 provides:
   profiles:
@@ -34,12 +50,23 @@ provides:
     - ip-tracker
     - archive
     - phase-gate
+    - onepager             # audience voice profiles for project-onepager — shipped since the
+                           # onepager skill landed but never declared here until 2026-08-21
   templates:
     - claim-cover-email.md
     - sc-agenda-appendix-a.md
-    - final-report.md
+    - sc-minutes.md
     - ip-disclosure.md
-    - publication-review-form.md
+    - pic-ip-registry-abstract.md
+    - pic-annual-questionnaire-ip-section.md
+    - lessons-learned-summary.md
+    - pic-ip-final-report.md
+    # final-report.md and publication-review-form.md were declared here with no files and no
+    # profile referencing either — trimmed 2026-08-21 (FB-014 / issue #17). The member final
+    # report is real but PIC distributes its template ~90 days before project close (PM Guide,
+    # "Project Closure and Final Reporting") — it is facility-supplied when issued, not
+    # pack-shipped. Publication review is governed by the PM Guide's 30-day/14-day SC review
+    # windows; author a form and re-declare it in the same change if one is wanted.
   reporting_matrix_defaults: true
 
 depends_on:
@@ -57,8 +84,11 @@ conflicts_with:
 # facility's own manifest.yaml:phases.lifecycle always wins. Nothing is ever written blind, and
 # a facility that leaves its lifecycle unset stays permanently valid.
 # Resolution order: facility > pack default > terminal.
-# Lifecycle behavior is enforced by project-phase-gate and the selected preset.
+# Spec: skills/project-phase-gate/SKILL.md
 defaults:
   # An MPA has an end date, a final report, and a holdback release. Structurally barred
   # from continuous anyway: grant-default declares no cycles_back_to.
   lifecycle: terminal
+  # preset is a suggestion too: it pre-fills the rhythm question and project-scaffolder Step 2
+  # resolution step 2. The facility\'s phases.preset always wins.
+  preset: grant-default

@@ -1,0 +1,25 @@
+# project — "what is this member, right now?" (the mounted Project figure; spec §10.2)
+# One figure per member, drawn from its latest snapshot; the understanding page is its prose twin.
+view:
+  id: portfolio-project
+  title: "{member.name}"
+  requires: "capability=portfolio"
+  kind: figure
+  source: "latest snapshot for the member + portfolio/index/*.yaml rows for it"
+  blocks:
+    - id: phase
+      render: "ladder of the member's phase preset; current step lifted and labelled '{phase} · since {phase_entered}'"
+    - id: next
+      render: "countdown ring: days to next_due[0]; ring fill = milestone percent; critical colour when at_risk; label '{ref} · {date} · {percent}%'"
+    - id: milestones
+      render: "one block per milestone in order; done = filled; open = outline with progress fill; at_risk = critical outline; no owner = dashed; captions 'done on their dates' / percent"
+    - id: people
+      render: "one row per person in the member: colour disc (fixed owner order), name, role, load bar = in-flight milestones + owned dated commitments; caption when a single operator carries everything"
+    - id: risks
+      render: "open risks as circles sized by score (r = 8 + score×1.8); critical stroke ≥ 9, warning 6–8; label id + title; caption 'reviewed {date}' and 'from portfolio:{id}' when accepted from a proposal"
+    - id: activity
+      render: "7 daily bars from activity-30d, today emphasised; caption '{events_7d} events'"
+    - id: harvest
+      render: "one dot per surface: green ≤ stale threshold, warning otherwise; label '{surface} {age} d'"
+  footer: "cited member files; the one line of 'what changed since the last collect'"
+  table_view: true

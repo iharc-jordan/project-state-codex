@@ -1,21 +1,48 @@
 pack:
   id: "agile-default"
-  name: "Agile Engineering Defaults"
+  name: "Software Product (Agile)"
   version: "0.1.0-starter"
-  compatible_core: ">=2.0,<3.0"
+  compatible_core: ">=4.0,<6.0"
   description: |
     Pack for engineering teams running Scrum/Kanban with release trains. Configures
     sprint cadence, retro templates, release-phase model. Does not assume a funder
     or customer; pair with another pack for those.
   authors:
     - "David Olsson <david@atomic47.co>"
+  governing_documents:
+    - "Scrum Guide (Schwaber & Sutherland) — sprint cadence and retrospective shape"
+    - "Kanban Method (Anderson) — flow and WIP conventions"
+    - "templates/phase-presets/agile-default.yaml — the release-phase model this pack assumes"
   released: "2026-04-27"
   maturity: "starter"
+  axis: work   # work | accountability | capability - the bundled pack contract
+
+# ----------------------------------------------------------------------------
+# Picker presentation - skills/project-scaffolder/SKILL.md Every front door (onboarding,
+# scaffolder, intake, kanban wizard) reads this block; none keeps its own table of packs.
+# ----------------------------------------------------------------------------
+picker:
+  listed: true
+  label: "Software product"
+  blurb: "Building and shipping software in sprints: sprint summaries, retros, a release loop."
+  signals:
+    - "sprint"
+    - "backlog"
+    - "story points"
+    - "release"
+    - "app"
+    - "platform"
+    - "API"
+    - "codebase"
+    - "MVP"
+    - "software"
 
 provides:
   profiles:
     - review-meeting     # sprint retrospective
-    - phase-gate         # sprint phases
+    # phase-gate was declared here with no profile file behind it — trimmed 2026-08-21
+    # (FB-014 / issue #17). Re-declare it in the same change that adds profiles/phase-gate.yaml.
+  seeds: [milestones, risks, kpis]   # the Software product work type's starting plan
   reporting_matrix_defaults: true
 
 # ----------------------------------------------------------------------------
@@ -26,7 +53,10 @@ provides:
 # facility's own manifest.yaml:phases.lifecycle always wins. Nothing is ever written blind, and
 # a facility that leaves its lifecycle unset stays permanently valid.
 # Resolution order: facility > pack default > terminal.
-# Lifecycle behavior is enforced by project-phase-gate and the selected preset.
+# Spec: skills/project-phase-gate/SKILL.md
 defaults:
   # A product ships and keeps shipping. agile-default cycles 04-release -> 02-build-loops.
   lifecycle: continuous
+  # preset is a suggestion too: it pre-fills the rhythm question and project-scaffolder Step 2
+  # resolution step 2. The facility\'s phases.preset always wins.
+  preset: agile-default

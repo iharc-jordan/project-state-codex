@@ -1,0 +1,22 @@
+# The `capabilities: portfolio:` block that `enable` writes into the PORTFOLIO project's
+# project-state/manifest.yaml. `workspace_root` and `subject` are REQUIRED — enable refuses
+# without them: the collector with no declared reach would "discover" whatever it can walk
+# to, and the reviewer with no subject writes for nobody.
+capabilities:
+  portfolio:
+    enabled: true
+    version: "1.0.0"               # plugin version at enable time; validator checks drift
+    pack: portfolio-default        # bundled default; swappable
+    workspace_root: REQUIRED       # where member project-states live — absolute, or relative
+                                   # to this project-state/. The collector reads nothing outside it.
+    subject: REQUIRED              # 1-2 sentences: whose portfolio, of what, for whom
+    discovery: auto                # auto: propose unknown */project-state/ under workspace_root as
+                                   #       `proposed` members (never activate) · registry-only: never propose
+    snapshot_cadence_days: 7
+    silence_threshold_days: 14     # active member with no activity for this long → portfolio.member-silent
+    harvest_stale_after_days: 3    # a member surface cursor older than this → portfolio.harvest-stale
+    index:
+      activity_window_days: 30     # how much of each member's log the index carries
+      deadline_window_days: 90     # how far ahead index/deadlines.yaml looks
+    answers:
+      keep: ask                    # ask | always | never — write query answers to portfolio/answers/

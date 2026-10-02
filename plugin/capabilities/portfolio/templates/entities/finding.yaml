@@ -1,0 +1,21 @@
+# portfolio-finding — append-only. After creation only last_seen, status, became and
+# dismissed_reason change. Same fingerprint on a later review == same finding.
+id: PF-F-000
+kind: portfolio-finding
+type: deadline-collision          # deadline-collision | capacity-conflict | cross-project-risk |
+                                  # dependency-at-risk | member-silent | phase-drift | registry-drift
+severity: soon                    # urgent | soon | ondeck
+members: []
+window: { from: null, to: null }
+summary: ""
+basis: declared                   # declared | inferred-from-owners | inferred-from-activity
+evidence: []                      # [{member, snapshot: YYYY-MM-DD, ref}]
+fingerprint: ""                   # "<type>|<member>:<ref>|<member>:<ref>" — sorted, stable
+first_seen: ""
+last_seen: ""
+status: open                      # open | acknowledged | promoted | resolved | dismissed
+became: []                        # [{member, entity, at}] — accepted proposals, computed by the collector
+dismissed_reason: null
+logged_by: portfolio-reviewer
+created: ""
+created_by: ""

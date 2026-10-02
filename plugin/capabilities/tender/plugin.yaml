@@ -1,0 +1,39 @@
+plugin:
+  id: "tender"
+  name: "Tender — public-sector tender discovery, qualification and pursuit"
+  version: "1.0.0"
+  type: capability
+  description: |
+    Gives a project a continuously operating tender desk: watches Canadian public-sector
+    procurement portals (CanadaBuys, MERX, SaskTenders, GEM, bids&tenders), turns matching
+    notices into typed tender entities inside the enabling project's substrate, scores
+    them against the project's capability profiles, monitors amendments and deadline
+    changes as typed events, and moves each through a validated pursuit lifecycle ending
+    in a bid/no-bid decision recorded as a facility decision. A won tender hands off to
+    project-scaffolder and becomes a delivery project; the pursuit record stays here.
+    App integration (boards, workspaces, guided setup, connector health) is declared in
+    surfaces.yaml — the reference implementation of capability-conditional views.
+  authors:
+    - "David Olsson <david@atomic47.co>"
+  spec: "capabilities/tender/surfaces.yaml"  # operative contract; no prose spec yet — see README
+  released: "2026-08-28"
+
+compatibility:
+  substrate: ">=4.9"
+
+namespace:
+  prefix: "tender"         # directories, entity kinds, events, state file
+  skills:
+    - tender-harvester
+    - tender-qualifier
+    - tender-monitor
+    - tender-pipeline
+
+payload:
+  schema: "schema/"
+  skills: "skills/"
+  templates: "templates/"
+  validator: "validator/"   # prose contract + executable validate_tender_state.py
+  views: "views/"          # build-tender-glance.py — the at-a-glance report the app renders
+  packs:
+    bundled: [tender-pursuit]

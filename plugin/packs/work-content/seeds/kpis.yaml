@@ -1,0 +1,14 @@
+# KPI suggestions — never written by onboarding. project-goal-tracker offers these in the `project-goal-tracker` workflow.
+kpis:
+  - slug: reach
+    title: "Reach / views"
+    unit: "count"
+    direction: up
+  - slug: engagement
+    title: "Engagement (reads, completions, shares)"
+    unit: "count"
+    direction: up
+  - slug: conversions
+    title: "Downloads or sign-ups"
+    unit: "count"
+    direction: up

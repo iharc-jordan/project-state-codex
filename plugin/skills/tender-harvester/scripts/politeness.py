@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Global per-domain politeness ledger for tender-intelligence listing connectors.
+"""Global per-domain politeness ledger for tender listing connectors.
 
 Spec §19.3: connectors run per facility, but per-domain rate limits must hold
 globally — three facilities polling SaskTenders must not triple the load. The

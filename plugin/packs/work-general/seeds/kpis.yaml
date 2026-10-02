@@ -1,0 +1,12 @@
+# KPI suggestions — never written by onboarding. project-goal-tracker offers these in the `project-goal-tracker` workflow.
+kpis:
+  - slug: milestones-on-time
+    title: "Milestones delivered on time"
+    unit: "%"
+    direction: up
+    hint: "Share of milestones completed on or before planned_end. Computable from the substrate."
+  - slug: budget-variance
+    title: "Budget variance"
+    unit: "%"
+    direction: down
+    hint: "Spend against plan to date; closer to zero is better."

@@ -1,0 +1,22 @@
+# KPI suggestions — never written by onboarding. project-goal-tracker offers these in the `project-goal-tracker` workflow.
+kpis:
+  - slug: registrations
+    title: "Registrations"
+    unit: count
+    direction: up
+  - slug: show-rate
+    title: "Show rate (attended ÷ registered)"
+    unit: "%"
+    direction: up
+  - slug: satisfaction
+    title: "Attendee satisfaction / NPS"
+    unit: score
+    direction: up
+  - slug: cost-per-attendee
+    title: "Cost per attendee"
+    unit: "$"
+    direction: down
+  - slug: sponsorship-revenue
+    title: "Sponsorship revenue"
+    unit: "$"
+    direction: up

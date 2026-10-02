@@ -1,34 +1,25 @@
 ---
 name: project-git
-description: "Deliberate Git checkpointing and team synchronization for Project State facilities. Use for checkpoint, push, sync, status, sharing, or end-of-session requests when the facility is Git-backed. Never fetch, pull, commit, or push automatically; compare only locally known refs until the operator authorizes a Git action, and require explicit resolution when two clones edit the same entity."
+description: "Checkpoint, push or sync a project-state substrate with git — 'checkpoint', 'push the project state', 'sync with the team', 'commit the project changes'. Writes commit messages from the activity log."
+map:
+  tier: P3
+  stage: keep
+  requires: [memory, shell, git, local-fs]
+  reads: [log, manifest]
+  produces: [state-checkpoint]
 ---
-
-> Codex adapter: Read [CODEX.md](../../CODEX.md) before using this skill.
 
 # Project Git
 
+> **When to use.**
+>
+> Strategic git checkpointing for project-state facilities. Generates commit messages automatically from the activity log. Sub-actions: checkpoint (commit local changes), push (share with team), sync (pull teammates changes, rebase-safe), status (what has changed since last commit). Use when the user says 'checkpoint the project', 'commit my work', 'sync with the team', 'push the state', 'what have I changed', 'share my changes', 'end of session', 'before the meeting', or any request to checkpoint, share, or receive project-state changes via git.
+
 ## Purpose
 
-Strategic git checkpointing for `project-state/` facilities. Git is not in the
-write path. Material implementation-linked state normally travels in the same
-branch/PR and protected/default-branch merge as the companion code. State-only
-checkpoints remain legitimate for meetings, decisions, reports, governance, and
-post-commit evidence when linked to their reason or revision.
+Strategic git checkpointing for local `project-state/` facilities. Canonical writes use the selected Project State binding: served projects go through its checked MCP tools; only unserved local projects use the file protocol. Git checkpointing is a separate deliberate action at a meaningful point, such as a requested handoff or a shared report.
 
-The append-only ledger and file-per-entity schema reduce conflict frequency, but
-they do not coordinate separate clones. Advisory lockfiles work only for writers
-sharing one filesystem or server-backed substrate. Two clones that edit the same
-entity still require an explicit Git conflict resolution.
-
-## Session synchronization warning
-
-At the first Project State operation in a session, if an upstream branch is
-configured, compare `HEAD` with the locally known upstream ref using read-only Git
-state (for example, `git status --short --branch` and
-`git rev-list --left-right --count HEAD...@{upstream}`). Warn once if the branch
-is known to be behind or diverged. This check must not fetch or otherwise contact
-the remote, so it may be stale; say that plainly. Never auto-fetch, pull, commit,
-or push.
+The append-only substrate and file-per-entity schema mean syncs almost always resolve automatically. Merges are not scary here.
 
 ## Finding the repo root
 
@@ -38,29 +29,21 @@ Walk up from `project-state/` to find `.git`. That directory is the git root. Al
 
 ---
 
-### `checkpoint [--include <path> ...]` (default)
+### `checkpoint` (default)
 
-Commit local facility changes with an auto-generated message. When the operator
-explicitly supplies companion implementation paths, stage exactly those paths
-plus the related `project-state/` changes. Do not force an implementation-linked
-fact into a separate state-only commit.
+Commit all local changes to the facility with an auto-generated message.
 
 **Steps:**
 
 1. Find the git root (walk up from `project-state/`).
-2. Run `git status --short` to see what has changed. If nothing, report "Nothing to checkpoint — working tree is clean." and stop. Resolve each
-   `--include` path against the repository and show the exact staging set.
-3. Run the Project State validation/reconciliation dry-run. Refuse the checkpoint
-   on parse/schema errors, duplicate deterministic event IDs, or unresolved
-   incompatible same-entity edits. Report locally known behind/diverged state;
-   do not contact the remote.
-4. Read the bounded tail of `project-state/logs/activity.ndjson` — the events since the last commit. To find events since last commit:
+2. Run `git status --short` to see what has changed. If nothing, report "Nothing to checkpoint — working tree is clean." and stop.
+3. Read the tail of `project-state/logs/activity.ndjson` — the events since the last commit. To find events since last commit:
    ```bash
    git log -1 --format="%H %aI" HEAD   # get last commit hash + timestamp
    # filter activity.ndjson for events with ts > last commit timestamp
    ```
    If no prior commits exist, read the last 20 lines of the activity log.
-5. Build the commit message from the activity log events:
+4. Build the commit message from the activity log events:
    ```
    project-state: <one-line summary>
 
@@ -73,18 +56,12 @@ fact into a separate state-only commit.
    - If 2–4 event types: list them. "milestone.updated, 2 decisions recorded, inbox triage"
    - If 5+ event types: summarize by count. "12 events — milestones, decisions, documents"
    - Always lead with the most significant event (completions > updates > reads)
-6. Run one of:
+5. Run:
    ```bash
-   # Deliberate state-only governance/reporting checkpoint
    git add project-state/
-
-   # Implementation-linked checkpoint; paths were explicitly selected
-   git add project-state/ <path> [<path> ...]
-
    git commit -m "<generated message>"
    ```
-7. Report what was committed: file count, event summary, commit hash (short),
-   and whether it was state-only or implementation-linked.
+6. Report what was committed: file count, event summary, commit hash (short).
 
 **Example output:**
 ```
@@ -121,22 +98,17 @@ Share committed checkpoints with the team.
 
 ### `sync`
 
-Pull teammates' changes into the local facility after explicit invocation.
-Append-only files reduce conflicts but do not make the operation semantically
-safe by themselves.
+Pull teammates' changes into the local facility. Safe because of the append-only substrate.
 
 **Steps:**
 
 1. Find the git root.
 2. Check for a remote: `git remote -v`. If none, report "No remote configured." and stop.
-3. Check for uncommitted local changes: `git status --short`. If any exist, warn:
-   "You have uncommitted local changes. Checkpoint or otherwise preserve them
-   before syncing." Stop unless the operator explicitly chooses to continue.
+3. Check for uncommitted local changes: `git status --short`. If any exist, warn: "You have uncommitted local changes. Consider running `project-git checkpoint` first so your work is preserved before syncing."
+   - Do not abort — the user may want to sync anyway and let rebase handle it.
 4. Run `git pull --rebase`.
 5. On clean success: report what came in — commits received, files changed, and any new activity log events from teammates (read the new NDJSON lines appended from remote).
-6. On rebase conflict, report exactly which file conflicted and what both sides
-   changed. Never choose a same-entity winner automatically; show both versions
-   and require explicit resolution.
+6. On rebase conflict: this should be rare given the append-only + file-per-entity design. If it happens, report exactly which file conflicted and what both sides changed. Do not attempt to resolve automatically — show the user both versions and ask which to keep.
 
 **Example output (clean sync):**
 ```
@@ -232,21 +204,11 @@ The scaffolder (`project-scaffolder`) should write this to the repo root at faci
 
 ```
 # project-state git merge configuration
-# Append-only logs: retain distinct lines from both sides for later validation
+# Append-only logs: keep all lines from both sides (never a real conflict)
 project-state/logs/*.ndjson merge=union
 ```
 
-This lets Git retain lines from both sides when teammates append distinct activity
-events. It does not resolve duplicate or contradictory semantic events, and it
-does not apply to two edits of the same canonical entity; validate the merged log
-and resolve those cases explicitly.
-
-The protected/default-branch merge is the serialization point for separate Git
-clones. Before accepting merged state, detect stale base revisions where known,
-duplicate deterministic event IDs, and incompatible edits to the same entity.
-Require explicit human resolution. Do not claim that `merge=union` means
-"merge equals union," do not use lockfiles as cross-clone coordination, and do
-not create a parallel state-change request ledger.
+This means `logs/activity.ndjson` merge conflicts — two teammates both appending events — are resolved automatically by taking all lines from both. No human intervention needed, ever.
 
 ---
 

@@ -1,0 +1,17 @@
+# Seeded into the PORTFOLIO project's reporting-matrix.yaml when the portfolio capability is
+# enabled with this pack. One entry: the weekly collect. It snapshots every member, compiles
+# the index, regenerates the understanding pages and writes the weekly change note.
+# Nothing else is scheduled — queries and syntheses are run by a person and kept when useful.
+entries:
+  - id: portfolio-weekly-collect
+    stakeholder: internal
+    report: "Weekly collect — snapshots, index, understanding pages, the weekly change note"
+    cadence: weekly
+    day: sunday
+    at: "23:30"
+    format: yaml
+    surface: "portfolio/snapshots/ · portfolio/index/ · portfolio/understanding/ · portfolio/reports/week-{date}.md · portfolio/reports/at-a-glance.html (rendered in the app)"
+    producer: portfolio-collector
+    producer_args: "all"
+    unattended: true
+    review: none               # the digest's unreachable / silent / stale checks are the review hook

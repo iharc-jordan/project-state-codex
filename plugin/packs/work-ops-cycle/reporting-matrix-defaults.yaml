@@ -1,0 +1,21 @@
+# work-ops-cycle — reporting matrix defaults (the bundled pack contract)
+# Seeded monthly. A quarterly cycle (project.ops.period: quarterly) should switch both entries to
+# kind: quarterly after seeding — the operator's edit outranks a pack default on every re-seed.
+
+defaults:
+  - id: period-close-checklist
+    stakeholder_group: internal.team
+    report: period-close-checklist
+    cadence: { kind: monthly, day_of_month: "last-business-day", lead_time_days: 5 }
+    format: md
+    surface: slack + gmail.draft
+    generator: project-status-reporter
+    description: "What must happen before this period can close, who owns it, and what is already late."
+
+  - id: period-close-report
+    stakeholder_group: internal.sponsor
+    report: period-close-report
+    cadence: { kind: monthly, day_of_month: "first-monday" }
+    format: md
+    surface: gmail.draft
+    generator: project-status-reporter
